@@ -1,11 +1,14 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { execSync } from "node:child_process";
 
 import {
   applyAnglesFlatMigrationToCommentrayToml,
   applyPathRenamesToCommentrayIndex,
+  collectOrphanCompanionMarkdownTargets,
   convertCommentraySourceMarkersToLanguage,
   defaultMetadataIndexPath,
+  discoverCommentrayPairsOnDisk,
   discoverFlatCompanionMarkdownFiles,
   ensureAnglesSentinelFile,
   GitScmProvider,
@@ -423,6 +426,252 @@ export const ALL_TOOLS: McpToolDef[] = [
       }
       await fs.writeFile(abs, sourceText, "utf8");
       return textResult(`Rewrote ${convertedPairs} marker pair(s) in ${rel}.`);
+    },
+  },
+
+  // ── Read-only discovery tools ────────────────────────────────────────
+
+  {
+    name: "commentray_list_pairs",
+    description:
+      "List all source→commentary pairs in the project. " +
+      "Returns repo-relative paths for each source file and its companion Markdown. " +
+      "Use this to discover what files already have commentary.",
+    schema: {},
+    handler: async (repoRoot) => {
+      const cfg = await loadCommentrayConfig(repoRoot);
+      const pairs = await discoverCommentrayPairsOnDisk(repoRoot, cfg.storageDir);
+      if (pairs.length === 0) {
+        return textResult(
+          "No commentray pairs found. Run commentray_init first, then add commentary.",
+        );
+      }
+      const lines = [`${pairs.length} source→commentary pair(s):`];
+      for (const p of pairs) {
+        lines.push(`  ${p.sourcePath}  →  ${p.commentrayPath}`);
+      }
+      return textResult(lines.join("\n"));
+    },
+  },
+
+  {
+    name: "commentray_read_commentray",
+    description:
+      "Read the commentary Markdown for a given source file. " +
+      "Returns the full Markdown content. Use this before writing or editing commentary.",
+    schema: {
+      file: z.string().describe("Repo-relative path to the source file"),
+      angleId: z.string().optional().describe("Angle ID (uses default if omitted)"),
+    },
+    handler: async (repoRoot, args) => {
+      const rel = normalizeRepoRelativePath(String(args.file));
+      const cfg = await loadCommentrayConfig(repoRoot);
+      const resolved = resolveCommentrayMarkdownPath(
+        repoRoot,
+        rel,
+        cfg,
+        args.angleId ? String(args.angleId) : undefined,
+      );
+      const absPath = path.join(repoRoot, ...resolved.commentrayPath.split("/"));
+      try {
+        const content = await fs.readFile(absPath, "utf8");
+        return textResult(content);
+      } catch (err) {
+        const code = (err as NodeJS.ErrnoException).code;
+        if (code === "ENOENT") {
+          return errorResult(
+            `No commentary found for ${rel}. Run commentray_init and add commentary first.`,
+          );
+        }
+        throw err;
+      }
+    },
+  },
+
+  {
+    name: "commentray_read_source",
+    description:
+      "Read a source file's content. Returns the full file text. " +
+      "Use this to understand the code before writing commentary for it.",
+    schema: {
+      file: z.string().describe("Repo-relative path to the source file"),
+    },
+    handler: async (repoRoot, args) => {
+      const rel = normalizeRepoRelativePath(String(args.file));
+      const abs = path.join(repoRoot, ...rel.split("/"));
+      try {
+        const content = await fs.readFile(abs, "utf8");
+        const lines = content.split("\n");
+        const header = `// ${rel}  (${lines.length} lines, ${content.length} bytes)\n`;
+        return textResult(header + content);
+      } catch (err) {
+        const code = (err as NodeJS.ErrnoException).code;
+        if (code === "ENOENT") return errorResult(`File not found: ${rel}`);
+        throw err;
+      }
+    },
+  },
+
+  {
+    name: "commentray_list_orphans",
+    description:
+      "List orphan companion Markdown files — commentary without a matching " +
+      "primary source file. Use commentray_doctor with allowDeletions=true to remove them.",
+    schema: {},
+    handler: async (repoRoot) => {
+      const cfg = await loadCommentrayConfig(repoRoot);
+      const orphans = await collectOrphanCompanionMarkdownTargets(repoRoot, cfg.storageDir);
+      if (orphans.length === 0) {
+        return textResult(
+          "No orphan companions found. All commentary files have matching source files.",
+        );
+      }
+      const lines = [`${orphans.length} orphan companion(s) found:`];
+      for (const o of orphans) {
+        const kind = o.cleanupIsDirectory ? "dir" : "file";
+        lines.push(`  [${kind}] ${o.commentrayPath}  (missing source: ${o.sourcePath})`);
+      }
+      lines.push("");
+      lines.push(
+        "To remove them: use commentray_doctor with allowDeletions=true, or run `commentray doctor --allow-deletions` from the CLI.",
+      );
+      return textResult(lines.join("\n"));
+    },
+  },
+
+  {
+    name: "commentray_find_uncommented",
+    description:
+      "Find source files in the repo that could have commentary but don't. " +
+      "Scans Git-tracked files, filters by common source extensions, and " +
+      "compares against the index. Use this to discover documentation opportunities.",
+    schema: {
+      maxFiles: z
+        .number()
+        .optional()
+        .default(100)
+        .describe("Maximum files to return (prevents overwhelming output)"),
+    },
+    handler: async (repoRoot, args) => {
+      // Get git-tracked files
+      let tracked: string;
+      try {
+        tracked = execSync("git ls-files -z --cached", {
+          cwd: repoRoot,
+          encoding: "utf8",
+          maxBuffer: 10 * 1024 * 1024,
+        });
+      } catch {
+        return errorResult(
+          "Could not list Git-tracked files. Ensure the repo has a Git checkout and git is on PATH.",
+        );
+      }
+      const allFiles = tracked.split("\0").filter(Boolean);
+
+      const sourceExts = new Set([
+        ".ts",
+        ".tsx",
+        ".js",
+        ".jsx",
+        ".py",
+        ".rs",
+        ".go",
+        ".java",
+        ".kt",
+        ".swift",
+        ".c",
+        ".cpp",
+        ".h",
+        ".hpp",
+        ".cs",
+        ".rb",
+        ".php",
+        ".scala",
+        ".clj",
+        ".ex",
+        ".exs",
+        ".elm",
+        ".hs",
+        ".lua",
+        ".r",
+        ".nim",
+        ".zig",
+        ".ml",
+        ".mli",
+        ".yaml",
+        ".yml",
+        ".toml",
+        ".json",
+        ".md",
+        ".mdx",
+      ]);
+
+      const index = await readIndex(repoRoot);
+      const indexedPaths = new Set<string>();
+      if (index) {
+        for (const entry of Object.values(index.byCommentrayPath)) {
+          indexedPaths.add(entry.sourcePath);
+        }
+      }
+
+      const uncommented: string[] = [];
+      for (const f of allFiles) {
+        const ext = path.extname(f).toLowerCase();
+        if (!sourceExts.has(ext)) continue;
+        if (indexedPaths.has(f)) continue;
+        uncommented.push(f);
+        if (uncommented.length >= (args.maxFiles as number)) break;
+      }
+
+      const totalSource = allFiles.filter((f) =>
+        sourceExts.has(path.extname(f).toLowerCase()),
+      ).length;
+      const commented = totalSource - uncommented.length;
+
+      if (uncommented.length === 0) {
+        return textResult(`All ${totalSource} tracked source files have commentary. Great job!`);
+      }
+
+      const lines = [
+        `${uncommented.length} uncommented source file(s) (${commented} already have commentary, ${totalSource} total tracked source files):`,
+      ];
+      for (const f of uncommented) {
+        lines.push(`  ${f}`);
+      }
+      if (uncommented.length >= (args.maxFiles as number)) {
+        lines.push(`  ... (capped at ${args.maxFiles}; increase maxFiles to see more)`);
+      }
+      return textResult(lines.join("\n"));
+    },
+  },
+
+  {
+    name: "commentray_get_index",
+    description:
+      "Return the full Commentray index as formatted JSON. " +
+      "Shows all tracked source files, their companion paths, block IDs, anchors, and marker IDs. " +
+      "Use this to understand the complete state of the project's commentary.",
+    schema: {},
+    handler: async (repoRoot) => {
+      const index = await readIndex(repoRoot);
+      if (!index) {
+        return errorResult(`No index found. Run commentray_init first.`);
+      }
+      const summary = {
+        schemaVersion: index.schemaVersion,
+        pairCount: Object.keys(index.byCommentrayPath).length,
+        pairs: Object.entries(index.byCommentrayPath).map(([cp, entry]) => ({
+          sourcePath: entry.sourcePath,
+          commentrayPath: cp,
+          blockCount: entry.blocks.length,
+          blocks: entry.blocks.map((b) => ({
+            id: b.id,
+            anchor: b.anchor,
+            markerId: b.markerId,
+          })),
+        })),
+      };
+      return textResult(JSON.stringify(summary, null, 2));
     },
   },
 ];
