@@ -34,6 +34,11 @@ const HARNESSES: HarnessConfig[] = [
 
 // ── MCP server entry (portable — no absolute paths) ───────────────────────
 
+const COMMENTRAY_DESCRIPTION =
+  "Commentray: out-of-file commentary anchored to code. " +
+  "Explains design decisions, trade-offs, and rationale — the \"why\" that doesn't belong in comments or docs. " +
+  "Strict separation: code comments (inline), documentation (standalone), Commentray (anchored, cross-linked).";
+
 function makeMcpEntry(): Record<string, unknown> {
   return {
     commentray: {
@@ -41,6 +46,7 @@ function makeMcpEntry(): Record<string, unknown> {
       command: "commentray",
       args: ["mcp", "serve"],
       cwd: "${workspaceFolder}",
+      description: COMMENTRAY_DESCRIPTION,
     },
   };
 }

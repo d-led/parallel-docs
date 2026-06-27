@@ -49,6 +49,8 @@ describe("installMcpConfigs", () => {
     expect(parsed.servers.commentray).toBeDefined();
     expect(parsed.servers.commentray.command).toBe("commentray");
     expect(parsed.servers.commentray.args).toEqual(["mcp", "serve"]);
+    expect(parsed.servers.commentray.description).toContain("Commentray");
+    expect(parsed.servers.commentray.description).toContain("design decisions");
   });
 
   it("skips existing entries by default", async () => {

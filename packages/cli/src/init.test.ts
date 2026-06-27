@@ -31,9 +31,11 @@ describe("Full init in an empty or partial repository", () => {
       const vscodeMcp = JSON.parse(await readFile(path.join(dir, ".vscode", "mcp.json"), "utf8"));
       expect(vscodeMcp).toHaveProperty("servers.commentray.type", "stdio");
       expect(vscodeMcp).toHaveProperty("servers.commentray.command", "commentray");
+      expect(vscodeMcp).toHaveProperty("servers.commentray.description");
 
       const claudeMcp = JSON.parse(await readFile(path.join(dir, ".claude", "mcp.json"), "utf8"));
       expect(claudeMcp).toHaveProperty("servers.commentray.type", "stdio");
+      expect(claudeMcp).toHaveProperty("servers.commentray.description");
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
