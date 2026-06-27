@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "commentray": {
+      "command": "node",
+      "args": ["/Users/dmitryledentsov/src/commentary/packages/vscode/dist/mcp-server.js"]
+    }
+  }
+}

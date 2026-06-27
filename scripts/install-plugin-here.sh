@@ -142,13 +142,32 @@ echo "Installing $vsix into $editor_cli..." >&2
 echo "Done. Commentray $(node -e "process.stdout.write(require('$EXT_DIR/package.json').version)") installed into $editor_cli." >&2
 
 # Install MCP server config for this repo so AI assistants can use it.
-if command -v commentray >/dev/null 2>&1; then
-  echo "Installing MCP server config (commentray mcp install)..." >&2
-  commentray mcp install 2>/dev/null || echo "(MCP install skipped — commentray CLI not found or repo not initialized)" >&2
-elif node -e "require('$EXT_DIR/dist/mcp-server.js')" 2>/dev/null; then
-  echo "" >&2
-  echo "MCP server bundled with the extension." >&2
-  echo "To enable AI assistant tools, run: commentray mcp install" >&2
-  echo "Or manually configure your MCP client to use:" >&2
-  echo "  node $EXT_DIR/dist/mcp-server.js" >&2
-fi
+# Points directly at the locally built mcp-server.js — no CLI needed on PATH.
+echo "Installing MCP server config (local mcp-server.js)..." >&2
+MCP_SERVER="$EXT_DIR/dist/mcp-server.js"
+
+write_mcp_config() {
+  local file="$1"
+  local dir
+  dir="$(dirname "$file")"
+  mkdir -p "$dir"
+  cat > "$file" <<JSONEOF
+{
+  "mcpServers": {
+    "commentray": {
+      "command": "node",
+      "args": ["$MCP_SERVER"]
+    }
+  }
+}
+JSONEOF
+  echo "  $file" >&2
+}
+
+write_mcp_config "$REPO_ROOT/.vscode/mcp.json"
+write_mcp_config "$REPO_ROOT/.claude/mcp.json"
+write_mcp_config "$REPO_ROOT/.antigravity/mcp.json"
+write_mcp_config "$REPO_ROOT/.opencode/mcp.json"
+
+echo "" >&2
+echo "MCP server ready. Reload your editor window to see Commentray in the MCP list." >&2
