@@ -6,7 +6,7 @@
 [![npm: @commentray/core](https://img.shields.io/npm/v/@commentray/core?label=@commentray/core)](https://www.npmjs.com/package/@commentray/core)
 [![npm: @commentray/render](https://img.shields.io/npm/v/@commentray/render?label=@commentray/render)](https://www.npmjs.com/package/@commentray/render)
 [![npm: @commentray/mcp-server](https://img.shields.io/npm/v/@commentray/mcp-server?label=@commentray/mcp-server)](https://www.npmjs.com/package/@commentray/mcp-server)
-[![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/d-led.commentray-vscode?label=VS%20Code)](https://marketplace.visualstudio.com/items?itemName=d-led.commentray-vscode)
+[![VS Code Marketplace](https://vsmarketplacebadges.dev/version-short/d-led.commentray-vscode.png?label=VS%20Code)](https://marketplace.visualstudio.com/items?itemName=d-led.commentray-vscode)
 
 Have you ever wished a “commentary track” for code the way DVD extras let filmmakers talk over a film without changing the picture? When looking at code, that might answer the whys, reveal the intent besides the code itself.
 
