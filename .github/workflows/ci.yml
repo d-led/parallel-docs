@@ -45,15 +45,7 @@ jobs:
       - name: Link-check static pages (lychee)
         run: |
           npm run pages:build
-          nohup npm run e2e:server > /tmp/linkcheck-serve.log 2>&1 &
-          echo $! > /tmp/linkcheck-serve.pid
-          # wait for server
-          n=0
-          until node -e "require('http').get('http://127.0.0.1:14173/', (r) => { process.exit(r.statusCode === 200 ? 0 : 1) }).on('error', () => process.exit(1))"; do
-            n=$((n+1)); [ "$n" -ge 60 ] && exit 1; sleep 1
-          done
-          # Use lychee-action's docker-less approach: install via binary
-          bash scripts/linkcheck.sh http://127.0.0.1:14173
+          bash scripts/linkcheck.sh
         if: ${{ always() }}
 
   # Cypress + static site (unprivileged). JUnit → GitHub Checks runs in e2e-publish-checks.yml (workflow_run, no PR SHA checkout).

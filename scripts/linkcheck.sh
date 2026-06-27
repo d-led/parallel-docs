@@ -1,14 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Check all internal links on a served Commentray static site using lychee.
+# Check all internal links in the built Commentray static site using lychee.
+# Checks ALL HTML files under _site/ with --root-dir for relative link resolution.
 # Installs lychee if not already present (brew on macOS, cargo with Rust, or binary download).
 #
 # Usage:
-#   bash scripts/linkcheck.sh                          # check http://127.0.0.1:14173
-#   bash scripts/linkcheck.sh http://127.0.0.1:4173    # custom base URL
+#   bash scripts/linkcheck.sh                          # check _site/ against local files
+#   bash scripts/linkcheck.sh --serve http://127.0.0.1:4173  # check via HTTP server
 
-BASE_URL="${1:-http://127.0.0.1:14173}"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SITE_DIR="$REPO_ROOT/_site"
 
 # ── Ensure lychee is available ──────────────────────────────────────────
 
@@ -31,9 +33,8 @@ ensure_lychee() {
 
   # Direct binary download — matches lychee-action v2 naming convention
   local version="0.24.2"
-  local arch
+  local arch os target_arch
   arch="$(uname -m)"
-  local os
   os="$(uname -s | tr '[:upper:]' '[:lower:]')"
 
   case "$os-$arch" in
@@ -66,19 +67,22 @@ ensure_lychee
 
 # ── Run lychee ───────────────────────────────────────────────────────────
 
-echo "[linkcheck] Checking internal links on ${BASE_URL}…" >&2
+echo "[linkcheck] Checking internal links across all _site/ HTML files…" >&2
 
-# Point lychee at the root page; it crawls internal links from there.
-# The --include filter keeps it on the same origin.
+# Check ALL HTML files under _site/ with --root-dir so relative links
+# (./browse/…, ../…) resolve correctly against the local file tree.
+# Exclude external domains (github.com, npmjs.com) — those are validated
+# separately by scripts/validate-pages-github-links.mjs.
 lychee \
-  --base-url "$BASE_URL" \
+  --root-dir "$SITE_DIR" \
   --format detailed \
   --no-progress \
   --max-concurrency 16 \
   --require-https=false \
   --accept 200,301,302 \
-  --include "$BASE_URL" \
   --include-mail=false \
-  "$BASE_URL/"
+  --exclude '^https?://' \
+  --exclude '^mailto:' \
+  "$SITE_DIR"/**/*.html
 
 echo "[linkcheck] OK — all internal links resolve." >&2
