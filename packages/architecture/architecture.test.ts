@@ -177,7 +177,14 @@ describe("monorepo package dependency rules", () => {
   });
 
   it("has no import cycles within each first-party package src tree", async () => {
-    const packages = ["core", "render", "code-commentray-static", "mcp-server", "cli", "vscode"] as const;
+    const packages = [
+      "core",
+      "render",
+      "code-commentray-static",
+      "mcp-server",
+      "cli",
+      "vscode",
+    ] as const;
     for (const pkg of packages) {
       await assertNoImportCyclesInPackageSrc(pkg);
     }

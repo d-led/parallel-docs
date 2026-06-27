@@ -258,11 +258,7 @@ export const ALL_TOOLS: McpToolDef[] = [
       "(per-source folders under angle directories). Use dryRun=true to preview.",
     schema: {
       angleId: z.string().optional().default("main").describe("Angle ID for migrated files"),
-      dryRun: z
-        .boolean()
-        .optional()
-        .default(false)
-        .describe("Preview moves without writing files"),
+      dryRun: z.boolean().optional().default(false).describe("Preview moves without writing files"),
     },
     handler: async (repoRoot, args) => {
       const cfg = await loadCommentrayConfig(repoRoot);
@@ -338,7 +334,9 @@ export const ALL_TOOLS: McpToolDef[] = [
       });
       const cfg = await loadCommentrayConfig(repoRoot);
       await ensureAnglesSentinelFile(repoRoot, cfg.storageDir);
-      return textResult(`Angle "${args.angleId}" registered${args.makeDefault ? " (default)" : ""}.`);
+      return textResult(
+        `Angle "${args.angleId}" registered${args.makeDefault ? " (default)" : ""}.`,
+      );
     },
   },
 
@@ -351,11 +349,7 @@ export const ALL_TOOLS: McpToolDef[] = [
     schema: {
       from: z.string().optional().default("HEAD~1").describe("Older tree-ish ref"),
       to: z.string().optional().default("HEAD").describe("Newer tree-ish ref"),
-      dryRun: z
-        .boolean()
-        .optional()
-        .default(false)
-        .describe("Preview renames without writing"),
+      dryRun: z.boolean().optional().default(false).describe("Preview renames without writing"),
     },
     handler: async (repoRoot, args) => {
       const scm = new GitScmProvider();

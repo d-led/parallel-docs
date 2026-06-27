@@ -30,18 +30,18 @@ packages/vscode/                ← new command: configureMcpServer
 
    Tools (10 total, exclude `serve`):
 
-   | MCP Tool | CLI equivalent |
-   |---|---|
-   | `commentray_init` | `init` |
-   | `commentray_validate` | `validate [--staged]` |
-   | `commentray_paths` | `paths <file>` |
-   | `commentray_render` | `render --source --markdown --out --mermaid` |
-   | `commentray_doctor` | `doctor [--allow-deletions]` |
-   | `commentray_migrate` | `migrate` |
-   | `commentray_migrate_angles` | `migrate-angles [--angle-id] [--dry-run]` |
-   | `commentray_angles_add` | `angles add <angleId> [--source] [--title] [--make-default]` |
-   | `commentray_sync_moved_paths` | `sync-moved-paths [--from] [--to] [--dry-run]` |
-   | `commentray_convert_source_markers` | `convert-source-markers --file --language [--dry-run]` |
+   | MCP Tool                            | CLI equivalent                                               |
+   | ----------------------------------- | ------------------------------------------------------------ |
+   | `commentray_init`                   | `init`                                                       |
+   | `commentray_validate`               | `validate [--staged]`                                        |
+   | `commentray_paths`                  | `paths <file>`                                               |
+   | `commentray_render`                 | `render --source --markdown --out --mermaid`                 |
+   | `commentray_doctor`                 | `doctor [--allow-deletions]`                                 |
+   | `commentray_migrate`                | `migrate`                                                    |
+   | `commentray_migrate_angles`         | `migrate-angles [--angle-id] [--dry-run]`                    |
+   | `commentray_angles_add`             | `angles add <angleId> [--source] [--title] [--make-default]` |
+   | `commentray_sync_moved_paths`       | `sync-moved-paths [--from] [--to] [--dry-run]`               |
+   | `commentray_convert_source_markers` | `convert-source-markers --file --language [--dry-run]`       |
 
 3. **Create `src/mcp-server.ts`** — Exports `createMcpServer(repoRoot: string)` that returns a configured `Server` instance with all tools registered. Uses `@modelcontextprotocol/sdk`'s `McpServer`. Reports server identity: name `commentray-mcp`, version from its own package.json.
 
@@ -66,15 +66,19 @@ packages/vscode/                ← new command: configureMcpServer
 7. **Add `@commentray/mcp-server` dependency** to `packages/cli/package.json`.
 
 8. **Add `commentray mcp serve` subcommand** to `packages/cli/src/cli.ts`:
+
    ```
    commentray mcp serve
    ```
+
    Starts the MCP server via stdio from the current repo root. Thin wrapper that imports `stdio-entry` from `@commentray/mcp-server`. This is the command referenced in all generated MCP configs.
 
 9. **Add `commentray mcp install` subcommand** to `packages/cli/src/cli.ts`:
+
    ```
    commentray mcp install [--dry-run] [--force]
    ```
+
    Calls `installMcpConfigs` from `@commentray/mcp-server`. Reports which files were written/updated, which harnesses were configured.
 
 10. **Add `commentray mcp` parent command** with `--help` listing both subcommands.
@@ -168,34 +172,34 @@ packages/vscode/                ← new command: configureMcpServer
 
 ## Relevant Files
 
-| File | Action |
-|---|---|
-| `packages/mcp-server/package.json` | **NEW** — `publishConfig.access=public`, `files` |
-| `packages/mcp-server/tsconfig.json` | **NEW** |
-| `packages/mcp-server/tsconfig.build.json` | **NEW** |
-| `packages/mcp-server/src/index.ts` | **NEW** — public API |
-| `packages/mcp-server/src/mcp-tools.ts` | **NEW** — 10 tool definitions |
-| `packages/mcp-server/src/mcp-server.ts` | **NEW** — `createMcpServer()` |
-| `packages/mcp-server/src/stdio-entry.ts` | **NEW** — shebang entry point |
-| `packages/mcp-server/src/mcp-install.ts` | **NEW** — `installMcpConfigs()` |
-| `packages/mcp-server/src/test/mcp-tools.test.ts` | **NEW** |
-| `packages/mcp-server/src/test/mcp-server.test.ts` | **NEW** |
-| `packages/mcp-server/src/test/mcp-install.test.ts` | **NEW** |
-| `packages/cli/package.json` | add `@commentray/mcp-server` dep |
-| `packages/cli/src/cli.ts` | add `mcp serve`, `mcp install` commands |
-| `packages/cli/src/test/mcp-cli.test.ts` | **NEW** |
-| `packages/vscode/package.json` | add `@commentray/mcp-server` dep, `configureMcpServer` command + activationEvent, `build:mcp-server` script |
-| `packages/vscode/src/extension.ts` | add `configureMcpServer` handler |
-| `packages/vscode/esbuild.mcp-server.mjs` | **NEW** — bundle stdio-entry |
-| `packages/vscode/src/test/suite/mcp-extension.test.ts` | **NEW** |
-| `packages/architecture/architecture.test.ts` | allow cli→mcp-server, vscode→mcp-server |
-| `tsconfig.json` (root) | add project reference |
-| `scripts/publish.sh` | add `@commentray/mcp-server` to `PUBLIC_WORKSPACES` |
-| `scripts/sync-workspace-deps.mjs` | add `@commentray/mcp-server` to `WORKSPACE_NAMES` |
-| `scripts/install-plugin-here.sh` | **NEW** — install extension into running IDE |
-| `docs/user/mcp-server.md` | **NEW** — usage guide |
-| `README.md` | mention MCP server |
-| `CHANGELOG.md` | add v0.4.0 entry |
+| File                                                   | Action                                                                                                      |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| `packages/mcp-server/package.json`                     | **NEW** — `publishConfig.access=public`, `files`                                                            |
+| `packages/mcp-server/tsconfig.json`                    | **NEW**                                                                                                     |
+| `packages/mcp-server/tsconfig.build.json`              | **NEW**                                                                                                     |
+| `packages/mcp-server/src/index.ts`                     | **NEW** — public API                                                                                        |
+| `packages/mcp-server/src/mcp-tools.ts`                 | **NEW** — 10 tool definitions                                                                               |
+| `packages/mcp-server/src/mcp-server.ts`                | **NEW** — `createMcpServer()`                                                                               |
+| `packages/mcp-server/src/stdio-entry.ts`               | **NEW** — shebang entry point                                                                               |
+| `packages/mcp-server/src/mcp-install.ts`               | **NEW** — `installMcpConfigs()`                                                                             |
+| `packages/mcp-server/src/test/mcp-tools.test.ts`       | **NEW**                                                                                                     |
+| `packages/mcp-server/src/test/mcp-server.test.ts`      | **NEW**                                                                                                     |
+| `packages/mcp-server/src/test/mcp-install.test.ts`     | **NEW**                                                                                                     |
+| `packages/cli/package.json`                            | add `@commentray/mcp-server` dep                                                                            |
+| `packages/cli/src/cli.ts`                              | add `mcp serve`, `mcp install` commands                                                                     |
+| `packages/cli/src/test/mcp-cli.test.ts`                | **NEW**                                                                                                     |
+| `packages/vscode/package.json`                         | add `@commentray/mcp-server` dep, `configureMcpServer` command + activationEvent, `build:mcp-server` script |
+| `packages/vscode/src/extension.ts`                     | add `configureMcpServer` handler                                                                            |
+| `packages/vscode/esbuild.mcp-server.mjs`               | **NEW** — bundle stdio-entry                                                                                |
+| `packages/vscode/src/test/suite/mcp-extension.test.ts` | **NEW**                                                                                                     |
+| `packages/architecture/architecture.test.ts`           | allow cli→mcp-server, vscode→mcp-server                                                                     |
+| `tsconfig.json` (root)                                 | add project reference                                                                                       |
+| `scripts/publish.sh`                                   | add `@commentray/mcp-server` to `PUBLIC_WORKSPACES`                                                         |
+| `scripts/sync-workspace-deps.mjs`                      | add `@commentray/mcp-server` to `WORKSPACE_NAMES`                                                           |
+| `scripts/install-plugin-here.sh`                       | **NEW** — install extension into running IDE                                                                |
+| `docs/user/mcp-server.md`                              | **NEW** — usage guide                                                                                       |
+| `README.md`                                            | mention MCP server                                                                                          |
+| `CHANGELOG.md`                                         | add v0.4.0 entry                                                                                            |
 
 ## Verification
 
@@ -215,30 +219,31 @@ packages/vscode/                ← new command: configureMcpServer
 
 ## Decisions
 
-| Decision | Rationale |
-|---|---|
-| **New `packages/mcp-server/` package** | Shared by both CLI and VS Code. Avoids duplicating tool definitions. Follows layered architecture: core ← mcp-server ← cli/vscode. |
-| **`commentray mcp serve` as the canonical command** | Portable — no absolute paths. Every contributor runs the same CLI they already have. Configs are commit-safe. |
-| **`commentray mcp install` writes repo-local configs only** | `.vscode/mcp.json`, `.claude/mcp.json`, etc. are project files — meant to be committed. No user-global config files touched. |
-| **stdio transport only** | Standard for MCP clients. No VS Code MCP gateway integration in initial release. |
-| **All CLI commands except `serve`** exposed as MCP tools | `serve` is a long-running process, not suitable as an MCP tool. |
-| **Direct `@commentray/core` API calls** | Faster, no subprocess overhead, better error propagation. |
-| **`zod` for input validation** | Runtime validation at the MCP boundary before touching core APIs. |
-| **Workspace root from cwd** | Same as CLI behavior. MCP clients start the server in the project directory. |
-| **VS Code bundles a standalone MCP server too** | Fallback for users who have the extension but not the CLI. |
+| Decision                                                    | Rationale                                                                                                                          |
+| ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| **New `packages/mcp-server/` package**                      | Shared by both CLI and VS Code. Avoids duplicating tool definitions. Follows layered architecture: core ← mcp-server ← cli/vscode. |
+| **`commentray mcp serve` as the canonical command**         | Portable — no absolute paths. Every contributor runs the same CLI they already have. Configs are commit-safe.                      |
+| **`commentray mcp install` writes repo-local configs only** | `.vscode/mcp.json`, `.claude/mcp.json`, etc. are project files — meant to be committed. No user-global config files touched.       |
+| **stdio transport only**                                    | Standard for MCP clients. No VS Code MCP gateway integration in initial release.                                                   |
+| **All CLI commands except `serve`** exposed as MCP tools    | `serve` is a long-running process, not suitable as an MCP tool.                                                                    |
+| **Direct `@commentray/core` API calls**                     | Faster, no subprocess overhead, better error propagation.                                                                          |
+| **`zod` for input validation**                              | Runtime validation at the MCP boundary before touching core APIs.                                                                  |
+| **Workspace root from cwd**                                 | Same as CLI behavior. MCP clients start the server in the project directory.                                                       |
+| **VS Code bundles a standalone MCP server too**             | Fallback for users who have the extension but not the CLI.                                                                         |
 
 ## Supported Harnesses for `mcp install`
 
-| Harness | Config File | Notes |
-|---|---|---|
-| VS Code Copilot | `.vscode/mcp.json` | Workspace-level MCP config |
-| Claude Code / Claude IDE | `.claude/mcp.json` | Project-level MCP config |
-| Antigravity | `.antigravity/mcp.json` | Project-level MCP config |
-| OpenCode | `.opencode/mcp.json` | Project-level MCP config |
-| Claude Desktop | _(skipped — user-global, would need absolute path)_ | Print instructions instead |
-| GitHub Copilot (standalone) | _(skipped — user-global)_ | Print instructions instead |
+| Harness                     | Config File                                         | Notes                      |
+| --------------------------- | --------------------------------------------------- | -------------------------- |
+| VS Code Copilot             | `.vscode/mcp.json`                                  | Workspace-level MCP config |
+| Claude Code / Claude IDE    | `.claude/mcp.json`                                  | Project-level MCP config   |
+| Antigravity                 | `.antigravity/mcp.json`                             | Project-level MCP config   |
+| OpenCode                    | `.opencode/mcp.json`                                | Project-level MCP config   |
+| Claude Desktop              | _(skipped — user-global, would need absolute path)_ | Print instructions instead |
+| GitHub Copilot (standalone) | _(skipped — user-global)_                           | Print instructions instead |
 
 All repo-local configs use:
+
 ```json
 {
   "mcpServers": {

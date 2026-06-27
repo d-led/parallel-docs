@@ -1480,7 +1480,9 @@ async function repairFileCommand(): Promise<void> {
 async function configureMcpServerCommand(): Promise<void> {
   const extCtx = extensionContext;
   if (!extCtx) {
-    void vscode.window.showErrorMessage("Extension context not available. Please reload the window.");
+    void vscode.window.showErrorMessage(
+      "Extension context not available. Please reload the window.",
+    );
     return;
   }
   const extUri = extCtx.extensionUri;
@@ -1499,21 +1501,23 @@ async function configureMcpServerCommand(): Promise<void> {
     2,
   );
 
-  void vscode.window.showInformationMessage(
-    `Commentray MCP Server — add this to your MCP client config:
+  void vscode.window
+    .showInformationMessage(
+      `Commentray MCP Server — add this to your MCP client config:
 
 \`\`\`json
 ${configSnippet}
 \`\`\`
 
 *Preferred (portable)*: run \`commentray mcp install\` in your repo instead.`,
-    { modal: true },
-    "Copy JSON",
-  ).then((result) => {
-    if (result === "Copy JSON") {
-      void vscode.env.clipboard.writeText(configSnippet);
-    }
-  });
+      { modal: true },
+      "Copy JSON",
+    )
+    .then((result) => {
+      if (result === "Copy JSON") {
+        void vscode.env.clipboard.writeText(configSnippet);
+      }
+    });
 }
 
 async function renameCompanionFile(

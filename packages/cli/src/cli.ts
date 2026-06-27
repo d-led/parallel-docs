@@ -478,7 +478,9 @@ const mcpCmd = program
 
 mcpCmd
   .command("serve")
-  .description("Start the MCP server via stdio (used by MCP clients like Claude, VS Code Copilot, etc.)")
+  .description(
+    "Start the MCP server via stdio (used by MCP clients like Claude, VS Code Copilot, etc.)",
+  )
   .action(async () => {
     // Dynamic import — the mcp-server package is heavy and only needed here.
     const { createMcpServer } = await import("@commentray/mcp-server");
@@ -497,7 +499,11 @@ mcpCmd
       "Uses 'commentray mcp serve' as the command — fully portable, no absolute paths.",
   )
   .option("--dry-run", "Print what would be written without touching files", false)
-  .option("--force", "Overwrite existing Commentray entries (default: skip if already present)", false)
+  .option(
+    "--force",
+    "Overwrite existing Commentray entries (default: skip if already present)",
+    false,
+  )
   .action(async (opts: { dryRun?: boolean; force?: boolean }) => {
     const repoRoot = await repoRootFromCwd();
     const results = await installMcpConfigs(repoRoot, {
