@@ -120,7 +120,7 @@ run_step() {
   fi
 }
 
-run_step "format" npm run format
+run_step "format" npx prettier --write .
 run_step "actionlint" bash scripts/actionlint.sh
 run_step "lint" npm run lint
 run_step "dupes" npm run dupes
