@@ -12,7 +12,6 @@ set -euo pipefail
 # to catch broken internal links before merge.
 
 BASE_URL="${1:-http://127.0.0.1:14173}"
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # ── Ensure lychee is available ──────────────────────────────────────────
 
