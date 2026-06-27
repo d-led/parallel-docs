@@ -34,6 +34,7 @@ import { logCliValidationIssue, logCliWarning } from "./cli-output.js";
 import { runAnglesAddFromCwd } from "./angles-add-cmd.js";
 import { readGitStagedRepoRelativePaths } from "./git-staged-paths.js";
 import { runServeStaticPages } from "./serve.js";
+import { runPagesBuild } from "./serve.js";
 import { installMcpConfigs } from "@commentray/mcp-server";
 
 async function repoRootFromCwd(): Promise<string> {
@@ -441,6 +442,23 @@ program
     }
     try {
       await runServeStaticPages(await repoRootFromCwd(), { port });
+    } catch (err) {
+      console.error(err instanceof Error ? err.message : err);
+      process.exitCode = 1;
+    }
+  });
+
+const pagesCmd = program.command("pages").description("GitHub Pages build helpers");
+
+pagesCmd
+  .command("build")
+  .description(
+    "Build the static `_site/` tree from `.commentray.toml` [static_site] config. " +
+      "Use in CI workflows before deploying to GitHub Pages or any static host.",
+  )
+  .action(async () => {
+    try {
+      await runPagesBuild(await repoRootFromCwd());
     } catch (err) {
       console.error(err instanceof Error ? err.message : err);
       process.exitCode = 1;

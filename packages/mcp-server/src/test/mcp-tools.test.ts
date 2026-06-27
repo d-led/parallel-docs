@@ -9,8 +9,8 @@ function tool(name: string): McpToolDef {
 }
 
 describe("MCP tool definitions", () => {
-  it("registers 18 tools", () => {
-    expect(ALL_TOOLS).toHaveLength(18);
+  it("registers 19 tools", () => {
+    expect(ALL_TOOLS).toHaveLength(19);
   });
 
   it("each tool has a unique name", () => {

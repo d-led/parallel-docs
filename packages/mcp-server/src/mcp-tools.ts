@@ -743,6 +743,113 @@ export const ALL_TOOLS: McpToolDef[] = [
     },
   },
 
+  // ── commentray_setup_pages ──────────────────────────────────────────
+
+  {
+    name: "commentray_setup_pages",
+    description:
+      "Create or update `.github/workflows/commentray-pages.yml` to deploy " +
+      "the Commentray static site to GitHub Pages on every push to main. " +
+      "Requires the repo's Pages source to be set to 'GitHub Actions' in Settings → Pages. " +
+      "The workflow builds `_site/` via `commentray pages build` and publishes it.",
+    schema: {
+      force: z.boolean().optional().describe("Overwrite an existing workflow file"),
+      dryRun: z.boolean().optional().describe("Preview the workflow content without writing"),
+      branch: z
+        .string()
+        .optional()
+        .default("main")
+        .describe("Branch to deploy from (default: main)"),
+      nodeVersion: z.string().optional().default("22.x").describe("Node.js version to use in CI"),
+    },
+    handler: async (repoRoot, args) => {
+      const workflowDir = path.join(repoRoot, ".github", "workflows");
+      const workflowFile = path.join(workflowDir, "commentray-pages.yml");
+      const force = Boolean(args.force);
+      const dryRun = Boolean(args.dryRun);
+      const branch = String(args.branch ?? "main");
+      const nodeVersion = String(args.nodeVersion ?? "22.x");
+
+      const workflowYaml = `\
+# Commentray → GitHub Pages static site deployment.
+# Settings → Pages → Source: GitHub Actions.
+name: commentray-pages
+
+on:
+  push:
+    branches: [${branch}]
+
+concurrency:
+  group: pages-\${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: \${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "${nodeVersion}"
+          cache: npm
+
+      - run: npm ci
+
+      - name: Install Commentray CLI
+        run: npm install --no-save commentray
+
+      - name: Build Commentray static site
+        run: npx commentray pages build
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+`;
+
+      // Check if already exists
+      let exists = false;
+      try {
+        await fs.access(workflowFile);
+        exists = true;
+      } catch {
+        /* not found */
+      }
+
+      if (exists && !force && !dryRun) {
+        return textResult(`${workflowFile} already exists. Use --force to overwrite.`);
+      }
+
+      if (dryRun) {
+        return textResult(
+          (exists ? `Would overwrite ${workflowFile}` : `Would create ${workflowFile}`) +
+            `:\n\n${workflowYaml}`,
+        );
+      }
+
+      await fs.mkdir(workflowDir, { recursive: true });
+      await fs.writeFile(workflowFile, workflowYaml, "utf8");
+
+      const action = exists ? "Updated" : "Created";
+      return textResult(
+        `${action} ${workflowFile}. ` +
+          `Next: set Pages source to "GitHub Actions" in repo Settings → Pages.`,
+      );
+    },
+  },
+
   {
     name: "commentray_get_index",
     description:

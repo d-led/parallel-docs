@@ -329,3 +329,28 @@ export async function runServeStaticPages(
   // `serve-with-package-watch.mjs` restarts the CLI via SIGTERM.
   process.once("SIGTERM", exitClean);
 }
+
+/**
+ * Build the static `_site/` tree without starting an HTTP server.
+ * Useful for CI / GitHub Pages workflows that call `commentray pages build`.
+ */
+export async function runPagesBuild(repoRootAbs: string): Promise<void> {
+  const { buildGithubPagesStaticSite } =
+    await import("@commentray/code-commentray-static/github-pages-site");
+  const repoRoot = path.resolve(repoRootAbs);
+
+  // Ensure the project is initialized before building
+  const initialized = await isCommentrayProjectInitialized(repoRoot);
+  if (!initialized) {
+    const code = await runInitFull(repoRoot);
+    if (code !== 0) {
+      throw new Error(
+        `Failed to initialize Commentray project at ${repoRoot} (exit code: ${String(code)})`,
+      );
+    }
+  }
+
+  const { outHtml, navSearchPath } = await buildGithubPagesStaticSite({ repoRoot });
+  process.stderr.write(`Wrote ${outHtml}\n`);
+  process.stderr.write(`Wrote ${navSearchPath}\n`);
+}
