@@ -1,6 +1,6 @@
 {
   "name": "@commentray/render",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "publishConfig": {
     "access": "public"
   },
@@ -29,7 +29,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@commentray/core": "0.4.0",
+    "@commentray/core": "0.4.1",
     "@m31coding/fuzzy-search": "^2.0.0",
     "rehype-highlight": "^7.0.2",
     "rehype-raw": "^7.0.0",
