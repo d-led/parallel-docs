@@ -10,7 +10,8 @@
     "baseUrl": ".",
     "paths": {
       "@commentray/core": ["packages/core/src/index.ts"],
-      "@commentray/render": ["packages/render/src/index.ts"]
+      "@commentray/render": ["packages/render/src/index.ts"],
+      "@commentray/mcp-server": ["packages/mcp-server/src/index.ts"]
     },
     "types": ["node", "vscode"],
     "lib": ["ES2022"]
@@ -26,6 +27,7 @@
     "packages/vscode/src/**/*.ts",
     "packages/code-commentray-static/src/**/*.ts",
     "packages/code-commentray-static/fixtures/**/*.ts",
+    "packages/mcp-server/src/**/*.ts",
     "packages/architecture/**/*.ts",
     "scripts/**/*.mjs"
   ],

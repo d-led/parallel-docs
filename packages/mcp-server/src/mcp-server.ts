@@ -21,8 +21,7 @@ export function createMcpServer(repoRoot: string): McpServer {
 
 function registerTool(server: McpServer, tool: McpToolDef, repoRoot: string): void {
   // The MCP SDK infers args type from the schema; we pass through to our handler.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  server.tool(tool.name, tool.description, tool.schema, async (args: any) => {
+  server.tool(tool.name, tool.description, tool.schema, async (args) => {
     return tool.handler(repoRoot, args as Record<string, unknown>);
   });
 }
