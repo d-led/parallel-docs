@@ -1,6 +1,6 @@
 {
   "name": "@commentray/code-commentray-static",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Build static HTML pages for code + Commentray (resizable panes, wrap toggle)",
   "license": "MPL-2.0",
   "type": "module",
@@ -30,8 +30,8 @@
     "site": "node ./dist/cli.js"
   },
   "dependencies": {
-    "@commentray/core": "0.4.1",
-    "@commentray/render": "0.4.1",
+    "@commentray/core": "0.4.2",
+    "@commentray/render": "0.4.2",
     "commander": "^15.0.0",
     "png-to-ico": "^3.0.1",
     "sharp": "^0.35.2"
