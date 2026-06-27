@@ -50,7 +50,14 @@ ensure_lychee() {
     local url="https://github.com/lycheeverse/lychee/releases/download/v${version}/${tarball}"
 
     echo "[linkcheck] downloading lychee from ${url}…" >&2
-    curl -fsSL "$url" -o "/tmp/${tarball}"
+    if command -v curl &>/dev/null; then
+      curl -fsSL "$url" -o "/tmp/${tarball}"
+    elif command -v wget &>/dev/null; then
+      wget -q "$url" -O "/tmp/${tarball}"
+    else
+      echo "[linkcheck] ERROR: neither curl nor wget found. Install lychee manually." >&2
+      exit 1
+    fi
     tar -xzf "/tmp/${tarball}" -C /tmp
     chmod +x /tmp/lychee
     local install_dir="${HOME}/.local/bin"
