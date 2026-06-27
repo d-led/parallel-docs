@@ -119,7 +119,7 @@ rm -f \
   "$REPO_ROOT/packages/vscode"/tsconfig*.tsbuildinfo
 
 echo "Building workspace packages the extension depends on, then bundling..." >&2
-npm run build -w @commentray/core -w @commentray/render -w commentray-vscode
+npm run build -w @commentray/core -w @commentray/render -w @commentray/mcp-server -w commentray-vscode
 
 echo "Packaging extension..." >&2
 pushd "$EXT_DIR" >/dev/null
@@ -140,3 +140,15 @@ echo "Installing $vsix into $editor_cli..." >&2
 "$editor_cli" --install-extension "$vsix" --force
 
 echo "Done. Commentray $(node -e "process.stdout.write(require('$EXT_DIR/package.json').version)") installed into $editor_cli." >&2
+
+# Install MCP server config for this repo so AI assistants can use it.
+if command -v commentray >/dev/null 2>&1; then
+  echo "Installing MCP server config (commentray mcp install)..." >&2
+  commentray mcp install 2>/dev/null || echo "(MCP install skipped — commentray CLI not found or repo not initialized)" >&2
+elif node -e "require('$EXT_DIR/dist/mcp-server.js')" 2>/dev/null; then
+  echo "" >&2
+  echo "MCP server bundled with the extension." >&2
+  echo "To enable AI assistant tools, run: commentray mcp install" >&2
+  echo "Or manually configure your MCP client to use:" >&2
+  echo "  node $EXT_DIR/dist/mcp-server.js" >&2
+fi
