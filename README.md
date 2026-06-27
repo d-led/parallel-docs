@@ -2,6 +2,12 @@
 
 # Commentray — a side-by-side documentation ecosystem
 
+[![npm: commentray](https://img.shields.io/npm/v/commentray?label=commentray)](https://www.npmjs.com/package/commentray)
+[![npm: @commentray/core](https://img.shields.io/npm/v/@commentray/core?label=@commentray/core)](https://www.npmjs.com/package/@commentray/core)
+[![npm: @commentray/render](https://img.shields.io/npm/v/@commentray/render?label=@commentray/render)](https://www.npmjs.com/package/@commentray/render)
+[![npm: @commentray/mcp-server](https://img.shields.io/npm/v/@commentray/mcp-server?label=@commentray/mcp-server)](https://www.npmjs.com/package/@commentray/mcp-server)
+[![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/d-led.commentray-vscode?label=VS%20Code)](https://marketplace.visualstudio.com/items?itemName=d-led.commentray-vscode)
+
 Have you ever wished a “commentary track” for code the way DVD extras let filmmakers talk over a film without changing the picture? When looking at code, that might answer the whys, reveal the intent besides the code itself.
 
 The ecosystem is a handful of published npm libraries, the commentray CLI, and a VS Code or Cursor extension. They share one configuration file and one companion tree next to your sources. Tooling ties commentary to the code: optional Git hooks, validation and doctor flows, migrations, rendering, static site output, a **local** `commentray serve` helper for preview (not the production host—you deploy `_site/` elsewhere), and standalone executables when you do not want a Node install. For how checks split across hook, CLI, editor, and what this repository’s own CI runs versus validate, see [What Commentray detects](docs/user/detection.md).
