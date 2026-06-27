@@ -33,8 +33,7 @@ import { resolveRenderInputs, type RenderCliOptions } from "./render-inputs.js";
 import { logCliValidationIssue, logCliWarning } from "./cli-output.js";
 import { runAnglesAddFromCwd } from "./angles-add-cmd.js";
 import { readGitStagedRepoRelativePaths } from "./git-staged-paths.js";
-import { runServeStaticPages } from "./serve.js";
-import { runPagesBuild } from "./serve.js";
+import { runServeStaticPages, runPagesBuild } from "./serve.js";
 import { installMcpConfigs } from "@commentray/mcp-server";
 
 async function repoRootFromCwd(): Promise<string> {
