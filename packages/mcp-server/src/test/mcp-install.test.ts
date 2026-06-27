@@ -45,10 +45,10 @@ describe("installMcpConfigs", () => {
     const content = await fs.readFile(vscodePath, "utf8");
     const parsed = JSON.parse(content);
 
-    expect(parsed.mcpServers).toBeDefined();
-    expect(parsed.mcpServers.commentray).toBeDefined();
-    expect(parsed.mcpServers.commentray.command).toBe("commentray");
-    expect(parsed.mcpServers.commentray.args).toEqual(["mcp", "serve"]);
+    expect(parsed.servers).toBeDefined();
+    expect(parsed.servers.commentray).toBeDefined();
+    expect(parsed.servers.commentray.command).toBe("commentray");
+    expect(parsed.servers.commentray.args).toEqual(["mcp", "serve"]);
   });
 
   it("skips existing entries by default", async () => {
@@ -93,7 +93,7 @@ describe("installMcpConfigs", () => {
     const parsed = JSON.parse(content);
 
     // The command should be "commentray", never an absolute path
-    expect(parsed.mcpServers.commentray.command).toBe("commentray");
-    expect(parsed.mcpServers.commentray.command).not.toContain("/");
+    expect(parsed.servers.commentray.command).toBe("commentray");
+    expect(parsed.servers.commentray.command).not.toContain("/");
   });
 });

@@ -34,9 +34,10 @@ const HARNESSES: HarnessConfig[] = [
 
 // ── MCP server entry (portable — no absolute paths) ───────────────────────
 
-function makeMcpEntry() {
+function makeMcpEntry(): Record<string, unknown> {
   return {
     commentray: {
+      type: "stdio",
       command: "commentray",
       args: ["mcp", "serve"],
     },
@@ -46,7 +47,7 @@ function makeMcpEntry() {
 // ── JSON merge logic ──────────────────────────────────────────────────────
 
 interface McpConfig {
-  mcpServers?: Record<string, unknown>;
+  servers?: Record<string, unknown>;
 }
 
 async function readOrEmpty(absPath: string): Promise<McpConfig> {
@@ -89,7 +90,7 @@ export async function installMcpConfigs(
     }
 
     const existing = await readOrEmpty(configAbs);
-    const hasCommentray = existing.mcpServers && "commentray" in existing.mcpServers;
+    const hasCommentray = existing.servers && "commentray" in existing.servers;
 
     if (hasCommentray && !options.force) {
       results.push({
@@ -115,8 +116,8 @@ export async function installMcpConfigs(
     // Merge the Commentray entry into the existing config
     const merged: McpConfig = {
       ...existing,
-      mcpServers: {
-        ...(existing.mcpServers ?? {}),
+      servers: {
+        ...(existing.servers ?? {}),
         ...makeMcpEntry(),
       },
     };

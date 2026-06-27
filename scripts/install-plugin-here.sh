@@ -153,8 +153,9 @@ write_mcp_config() {
   mkdir -p "$dir"
   cat > "$file" <<JSONEOF
 {
-  "mcpServers": {
+  "servers": {
     "commentray": {
+      "type": "stdio",
       "command": "node",
       "args": ["$MCP_SERVER"]
     }
