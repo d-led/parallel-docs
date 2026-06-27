@@ -93,7 +93,18 @@ jobs:
 
       - name: Link-check served pages (lychee)
         if: ${{ always() }}
-        run: bash scripts/linkcheck.sh http://127.0.0.1:14173
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: >
+            --base-url http://127.0.0.1:14173
+            --format detailed
+            --no-progress
+            --max-concurrency 16
+            --require-https=false
+            --accept 200,301,302
+            --include http://127.0.0.1:14173
+            --include-mail=false
+            http://127.0.0.1:14173/
 
       - name: Upload E2E bundle for Checks workflow
         # Keep artifacts on test failures, but skip during concurrency cancellations.
