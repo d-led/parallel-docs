@@ -381,7 +381,7 @@ title = "Alt"
         description:
           "Commentray: out-of-file commentary anchored to code. " +
           "Explains design decisions, trade-offs, and rationale — " +
-          "the \"why\" that doesn't belong in comments or docs. " +
+          'the "why" that doesn\'t belong in comments or docs. ' +
           "Strict separation: code comments (inline), documentation (standalone), " +
           "Commentray (anchored, cross-linked).",
       },
@@ -487,8 +487,13 @@ async function runScreenshotScenarios(page) {
   await shot(page, "vscode-validate-workspace.png");
   await dismissOverlays(page);
 
-  // ── MCP screenshots ──────────────────────────────────────────────────────
+  await captureMcpScreenshots(page);
+}
 
+/**
+ * @param {import('playwright').Page} page
+ */
+async function captureMcpScreenshots(page) {
   // Show Commentray MCP setup in the command palette
   await typeInCommandPalette(page, "Commentray Configure MCP");
   await shot(page, "vscode-mcp-palette.png");

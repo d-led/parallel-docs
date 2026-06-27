@@ -36,7 +36,7 @@ const HARNESSES: HarnessConfig[] = [
 
 const COMMENTRAY_DESCRIPTION =
   "Commentray: out-of-file commentary anchored to code. " +
-  "Explains design decisions, trade-offs, and rationale — the \"why\" that doesn't belong in comments or docs. " +
+  'Explains design decisions, trade-offs, and rationale — the "why" that doesn\'t belong in comments or docs. ' +
   "Strict separation: code comments (inline), documentation (standalone), Commentray (anchored, cross-linked).";
 
 function makeMcpEntry(): Record<string, unknown> {

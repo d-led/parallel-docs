@@ -684,9 +684,8 @@ export const ALL_TOOLS: McpToolDef[] = [
       stopServeServer();
 
       // Dynamic import: static-site stack may pull heavy dependencies
-      const { buildGithubPagesStaticSite } = await import(
-        "@commentray/code-commentray-static/github-pages-site"
-      );
+      const { buildGithubPagesStaticSite } =
+        await import("@commentray/code-commentray-static/github-pages-site");
       const { default: serveHandler } = await import("serve-handler");
 
       await buildGithubPagesStaticSite({ repoRoot });

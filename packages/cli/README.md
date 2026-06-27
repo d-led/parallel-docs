@@ -43,6 +43,7 @@ commentray paths SRC       # print the commentray Markdown path for a source fil
 ```
 
 <!-- #region commentray:cli-exit-codes -->
+
 Exit codes: `0` for success, `1` when validation finds errors (suitable for CI).
 <!-- #endregion commentray:cli-exit-codes -->
 

@@ -22,6 +22,7 @@ The split also matters for search and documentation: "Commentray validate" is a 
 The Angles layout switch uses a **file-system sentinel** (`{storage}/source/.default`) rather than a TOML config key. This is a deliberate design choice:
 
 **Config flags are fragile.** If `[angles].enabled = true` lives in `.commentray.toml`, then:
+
 - Removing the config doesn't remove the Angles directory structure — you get orphaned folders.
 - Copying a repo (or checking out a branch) loses the flag if `.commentray.toml` is `.gitignore`d.
 - Tooling must check both the config flag AND the directory structure to know what's real.

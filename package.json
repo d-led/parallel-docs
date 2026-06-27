@@ -82,7 +82,7 @@
     "archunit": "^2.3.0",
     "cypress": "^15.18.0",
     "eslint": "^10.6.0",
-    "jscpd": "^5.0.11",
+    "jscpd": "^4.2.5",
     "jsdom": "^29.1.1",
     "mocha-junit-reporter": "^2.2.1",
     "playwright": "^1.61.1",
