@@ -35,7 +35,8 @@
     "onCommand:commentray.openCorrespondingSource",
     "onCommand:commentray.removeBlock",
     "onCommand:commentray.cleanRegions",
-    "onCommand:commentray.repairFile"
+    "onCommand:commentray.repairFile",
+    "onCommand:commentray.configureMcpServer"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -126,6 +127,11 @@
         "title": "Repair commentary region markers",
         "category": "Commentray",
         "enablement": "commentray.workspaceInitialized && !editorReadonly"
+      },
+      {
+        "command": "commentray.configureMcpServer",
+        "title": "Configure MCP server for AI coding assistants…",
+        "category": "Commentray"
       }
     ],
     "keybindings": [
@@ -221,12 +227,15 @@
     ]
   },
   "scripts": {
-    "build": "tsc -p tsconfig.build.json && node ./esbuild.extension.mjs",
+    "build": "tsc -p tsconfig.build.json && node ./esbuild.extension.mjs && node ./esbuild.mcp-server.mjs",
+    "build:extension": "tsc -p tsconfig.build.json && node ./esbuild.extension.mjs",
+    "build:mcp-server": "tsc -p tsconfig.build.json && node ./esbuild.mcp-server.mjs",
     "clean": "rm -rf dist",
     "test:vscode": "tsc -p tsconfig.tests.json && vscode-test"
   },
   "dependencies": {
     "@commentray/core": "0.3.6",
+    "@commentray/mcp-server": "0.3.6",
     "@commentray/render": "0.3.6"
   },
   "devDependencies": {

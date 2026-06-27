@@ -138,6 +138,14 @@ describe("monorepo package dependency rules", () => {
     });
   });
 
+  it("keeps @commentray/mcp-server from reaching static site, CLI, or the VS Code extension", async () => {
+    await assertFirstPartyPackageDoesNotImportFolders({
+      sourceGlob: "packages/mcp-server/**",
+      forbiddenFolders: ["packages/code-commentray-static", "packages/cli", "packages/vscode"],
+      failureMessage: (folder) => `@commentray/mcp-server must not depend on files under ${folder}`,
+    });
+  });
+
   it("keeps @commentray/code-commentray-static from reaching the CLI or VS Code extension", async () => {
     await assertFirstPartyPackageDoesNotImportFolders({
       sourceGlob: "packages/code-commentray-static/**",
@@ -169,7 +177,7 @@ describe("monorepo package dependency rules", () => {
   });
 
   it("has no import cycles within each first-party package src tree", async () => {
-    const packages = ["core", "render", "code-commentray-static", "cli", "vscode"] as const;
+    const packages = ["core", "render", "code-commentray-static", "mcp-server", "cli", "vscode"] as const;
     for (const pkg of packages) {
       await assertNoImportCyclesInPackageSrc(pkg);
     }

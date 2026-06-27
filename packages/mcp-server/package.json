@@ -1,0 +1,36 @@
+{
+  "name": "@commentray/mcp-server",
+  "version": "0.3.6",
+  "publishConfig": {
+    "access": "public"
+  },
+  "description": "MCP (Model Context Protocol) server for Commentray — exposes CLI commands as AI coding assistant tools",
+  "license": "MPL-2.0",
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@commentray/core": "0.3.6",
+    "@commentray/render": "0.3.6",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1"
+  }
+}

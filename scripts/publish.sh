@@ -54,6 +54,7 @@ PUBLIC_WORKSPACES=(
   "@commentray/core"
   "@commentray/render"
   "@commentray/code-commentray-static"
+  "@commentray/mcp-server"
   "commentray"
 )
 

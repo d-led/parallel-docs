@@ -34,6 +34,7 @@ import { logCliValidationIssue, logCliWarning } from "./cli-output.js";
 import { runAnglesAddFromCwd } from "./angles-add-cmd.js";
 import { readGitStagedRepoRelativePaths } from "./git-staged-paths.js";
 import { runServeStaticPages } from "./serve.js";
+import { installMcpConfigs } from "@commentray/mcp-server";
 
 async function repoRootFromCwd(): Promise<string> {
   const root = await findProjectRoot(process.cwd());
@@ -467,6 +468,51 @@ program
       out: opts.out,
       mermaid: Boolean(opts.mermaid),
     });
+  });
+
+// ── mcp commands ─────────────────────────────────────────────────────────
+
+const mcpCmd = program
+  .command("mcp")
+  .description("Start or install the Commentray MCP server for AI coding assistants");
+
+mcpCmd
+  .command("serve")
+  .description("Start the MCP server via stdio (used by MCP clients like Claude, VS Code Copilot, etc.)")
+  .action(async () => {
+    // Dynamic import — the mcp-server package is heavy and only needed here.
+    const { createMcpServer } = await import("@commentray/mcp-server");
+    const { StdioServerTransport } = await import("@modelcontextprotocol/sdk/server/stdio.js");
+    const repoRoot = await repoRootFromCwd();
+    const server = createMcpServer(repoRoot);
+    const transport = new StdioServerTransport();
+    await server.connect(transport);
+  });
+
+mcpCmd
+  .command("install")
+  .description(
+    "Write repo-local MCP config files (.vscode/mcp.json, .claude/mcp.json, etc.) " +
+      "so AI coding assistants can discover the Commentray MCP server. " +
+      "Uses 'commentray mcp serve' as the command — fully portable, no absolute paths.",
+  )
+  .option("--dry-run", "Print what would be written without touching files", false)
+  .option("--force", "Overwrite existing Commentray entries (default: skip if already present)", false)
+  .action(async (opts: { dryRun?: boolean; force?: boolean }) => {
+    const repoRoot = await repoRootFromCwd();
+    const results = await installMcpConfigs(repoRoot, {
+      dryRun: Boolean(opts.dryRun),
+      force: Boolean(opts.force),
+    });
+    for (const r of results) {
+      const label = r.action.replace(/_/g, " ");
+      console.log(`  [${label}] ${r.harness}: ${r.configFile}`);
+    }
+    if (opts.dryRun) {
+      console.log("\nDry run — no files written. Re-run without --dry-run to apply.");
+    } else {
+      console.log("\nDone. AI assistants in this repo can now use Commentray tools.");
+    }
   });
 
 void runCommanderMain(() => program.parseAsync(process.argv));

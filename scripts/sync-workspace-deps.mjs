@@ -26,6 +26,7 @@ const WORKSPACE_NAMES = new Set([
   "@commentray/render",
   "commentray",
   "@commentray/code-commentray-static",
+  "@commentray/mcp-server",
 ]);
 
 const DEP_FIELDS = ["dependencies", "devDependencies", "peerDependencies", "optionalDependencies"];

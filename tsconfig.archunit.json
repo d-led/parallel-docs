@@ -8,6 +8,7 @@
     "packages/core/src/**/*.ts",
     "packages/render/src/**/*.ts",
     "packages/code-commentray-static/src/**/*.ts",
+    "packages/mcp-server/src/**/*.ts",
     "packages/cli/src/**/*.ts",
     "packages/vscode/src/**/*.ts",
     "packages/architecture/**/*.ts"

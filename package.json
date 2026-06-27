@@ -15,7 +15,7 @@
   "scripts": {
     "bootstrap": "npm install",
     "setup": "bash scripts/setup.sh",
-    "build": "npm run build -w @commentray/core && npm run build -w @commentray/render && npm run build -w @commentray/code-commentray-static && npm run build -w commentray && npm run build -w commentray-vscode",
+    "build": "npm run build -w @commentray/core && npm run build -w @commentray/render && npm run build -w @commentray/code-commentray-static && npm run build -w @commentray/mcp-server && npm run build -w commentray && npm run build -w commentray-vscode",
     "clean": "npm run -ws --if-present clean",
     "format": "bash scripts/format.sh",
     "format:check": "bash scripts/format-check.sh",
