@@ -961,9 +961,7 @@ async function pickCommentrayAngleIdInteractively(
 
 /** `executeCommand("commentray.addAngleDefinition", { id: "architecture", title: "Architecture", makeDefault: true })` skips prompts (tests, automation). */
 type AddAngleDefinitionCommandArg =
-  | "absent"
-  | "invalid"
-  | { id: string; title?: string; makeDefault?: boolean };
+  "absent" | "invalid" | { id: string; title?: string; makeDefault?: boolean };
 
 function parseOptionalString(value: unknown): string | "invalid" | undefined {
   if (value === undefined || value === null) return undefined;

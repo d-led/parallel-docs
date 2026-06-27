@@ -10,7 +10,7 @@
     "packages/*"
   ],
   "overrides": {
-    "serialize-javascript": "7.0.5"
+    "serialize-javascript": "7.0.6"
   },
   "scripts": {
     "bootstrap": "npm install",
@@ -76,22 +76,22 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/jsdom": "^28.0.3",
-    "@types/node": "^25.9.1",
-    "@vitest/coverage-v8": "^4.1.7",
+    "@types/node": "^26.0.1",
+    "@vitest/coverage-v8": "^4.1.9",
     "archunit": "^2.3.0",
-    "cypress": "^15.16.0",
-    "eslint": "^10.4.0",
-    "jscpd": "^4.2.4",
+    "cypress": "^15.18.0",
+    "eslint": "^10.6.0",
+    "jscpd": "^5.0.11",
     "jsdom": "^29.1.1",
     "mocha-junit-reporter": "^2.2.1",
-    "playwright": "^1.60.0",
-    "prettier": "^3.8.3",
+    "playwright": "^1.61.1",
+    "prettier": "^3.9.0",
     "serve-handler": "^6.1.7",
-    "start-server-and-test": "^3.0.5",
-    "stylelint": "^17.12.0",
+    "start-server-and-test": "^3.0.11",
+    "stylelint": "^17.14.0",
     "stylelint-config-standard": "^40.0.0",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.60.0",
-    "vitest": "^4.1.7"
+    "typescript-eslint": "^8.62.0",
+    "vitest": "^4.1.9"
   }
 }

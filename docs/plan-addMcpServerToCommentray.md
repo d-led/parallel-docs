@@ -1,6 +1,6 @@
-## Plan: Add MCP Server to Commentray
+## Plan: Add MCP Server to Commentray ✅ COMPLETED (v0.4.0)
 
-**TL;DR** — New `packages/mcp-server/` shared package with MCP tool definitions and server. CLI gets `commentray mcp serve` (start server) and `commentray mcp install` (write repo-local configs for VS Code, Claude, Antigravity, OpenCode, etc. — no absolute paths). VS Code extension gets `commentray.configureMcpServer`. Ships with v0.4.0.
+**TL;DR** — New `packages/mcp-server/` shared package with 16 MCP tools. CLI gets `commentray mcp serve` + `commentray mcp install`. VS Code gets `configureMcpServer` + bundled `dist/mcp-server.js`. Ships with v0.4.0.
 
 ## Architecture Overview
 

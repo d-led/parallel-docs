@@ -34,9 +34,9 @@
     "@commentray/render": "0.4.0",
     "commander": "^15.0.0",
     "png-to-ico": "^3.0.1",
-    "sharp": "^0.34.5"
+    "sharp": "^0.35.2"
   },
   "devDependencies": {
-    "@types/node": "^25.9.1"
+    "@types/node": "^26.0.1"
   }
 }

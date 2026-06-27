@@ -28,9 +28,9 @@
     "@commentray/core": "0.3.6",
     "@commentray/render": "0.3.6",
     "@modelcontextprotocol/sdk": "^1.29.0",
-    "zod": "^4.1.12"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@types/node": "^25.9.1"
+    "@types/node": "^26.0.1"
   }
 }
