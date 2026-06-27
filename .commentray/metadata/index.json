@@ -135,6 +135,54 @@
           "markerId": "dev-vscode-engine"
         }
       ]
+    },
+    ".commentray/source/packages/cli/README.md/main.md": {
+      "sourcePath": "packages/cli/README.md",
+      "commentrayPath": ".commentray/source/packages/cli/README.md/main.md",
+      "blocks": [
+        {
+          "id": "cli-adoption",
+          "anchor": "marker:cli-adoption",
+          "markerId": "cli-adoption"
+        },
+        {
+          "id": "cli-exit-codes",
+          "anchor": "marker:cli-exit-codes",
+          "markerId": "cli-exit-codes"
+        }
+      ]
+    },
+    ".commentray/source/docs/spec/storage.md/main.md": {
+      "sourcePath": "docs/spec/storage.md",
+      "commentrayPath": ".commentray/source/docs/spec/storage.md/main.md",
+      "blocks": [
+        {
+          "id": "storage-vocabulary",
+          "anchor": "marker:storage-vocabulary",
+          "markerId": "storage-vocabulary"
+        },
+        {
+          "id": "storage-angles-sentinel",
+          "anchor": "marker:storage-angles-sentinel",
+          "markerId": "storage-angles-sentinel"
+        },
+        {
+          "id": "storage-static-browser",
+          "anchor": "marker:storage-static-browser",
+          "markerId": "storage-static-browser"
+        }
+      ]
+    },
+    ".commentray/source/docs/spec/anchors.md/main.md": {
+      "sourcePath": "docs/spec/anchors.md",
+      "commentrayPath": ".commentray/source/docs/spec/anchors.md/main.md",
+      "blocks": [
+        {
+          "id": "anchors-grammar-design",
+          "anchor": "marker:anchors-grammar-design",
+          "markerId": "anchors-grammar-design"
+        }
+      ]
     }
   }
 }

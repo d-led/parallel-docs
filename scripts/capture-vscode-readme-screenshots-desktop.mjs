@@ -37,6 +37,8 @@
  *   vscode-rendered-preview-angle-palette.png
  *   vscode-rendered-preview-angle.png
  *   vscode-validate-workspace.png
+ *   vscode-mcp-palette.png
+ *   vscode-mcp-config-json.png
  *
  * @see https://github.com/microsoft/playwright/issues/22351
  */
@@ -366,6 +368,31 @@ title = "Alt"
   await writeFile(path.join(companionDir, "main.md"), SCREENSHOT_MAIN_MD, "utf-8");
   await writeFile(path.join(companionDir, "alt.md"), SCREENSHOT_ALT_MD, "utf-8");
 
+  // MCP server config — show the Commentray entry with its description
+  const vscodeDir = path.join(ws, ".vscode");
+  await mkdir(vscodeDir, { recursive: true });
+  const mcpConfig = {
+    servers: {
+      commentray: {
+        type: "stdio",
+        command: "commentray",
+        args: ["mcp", "serve"],
+        cwd: "${workspaceFolder}",
+        description:
+          "Commentray: out-of-file commentary anchored to code. " +
+          "Explains design decisions, trade-offs, and rationale — " +
+          "the \"why\" that doesn't belong in comments or docs. " +
+          "Strict separation: code comments (inline), documentation (standalone), " +
+          "Commentray (anchored, cross-linked).",
+      },
+    },
+  };
+  await writeFile(
+    path.join(vscodeDir, "mcp.json"),
+    JSON.stringify(mcpConfig, null, 2) + "\n",
+    "utf-8",
+  );
+
   return ws;
 }
 
@@ -458,6 +485,26 @@ async function runScreenshotScenarios(page) {
   await runPaletteQuery(page, commentrayCommand("Validate workspace"), { afterEnterMs: 3500 });
   await runPaletteQuery(page, "Output: Focus on Output View", { afterEnterMs: 3200 });
   await shot(page, "vscode-validate-workspace.png");
+  await dismissOverlays(page);
+
+  // ── MCP screenshots ──────────────────────────────────────────────────────
+
+  // Show Commentray MCP setup in the command palette
+  await typeInCommandPalette(page, "Commentray Configure MCP");
+  await shot(page, "vscode-mcp-palette.png");
+  await dismissOverlays(page);
+
+  // Open .vscode/mcp.json to show the Commentray MCP server entry
+  await dismissOverlays(page);
+  await page.keyboard.press(quickOpenShortcut);
+  await sleep(700);
+  await page.keyboard.press(selectAllShortcut);
+  await sleep(120);
+  await page.keyboard.type(".vscode/mcp.json", { delay: 22 });
+  await sleep(400);
+  await page.keyboard.press("Enter");
+  await sleep(3500);
+  await shot(page, "vscode-mcp-config-json.png");
   await dismissOverlays(page);
 }
 

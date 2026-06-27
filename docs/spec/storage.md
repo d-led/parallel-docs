@@ -12,12 +12,16 @@
 
 ## Vocabulary: Commentray the tool vs commentray the writing
 
+<!-- #region commentray:storage-vocabulary -->
+
 - **Commentray** (capital **C**): the project, CLI, editor extension, and render stack in this repository.
 - **commentray** (lowercase, uncountable): the **documentation language**—the practice of keeping narrative, diagrams, and rationale in paired Markdown under `.commentray/source/` instead of bloating the primary file. You _write in commentray_, _review in commentray_, or _onboard through commentray_ alongside the code.
 
 Example: _“We have to document our architecture in commentray so that newcomers can have an effective source code onboarding experience.”_
 
 Implementation detail: each file is still Markdown on disk; the path layout is defined in the next section.
+
+<!-- #endregion commentray:storage-vocabulary -->
 
 ## Commentray file naming
 
@@ -53,6 +57,8 @@ The VS Code extension exposes **Add angle to project** (writes `[angles]` in `.c
 
 ### On-disk layout: sentinel `{storage}/source/.default`
 
+<!-- #region commentray:storage-angles-sentinel -->
+
 Angles use a **different directory shape** than the flat default. The switch is explicit and file-system driven:
 
 - **No** path `{storage}/source/.default` → only the **flat** layout above (`.commentray/source/{P}.md`).
@@ -71,13 +77,19 @@ The sentinel `.default` does not by itself pick which Angle is “default” for
 
 **Migration from flat layout:** run **`commentray migrate-angles`** (optional `--angle-id`, default `main`, and `--dry-run`). It moves every flat companion `{storage}/source/{P}.md` → `{storage}/source/{P}/{angle}.md`, creates the **`.default`** sentinel, merges **`[angles]`** into `.commentray.toml`, rewrites **`[static_site].commentray_markdown`** when it pointed at a moved file, and updates **`index.json`** keys via `byCommentrayPath`. The schema-only command remains **`commentray migrate`** (`packages/core/src/migrate.ts`). You can still adopt Angles manually (VS Code **Commentray: Add angle to project…** or hand edits) if you prefer not to bulk-move files.
 
+<!-- #endregion commentray:storage-angles-sentinel -->
+
 ## GitHub Pages static browser (single `index.html`)
+
+<!-- #region commentray:storage-static-browser -->
 
 The Pages build emits **one** HTML file: one **code** pane (`static_site.default_source_file`; deprecated alias `static_site.source_file`) and one or more **commentray** bodies. When **Angles** are enabled and **two or more** definitions on disk exist for that source, the hub renders an **Angle** `<select>` and swaps the commentray pane client-side (stretch layout is skipped in that mode). Default hub pairing can be derived from `static_site.default_angle`; an explicit `static_site.commentray_markdown` still overrides. When `.commentray/metadata/index.json` lists **blocks** for the active pair and the Markdown has matching `<!-- commentray:block id=… -->` markers, a single-angle build can still use a **single-scroll, blame-style table** (one row per block) instead of dual panes.
 
 - **`[[static_site.related_github_files]]`** — optional rows with repo-relative `path` and optional `label` (defaults to the file’s basename). When `static_site.github_url` is a GitHub **repository home** URL (`https://github.com/owner/repo`), the toolbar gains **Also on GitHub** links to `…/blob/<branch>/path` so readers can jump to other Markdown or code on GitHub. Set **`static_site.github_blob_branch`** when your default branch is not `main`.
 - **Search** — **Escape** clears the query and hides hit results (same as the **Clear** control). The Pages build uses **scoped search**: only **commentray Markdown** (and path labels), not every line of the primary source file, plus a sidecar **`commentray-nav-search.json`**. That JSON is built from **every pair in** `.commentray/metadata/index.json` **`byCommentrayPath`** (so multiple angles for the same `sourcePath` appear as separate rows **when indexed**). When the index is **empty**, the build falls back to **one** pair from `[static_site]` only—it does **not** scan `source/{P}/*.md` on disk, so unindexed angle files are **omitted** from hub search on Pages.
 - **Generator / build stamp** — emitted HTML includes `<meta name="generator" content="Commentray @commentray/render@…; @commentray/code-commentray-static@…; builtAt=…">` (ISO instant) when the default generator is used, and a footer with that instant as `<time datetime>` plus a locale-formatted local date/time with timezone from the build machine. Omit the meta tag by passing an empty `generatorLabel` from the static builder API.
+
+<!-- #endregion commentray:storage-static-browser -->
 
 ## Images and other local assets (static HTML)
 

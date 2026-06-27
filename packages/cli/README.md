@@ -6,6 +6,8 @@ Command-line interface for [Commentray](https://github.com/d-led/commentray) —
 
 ## Install
 
+<!-- #region commentray:cli-adoption -->
+
 ```bash
 npm install -D commentray
 # or globally:
@@ -15,6 +17,8 @@ npm install -g commentray
 **Without installing:** `npx commentray` runs the published CLI on demand. `npx commentray --help` prints `Usage: commentray [options] [command]` and lists commands (same as a global `commentray` on `PATH`).
 
 Standalone, self-contained binaries (no Node install needed) for Linux x64/arm64, macOS x64/arm64, and Windows x64 ship on **[GitHub Releases](https://github.com/d-led/commentray/releases)** with each **`v*`** tag. CI workflow artifacts expire after a short retention period—prefer **Release** assets for anything you rely on long term.
+
+<!-- #endregion commentray:cli-adoption -->
 
 ## Use
 
@@ -38,7 +42,9 @@ commentray render [--source SRC] [--markdown MD] [--out OUT.html] [--mermaid]
 commentray paths SRC       # print the commentray Markdown path for a source file
 ```
 
+<!-- #region commentray:cli-exit-codes -->
 Exit codes: `0` for success, `1` when validation finds errors (suitable for CI).
+<!-- #endregion commentray:cli-exit-codes -->
 
 ## License
 

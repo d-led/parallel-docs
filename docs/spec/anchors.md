@@ -1,5 +1,7 @@
 # Anchor grammar
 
+<!-- #region commentray:anchors-grammar-design -->
+
 Anchors connect commentray **blocks** to spans inside a primary file. The grammar is intentionally small; language-specific plugins may interpret additional opaque anchors later.
 
 **About “v0” elsewhere in the repo:** some older docs used **“v0”** to mean _the first documented revision of this anchor string grammar_ (a doc label), **not** a product generation, **not** the `[scm]` section of `.commentray.toml`, and **not** a promise that only Git exists forever. When in doubt, trust the tables in [Configuration](../user/config.md) and this page’s grammar sections.
@@ -45,6 +47,8 @@ Validation: **per source file**, paired starts/ends must be well-formed (no dupl
 ### Opaque anchors
 
 Any string that does not match the forms above is stored as an **opaque** anchor for forward compatibility.
+
+<!-- #endregion commentray:anchors-grammar-design -->
 
 ## Cross references
 
