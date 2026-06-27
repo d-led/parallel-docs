@@ -1,7 +1,9 @@
 {
-  "mcpServers": {
+  "servers": {
     "commentray": {
+      "type": "stdio",
       "command": "node",
+      "cwd": "${workspaceFolder}",
       "args": ["/Users/dmitryledentsov/src/commentary/packages/vscode/dist/mcp-server.js"]
     }
   }

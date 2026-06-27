@@ -172,4 +172,4 @@ write_mcp_config "$REPO_ROOT/.antigravity/mcp.json"
 write_mcp_config "$REPO_ROOT/.opencode/mcp.json"
 
 echo "" >&2
-echo "MCP server ready. Reload your editor window to see Commentray in the MCP list." >&2
+echo "MCP server ready. Open the MCP panel (Cmd+Shift+P → 'MCP: List Servers') and restart 'commentray' to pick up the new config." >&2

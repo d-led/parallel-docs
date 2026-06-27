@@ -95,4 +95,4 @@ Add this to your MCP client config (Claude Desktop, etc.):
 
 **"commentray: command not found"**: Install the CLI: `npm install -g commentray`. Or use the VS Code extension's bundled MCP server.
 
-**Config not detected**: After running `commentray mcp install`, reload your AI editor window.
+**Config not detected**: Open the MCP panel (`MCP: List Servers` in the palette) and restart the Commentray server. No full window reload needed.
