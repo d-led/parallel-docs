@@ -819,22 +819,72 @@ jobs:
         uses: actions/deploy-pages@v4
 `;
 
-      // Check if already exists
-      let exists = false;
+      // ── Scan for existing Pages workflows ──────────────────────────
+      const PAGES_SIGNALS = [
+        "upload-pages-artifact",
+        "deploy-pages",
+        "pages: write",
+        "github-pages",
+      ];
+
+      const existingPagesWorkflows: string[] = [];
+      try {
+        const entries = await fs.readdir(workflowDir, { withFileTypes: true });
+        for (const entry of entries) {
+          if (!entry.isFile()) continue;
+          if (!entry.name.endsWith(".yml") && !entry.name.endsWith(".yaml")) continue;
+
+          // Skip the file we would write (unless it doesn't exist yet)
+          const absPath = path.join(workflowDir, entry.name);
+          if (absPath === workflowFile) continue;
+
+          const content = await fs.readFile(absPath, "utf8");
+          const lower = content.toLowerCase();
+          if (PAGES_SIGNALS.some((sig) => lower.includes(sig))) {
+            existingPagesWorkflows.push(entry.name);
+          }
+        }
+      } catch {
+        // workflowDir may not exist yet — that's fine
+      }
+
+      if (existingPagesWorkflows.length > 0 && !dryRun && !force) {
+        const stepsSnippet =
+          `\n      - name: Install Commentray CLI\n` +
+          `        run: npm install --no-save commentray\n\n` +
+          `      - name: Build Commentray static site\n` +
+          `        run: npx commentray pages build\n`;
+        return textResult(
+          `Found existing GitHub Pages workflow(s): ${existingPagesWorkflows.join(", ")}.\n\n` +
+            `Instead of adding a separate workflow, integrate the Commentray build step into ` +
+            `one of these existing workflows (before the upload-pages-artifact step). Add:\n` +
+            `${stepsSnippet}\n` +
+            `If you want to create a standalone ${workflowFile} anyway, re-run with --force.`,
+        );
+      }
+
+      // Check if our target file already exists
+      let targetExists = false;
       try {
         await fs.access(workflowFile);
-        exists = true;
+        targetExists = true;
       } catch {
         /* not found */
       }
 
-      if (exists && !force && !dryRun) {
+      if (targetExists && !force && !dryRun) {
         return textResult(`${workflowFile} already exists. Use --force to overwrite.`);
       }
 
       if (dryRun) {
+        const prefix =
+          existingPagesWorkflows.length > 0
+            ? `Existing pages workflows found (${existingPagesWorkflows.join(", ")}) — ` +
+              `consider integrating instead. `
+            : "";
         return textResult(
-          (exists ? `Would overwrite ${workflowFile}` : `Would create ${workflowFile}`) +
+          prefix +
+            (targetExists ? `Would overwrite ${workflowFile}` : `Would create ${workflowFile}`) +
             `:\n\n${workflowYaml}`,
         );
       }
@@ -842,9 +892,14 @@ jobs:
       await fs.mkdir(workflowDir, { recursive: true });
       await fs.writeFile(workflowFile, workflowYaml, "utf8");
 
-      const action = exists ? "Updated" : "Created";
+      const action = targetExists ? "Updated" : "Created";
+      const warning =
+        existingPagesWorkflows.length > 0
+          ? ` (note: existing pages workflow(s) found: ${existingPagesWorkflows.join(", ")} — ` +
+            `ensure no conflict)`
+          : "";
       return textResult(
-        `${action} ${workflowFile}. ` +
+        `${action} ${workflowFile}.${warning} ` +
           `Next: set Pages source to "GitHub Actions" in repo Settings → Pages.`,
       );
     },
