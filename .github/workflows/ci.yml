@@ -91,6 +91,10 @@ jobs:
           CYPRESS_CI: true
           NODE_OPTIONS: --dns-result-order=ipv4first
 
+      - name: Link-check served pages (lychee)
+        if: ${{ always() }}
+        run: bash scripts/linkcheck.sh http://127.0.0.1:14173
+
       - name: Upload E2E bundle for Checks workflow
         # Keep artifacts on test failures, but skip during concurrency cancellations.
         if: ${{ always() && !cancelled() }}
