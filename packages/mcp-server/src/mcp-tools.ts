@@ -683,42 +683,46 @@ export const ALL_TOOLS: McpToolDef[] = [
       // Stop existing server if running (on any port)
       stopServeServer();
 
-      // Dynamic import: static-site stack may pull heavy dependencies
-      const { buildGithubPagesStaticSite } =
-        await import("@commentray/code-commentray-static/github-pages-site");
-      const { default: serveHandler } = await import("serve-handler");
+      try {
+        // Dynamic import: static-site stack may pull heavy dependencies
+        const { buildGithubPagesStaticSite } =
+          await import("@commentray/code-commentray-static/github-pages-site");
+        const { default: serveHandler } = await import("serve-handler");
 
-      await buildGithubPagesStaticSite({ repoRoot });
+        await buildGithubPagesStaticSite({ repoRoot });
 
-      const siteAbs = path.join(repoRoot, "_site");
+        const siteAbs = path.join(repoRoot, "_site");
 
-      const server = createServer((req, res) => {
-        void serveHandler(req, res, {
-          public: siteAbs,
-          etag: true,
-          cleanUrls: false,
-          rewrites: [{ source: "/", destination: "/index.html" }],
-        }).catch((err: unknown) => {
-          if (!res.headersSent) {
-            res.writeHead(500);
-            res.end(err instanceof Error ? err.message : String(err));
-          }
+        const server = createServer((req, res) => {
+          void serveHandler(req, res, {
+            public: siteAbs,
+            etag: true,
+            cleanUrls: false,
+            rewrites: [{ source: "/", destination: "/index.html" }],
+          }).catch((err: unknown) => {
+            if (!res.headersSent) {
+              res.writeHead(500);
+              res.end(err instanceof Error ? err.message : String(err));
+            }
+          });
         });
-      });
 
-      await new Promise<void>((resolve, reject) => {
-        server.once("error", reject);
-        server.once("listening", () => {
-          server.off("error", reject);
-          resolve();
+        await new Promise<void>((resolve, reject) => {
+          server.once("error", reject);
+          server.once("listening", () => {
+            server.off("error", reject);
+            resolve();
+          });
+          server.listen(port, "0.0.0.0");
         });
-        server.listen(port, "0.0.0.0");
-      });
 
-      serveServer = server;
-      servePort = port;
+        serveServer = server;
+        servePort = port;
 
-      return textResult(`Serving at http://127.0.0.1:${String(port)}/`);
+        return textResult(`Serving at http://127.0.0.1:${String(port)}/`);
+      } catch (e) {
+        return errorResult(`Failed to start serve: ${e instanceof Error ? e.message : String(e)}`);
+      }
     },
   },
 
