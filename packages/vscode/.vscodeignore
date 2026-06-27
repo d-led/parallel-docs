@@ -14,3 +14,5 @@ dist/**/*.d.ts
 dist/**/*.d.ts.map
 dist/**/*.js.map
 .vscode-test.mjs
+dist/mcp-server-entry.*
+esbuild.mcp-server.mjs

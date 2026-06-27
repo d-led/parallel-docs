@@ -48,6 +48,13 @@ Captured from Extension Development Host + dogfood. In the palette, use **`>`** 
 
 ![Validate workspace + output](https://raw.githubusercontent.com/d-led/commentray/main/.commentray/source/packages/vscode/README.md/assets/vscode-validate-workspace.png)
 
+## AI Coding Assistants (MCP)
+
+This extension ships a bundled [MCP server](../docs/user/mcp-server.md) at `dist/mcp-server.js`.
+Run **Commentray: Configure MCP server for AI coding assistants…** from the palette
+to get the JSON config for VS Code Copilot, Claude, or any MCP client.
+For a portable, commit-safe setup, use the CLI: `commentray mcp install`.
+
 ## Commands
 
 Palette entries use the **Commentray** category (search `Commentray` or the command name).

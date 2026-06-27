@@ -26,7 +26,7 @@ await esbuild.build({
   minify: false,
   keepNames: true,
   legalComments: "none",
-  logLevel: "info",
+  logLevel: "error",
 });
 
 console.error(`wrote ${join(distDir, "mcp-server.js")}`);
