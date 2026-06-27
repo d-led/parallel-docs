@@ -14,12 +14,12 @@ commentray mcp install
 
 This creates/updates:
 
-| File | For |
-|---|---|
-| `.vscode/mcp.json` | VS Code Copilot |
-| `.claude/mcp.json` | Claude Code / Claude IDE |
-| `.antigravity/mcp.json` | Antigravity |
-| `.opencode/mcp.json` | OpenCode |
+| File                    | For                      |
+| ----------------------- | ------------------------ |
+| `.vscode/mcp.json`      | VS Code Copilot          |
+| `.claude/mcp.json`      | Claude Code / Claude IDE |
+| `.antigravity/mcp.json` | Antigravity              |
+| `.opencode/mcp.json`    | OpenCode                 |
 
 All configs use `commentray mcp serve` as the command — no absolute paths, safe to commit.
 
@@ -52,34 +52,34 @@ Add this to your MCP client config (Claude Desktop, etc.):
 
 ### Read & Discover
 
-| Tool | Description |
-|---|---|
-| `commentray_list_pairs` | List all source→commentary pairs |
-| `commentray_read_commentray` | Read commentary Markdown for a source file |
-| `commentray_read_source` | Read source file content |
-| `commentray_list_orphans` | List orphan companions (no matching source) |
+| Tool                          | Description                                  |
+| ----------------------------- | -------------------------------------------- |
+| `commentray_list_pairs`       | List all source→commentary pairs             |
+| `commentray_read_commentray`  | Read commentary Markdown for a source file   |
+| `commentray_read_source`      | Read source file content                     |
+| `commentray_list_orphans`     | List orphan companions (no matching source)  |
 | `commentray_find_uncommented` | Find tracked source files without commentary |
-| `commentray_get_index` | Dump full index as JSON |
+| `commentray_get_index`        | Dump full index as JSON                      |
 
 ### Validate & Maintain
 
-| Tool | Description |
-|---|---|
-| `commentray_validate` | Validate project metadata and configuration |
-| `commentray_doctor` | Validate + environment checks, optional orphan cleanup |
-| `commentray_migrate` | Migrate index.json to current schema |
-| `commentray_paths` | Resolve companion path for a source file |
+| Tool                  | Description                                            |
+| --------------------- | ------------------------------------------------------ |
+| `commentray_validate` | Validate project metadata and configuration            |
+| `commentray_doctor`   | Validate + environment checks, optional orphan cleanup |
+| `commentray_migrate`  | Migrate index.json to current schema                   |
+| `commentray_paths`    | Resolve companion path for a source file               |
 
 ### Write & Transform
 
-| Tool | Description |
-|---|---|
-| `commentray_init` | Initialize Commentray in the workspace |
-| `commentray_angles_add` | Register a new angle |
-| `commentray_migrate_angles` | Convert flat companions to Angles layout |
-| `commentray_sync_moved_paths` | Sync index with Git-renamed files |
+| Tool                                | Description                                 |
+| ----------------------------------- | ------------------------------------------- |
+| `commentray_init`                   | Initialize Commentray in the workspace      |
+| `commentray_angles_add`             | Register a new angle                        |
+| `commentray_migrate_angles`         | Convert flat companions to Angles layout    |
+| `commentray_sync_moved_paths`       | Sync index with Git-renamed files           |
 | `commentray_convert_source_markers` | Convert marker delimiters to language style |
-| `commentray_render` | Render side-by-side HTML page |
+| `commentray_render`                 | Render side-by-side HTML page               |
 
 ## Example AI Workflow
 

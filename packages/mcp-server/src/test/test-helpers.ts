@@ -22,14 +22,7 @@ export async function setupTempCommentrayProject(): Promise<{
   // Write .commentray.toml
   await fs.writeFile(
     path.join(repoRoot, ".commentray.toml"),
-    [
-      '[storage]',
-      'dir = ".commentray"',
-      "",
-      "[scm]",
-      'provider = "git"',
-      "",
-    ].join("\n"),
+    ["[storage]", 'dir = ".commentray"', "", "[scm]", 'provider = "git"', ""].join("\n"),
     "utf8",
   );
 

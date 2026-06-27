@@ -191,9 +191,7 @@ describe("commentray_angles_add", () => {
       // The zod schema rejects invalid IDs before handler is called
       const parseResult = anglesTool.schema.angleId?.safeParse?.("invalid id!");
       // But the handler itself would throw — test via direct call
-      await expect(
-        anglesTool.handler(repoRoot, { angleId: "invalid%id" }),
-      ).rejects.toThrow();
+      await expect(anglesTool.handler(repoRoot, { angleId: "invalid%id" })).rejects.toThrow();
     } finally {
       await cleanup();
     }
