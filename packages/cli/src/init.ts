@@ -13,6 +13,7 @@ import {
 
 import { logCliError, logCliValidationIssue, logCliWarning } from "./cli-output.js";
 import { mergeCommentrayPreCommitHook } from "./git-hooks.js";
+import { installMcpConfigs } from "@commentray/mcp-server";
 
 /** VS Code Marketplace id for the published Commentray extension. */
 export const COMMENTRAY_VSCODE_EXTENSION_ID = "d-led.commentray-vscode" as const;
@@ -171,6 +172,18 @@ export async function runInitFull(repoRoot: string): Promise<number> {
   }
 
   await initVscodeExtensionRecommendation(repoRoot);
+
+  // Install MCP server configs for all harnesses (idempotent)
+  try {
+    const mcpResults = await installMcpConfigs(repoRoot);
+    for (const r of mcpResults) {
+      if (r.action === "created" || r.action === "updated") {
+        console.log(`Wrote ${r.configFile} for ${r.harness} MCP integration.`);
+      }
+    }
+  } catch (e) {
+    logCliWarning(`Could not install MCP configs: ${e instanceof Error ? e.message : String(e)}`);
+  }
 
   for (const issue of init.validationIssues) {
     logCliValidationIssue(issue);

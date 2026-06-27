@@ -10,7 +10,8 @@
     "packages/*"
   ],
   "overrides": {
-    "serialize-javascript": "7.0.6"
+    "serialize-javascript": "7.0.6",
+    "glob": ">=13.0.0"
   },
   "scripts": {
     "bootstrap": "npm install",

@@ -11,7 +11,7 @@ import {
 } from "./init.js";
 
 describe("Full init in an empty or partial repository", () => {
-  it("creates storage, index, and config on a fresh directory", async () => {
+  it("creates storage, index, config, and MCP harness configs on a fresh directory", async () => {
     const dir = await mkdtemp(path.join(tmpdir(), "commentray-init-"));
     try {
       const code = await runInitFull(dir);
@@ -26,6 +26,14 @@ describe("Full init in an empty or partial repository", () => {
       const extRaw = await readFile(path.join(dir, ".vscode", "extensions.json"), "utf8");
       const ext = JSON.parse(extRaw) as { recommendations: string[] };
       expect(ext.recommendations).toContain(COMMENTRAY_VSCODE_EXTENSION_ID);
+
+      // MCP harness configs should be written during init
+      const vscodeMcp = JSON.parse(await readFile(path.join(dir, ".vscode", "mcp.json"), "utf8"));
+      expect(vscodeMcp).toHaveProperty("servers.commentray.type", "stdio");
+      expect(vscodeMcp).toHaveProperty("servers.commentray.command", "commentray");
+
+      const claudeMcp = JSON.parse(await readFile(path.join(dir, ".claude", "mcp.json"), "utf8"));
+      expect(claudeMcp).toHaveProperty("servers.commentray.type", "stdio");
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
