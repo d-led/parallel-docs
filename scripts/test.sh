@@ -11,6 +11,10 @@ export FORCE_COLOR
 # Avoid VS Code auto-attach side effects in child Node processes.
 unset VSCODE_INSPECTOR_OPTIONS
 
+# Auto-format before tests (catches drift early; git diff shows what changed).
+echo "Formatting..." >&2
+npx prettier --write . >/dev/null 2>&1
+
 mode="${COMMENTRAY_TEST_MODE:-unit}"
 case "$mode" in
   # Unit Vitest suite includes `packages/architecture/architecture.test.ts`

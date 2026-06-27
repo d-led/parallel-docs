@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Full quality gate: the set of checks that must pass before a change is
 # considered done. Runs:
-#   - prettier format check
+#   - prettier format (auto-writes; fails if changes needed — commit them)
 #   - actionlint (GitHub Actions workflows; Go binary, see scripts/actionlint.sh)
 #   - ESLint (project + refactor metrics) and Stylelint (first-party CSS)
 #   - duplicate detection (jscpd)
@@ -120,7 +120,7 @@ run_step() {
   fi
 }
 
-run_step "format:check" npm run format:check
+run_step "format" npm run format
 run_step "actionlint" bash scripts/actionlint.sh
 run_step "lint" npm run lint
 run_step "dupes" npm run dupes
