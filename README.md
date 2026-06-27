@@ -39,6 +39,16 @@ Short guides live under docs/user—install, first setup, keeping blocks aligned
 
 The [install guide](docs/user/install.md) walks through npm global, **`npx commentray`** (one-off; **`npx commentray --help`** → `Usage: commentray [options] [command]`), release binaries, and the Marketplace extension. Clone workflows, local binary builds, and macOS quarantine sit in [Development → CLI, binaries, and Pages](docs/development.md#cli-binaries-and-pages). If you want Node-free installs, use [GitHub Releases](https://github.com/d-led/commentray/releases); [Development](docs/development.md#cli-binaries-and-pages) explains which artifacts are meant to last.
 
+## AI Coding Assistants (MCP)
+
+Commentray ships an [MCP server](docs/user/mcp-server.md) so AI assistants can validate, discover, read, and write commentary. Start with:
+
+```bash
+commentray mcp install    # writes .vscode/mcp.json, .claude/mcp.json, etc.
+```
+
+This gives your AI coding assistant 16 tools — from `commentray_list_pairs` and `commentray_find_uncommented` to `commentray_read_commentray` and `commentray_validate`. See the [MCP guide](docs/user/mcp-server.md) for setup and tool reference.
+
 ## Ecosystem & this repo
 
 Layout, day-to-day commands, quality gate, Cypress, Pages, and releases for people working on Commentray itself are in [Development](docs/development.md), including [dogfood: README on GitHub Pages](docs/development.md#dogfood-readme-on-github-pages). The contributor contract is in [CONTRIBUTING.md](CONTRIBUTING.md).

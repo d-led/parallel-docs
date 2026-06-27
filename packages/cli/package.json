@@ -1,6 +1,6 @@
 {
   "name": "commentray",
-  "version": "0.3.6",
+  "version": "0.4.0",
   "publishConfig": {
     "access": "public"
   },
@@ -21,10 +21,10 @@
     "commentray": "node ./dist/cli.js"
   },
   "dependencies": {
-    "@commentray/code-commentray-static": "0.3.6",
-    "@commentray/core": "0.3.6",
-    "@commentray/mcp-server": "0.3.6",
-    "@commentray/render": "0.3.6",
+    "@commentray/code-commentray-static": "0.4.0",
+    "@commentray/core": "0.4.0",
+    "@commentray/mcp-server": "0.4.0",
+    "@commentray/render": "0.4.0",
     "chokidar": "^5.0.0",
     "commander": "^15.0.0",
     "ignore": "^7.0.5",

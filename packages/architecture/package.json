@@ -1,6 +1,6 @@
 {
   "name": "@commentray/architecture",
   "private": true,
-  "version": "0.3.6",
+  "version": "0.4.0",
   "description": "Monorepo architecture rules (ArchUnitTS); intent in .commentray/source/README.md/architecture.md"
 }
