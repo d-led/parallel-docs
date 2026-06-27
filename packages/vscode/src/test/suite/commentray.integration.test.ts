@@ -30,7 +30,7 @@ async function openDogfoodPairedMarkdownActiveEditor(
   return pairedUri;
 }
 
-function assertEqualLinesTrimmed(actual: string, expected: string, message?: string): void {
+function assertEqualLinesTrimmed(actual: string, expected: string, message = ""): void {
   const normActual = actual
     .replace(/\r\n/g, "\n")
     .split("\n")
@@ -43,7 +43,7 @@ function assertEqualLinesTrimmed(actual: string, expected: string, message?: str
     .map((l) => l.trim())
     .filter(Boolean)
     .join("\n");
-  assert.strictEqual(normActual, normExpected, message);
+  assert.strictEqual(normActual, normExpected, message ?? undefined);
 }
 
 /** Same implementation the extension calls; loaded via relative path because the EDH resolves `@commentray/core` package exports poorly under `require()`. */
