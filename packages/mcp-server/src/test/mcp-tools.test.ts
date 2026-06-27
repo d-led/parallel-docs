@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { ALL_TOOLS } from "../mcp-tools.js";
+import { ALL_TOOLS, type McpToolDef } from "../mcp-tools.js";
 import { setupTempCommentrayProject } from "./test-helpers.js";
+
+function tool(name: string): McpToolDef {
+  const t = ALL_TOOLS.find((x) => x.name === name);
+  if (!t) throw new Error(`Tool not found: ${name}`);
+  return t;
+}
 
 describe("MCP tool definitions", () => {
   it("registers 16 tools", () => {
@@ -13,28 +19,25 @@ describe("MCP tool definitions", () => {
   });
 
   it("each tool has a non-empty description", () => {
-    for (const tool of ALL_TOOLS) {
-      expect(tool.description.length).toBeGreaterThan(0);
+    for (const t of ALL_TOOLS) {
+      expect(t.description.length).toBeGreaterThan(0);
     }
   });
 
   it("each tool has a schema", () => {
-    for (const tool of ALL_TOOLS) {
-      expect(tool.schema).toBeDefined();
+    for (const t of ALL_TOOLS) {
+      expect(t.schema).toBeDefined();
     }
   });
 });
 
 describe("commentray_init", () => {
   it("initializes a fresh project", async () => {
-    const initTool = ALL_TOOLS.find((t) => t.name === "commentray_init")!;
     const { repoRoot, cleanup } = await setupTempCommentrayProject();
     try {
-      const result = await initTool.handler(repoRoot, {});
+      const result = await tool("commentray_init").handler(repoRoot, {});
       expect(result.isError).toBeFalsy();
-      // The project already has .commentray.toml from setup, so init is idempotent
-      const text = result.content[0].text;
-      expect(text.length).toBeGreaterThan(0);
+      expect(result.content[0].text.length).toBeGreaterThan(0);
     } finally {
       await cleanup();
     }
@@ -43,14 +46,10 @@ describe("commentray_init", () => {
 
 describe("commentray_validate", () => {
   it("validates a fresh project with no issues", async () => {
-    const validateTool = ALL_TOOLS.find((t) => t.name === "commentray_validate")!;
     const { repoRoot, cleanup } = await setupTempCommentrayProject();
     try {
-      // Init first
-      const initTool = ALL_TOOLS.find((t) => t.name === "commentray_init")!;
-      await initTool.handler(repoRoot, {});
-
-      const result = await validateTool.handler(repoRoot, {});
+      await tool("commentray_init").handler(repoRoot, {});
+      const result = await tool("commentray_validate").handler(repoRoot, {});
       expect(result.isError).toBeFalsy();
       expect(result.content[0].text).toContain("OK");
     } finally {
@@ -61,13 +60,10 @@ describe("commentray_validate", () => {
 
 describe("commentray_paths", () => {
   it("resolves a source file path to its companion .md path", async () => {
-    const pathsTool = ALL_TOOLS.find((t) => t.name === "commentray_paths")!;
     const { repoRoot, sourceRel, cleanup } = await setupTempCommentrayProject();
     try {
-      const initTool = ALL_TOOLS.find((t) => t.name === "commentray_init")!;
-      await initTool.handler(repoRoot, {});
-
-      const result = await pathsTool.handler(repoRoot, { file: sourceRel });
+      await tool("commentray_init").handler(repoRoot, {});
+      const result = await tool("commentray_paths").handler(repoRoot, { file: sourceRel });
       expect(result.isError).toBeFalsy();
       expect(result.content[0].text).toContain(".commentray/source/");
       expect(result.content[0].text).toContain(".md");
@@ -79,10 +75,9 @@ describe("commentray_paths", () => {
 
 describe("commentray_read_source", () => {
   it("reads a source file", async () => {
-    const readTool = ALL_TOOLS.find((t) => t.name === "commentray_read_source")!;
     const { repoRoot, sourceRel, cleanup } = await setupTempCommentrayProject();
     try {
-      const result = await readTool.handler(repoRoot, { file: sourceRel });
+      const result = await tool("commentray_read_source").handler(repoRoot, { file: sourceRel });
       expect(result.isError).toBeFalsy();
       expect(result.content[0].text).toContain("hello");
     } finally {
@@ -91,10 +86,11 @@ describe("commentray_read_source", () => {
   });
 
   it("errors for missing file", async () => {
-    const readTool = ALL_TOOLS.find((t) => t.name === "commentray_read_source")!;
     const { repoRoot, cleanup } = await setupTempCommentrayProject();
     try {
-      const result = await readTool.handler(repoRoot, { file: "nonexistent.ts" });
+      const result = await tool("commentray_read_source").handler(repoRoot, {
+        file: "nonexistent.ts",
+      });
       expect(result.isError).toBe(true);
     } finally {
       await cleanup();
@@ -104,10 +100,9 @@ describe("commentray_read_source", () => {
 
 describe("commentray_list_pairs", () => {
   it("returns empty for uninitialized project", async () => {
-    const listTool = ALL_TOOLS.find((t) => t.name === "commentray_list_pairs")!;
     const { repoRoot, cleanup } = await setupTempCommentrayProject();
     try {
-      const result = await listTool.handler(repoRoot, {});
+      const result = await tool("commentray_list_pairs").handler(repoRoot, {});
       expect(result.isError).toBeFalsy();
       expect(result.content[0].text).toContain("No commentray pairs found");
     } finally {
@@ -118,10 +113,9 @@ describe("commentray_list_pairs", () => {
 
 describe("commentray_list_orphans", () => {
   it("returns empty for fresh project", async () => {
-    const orphansTool = ALL_TOOLS.find((t) => t.name === "commentray_list_orphans")!;
     const { repoRoot, cleanup } = await setupTempCommentrayProject();
     try {
-      const result = await orphansTool.handler(repoRoot, {});
+      const result = await tool("commentray_list_orphans").handler(repoRoot, {});
       expect(result.isError).toBeFalsy();
       expect(result.content[0].text).toContain("No orphan companions found");
     } finally {
@@ -132,13 +126,10 @@ describe("commentray_list_orphans", () => {
 
 describe("commentray_get_index", () => {
   it("returns empty index for fresh project", async () => {
-    const indexTool = ALL_TOOLS.find((t) => t.name === "commentray_get_index")!;
     const { repoRoot, cleanup } = await setupTempCommentrayProject();
     try {
-      const initTool = ALL_TOOLS.find((t) => t.name === "commentray_init")!;
-      await initTool.handler(repoRoot, {});
-
-      const result = await indexTool.handler(repoRoot, {});
+      await tool("commentray_init").handler(repoRoot, {});
+      const result = await tool("commentray_get_index").handler(repoRoot, {});
       expect(result.isError).toBeFalsy();
       const parsed = JSON.parse(result.content[0].text);
       expect(parsed.pairCount).toBe(0);
@@ -150,13 +141,10 @@ describe("commentray_get_index", () => {
 
 describe("commentray_migrate", () => {
   it("reports no migration needed for fresh project", async () => {
-    const migrateTool = ALL_TOOLS.find((t) => t.name === "commentray_migrate")!;
     const { repoRoot, cleanup } = await setupTempCommentrayProject();
     try {
-      const initTool = ALL_TOOLS.find((t) => t.name === "commentray_init")!;
-      await initTool.handler(repoRoot, {});
-
-      const result = await migrateTool.handler(repoRoot, {});
+      await tool("commentray_init").handler(repoRoot, {});
+      const result = await tool("commentray_migrate").handler(repoRoot, {});
       expect(result.isError).toBeFalsy();
       expect(result.content[0].text).toContain("no migration needed");
     } finally {
@@ -167,13 +155,10 @@ describe("commentray_migrate", () => {
 
 describe("commentray_angles_add", () => {
   it("registers a new angle", async () => {
-    const anglesTool = ALL_TOOLS.find((t) => t.name === "commentray_angles_add")!;
     const { repoRoot, cleanup } = await setupTempCommentrayProject();
     try {
-      const initTool = ALL_TOOLS.find((t) => t.name === "commentray_init")!;
-      await initTool.handler(repoRoot, {});
-
-      const result = await anglesTool.handler(repoRoot, {
+      await tool("commentray_init").handler(repoRoot, {});
+      const result = await tool("commentray_angles_add").handler(repoRoot, {
         angleId: "architecture",
         title: "Architecture",
       });
@@ -185,13 +170,11 @@ describe("commentray_angles_add", () => {
   });
 
   it("rejects invalid angle IDs", async () => {
-    const anglesTool = ALL_TOOLS.find((t) => t.name === "commentray_angles_add")!;
     const { repoRoot, cleanup } = await setupTempCommentrayProject();
     try {
-      // The zod schema rejects invalid IDs before handler is called
-      const parseResult = anglesTool.schema.angleId?.safeParse?.("invalid id!");
-      // But the handler itself would throw — test via direct call
-      await expect(anglesTool.handler(repoRoot, { angleId: "invalid%id" })).rejects.toThrow();
+      await expect(
+        tool("commentray_angles_add").handler(repoRoot, { angleId: "invalid%id" }),
+      ).rejects.toThrow();
     } finally {
       await cleanup();
     }
