@@ -20,6 +20,7 @@ cd "$REPO_ROOT"
 
 npm run build -w @commentray/core
 npm run build -w @commentray/render
+npm run build -w @commentray/code-commentray-static
 npm run build -w @commentray/mcp-server
 cd packages/vscode
 npm run build
