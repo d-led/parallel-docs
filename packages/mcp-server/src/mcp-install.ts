@@ -40,6 +40,7 @@ function makeMcpEntry(): Record<string, unknown> {
       type: "stdio",
       command: "commentray",
       args: ["mcp", "serve"],
+      cwd: "${workspaceFolder}",
     },
   };
 }

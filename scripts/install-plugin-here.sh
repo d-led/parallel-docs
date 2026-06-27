@@ -157,6 +157,7 @@ write_mcp_config() {
     "commentray": {
       "type": "stdio",
       "command": "node",
+      "cwd": "\${workspaceFolder}",
       "args": ["$MCP_SERVER"]
     }
   }

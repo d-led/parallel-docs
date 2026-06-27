@@ -1488,9 +1488,11 @@ async function configureMcpServerCommand(): Promise<void> {
 
   const configSnippet = JSON.stringify(
     {
-      mcpServers: {
+      servers: {
         commentray: {
+          type: "stdio",
           command: "node",
+          cwd: "${workspaceFolder}",
           args: [mcpServerPath],
         },
       },
