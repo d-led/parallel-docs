@@ -7,6 +7,8 @@ defend, the boundary we cannot defend, and how to report an issue.
 
 ## Trust model
 
+<!-- #region commentray:security-trust-model -->
+
 **In-scope — Commentray must not make these worse than plain files on disk:**
 
 - Parsing `.commentray.toml`. Must never execute code, and must not let a
@@ -39,7 +41,11 @@ defend, the boundary we cannot defend, and how to report an issue.
 - Code executed by the developer's own editor, test runner, or build tools
   in response to any repository content.
 
+<!-- #endregion commentray:security-trust-model -->
+
 ## What is deliberately _not_ a hardening layer
+
+<!-- #region commentray:security-not-hardened -->
 
 - The CLI runs with the invoking user's full filesystem rights. It resolves
   the project root from `.commentray.toml` → `.git` → the current directory
@@ -48,6 +54,8 @@ defend, the boundary we cannot defend, and how to report an issue.
 - `commentray render --markdown PATH --out PATH` accepts absolute paths
   because it is a local convenience command driven by the user on the
   command line. Command-line arguments are trusted input.
+
+<!-- #endregion commentray:security-not-hardened -->
 
 ## Reporting a vulnerability
 

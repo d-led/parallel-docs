@@ -9,8 +9,8 @@ function tool(name: string): McpToolDef {
 }
 
 describe("MCP tool definitions", () => {
-  it("registers 16 tools", () => {
-    expect(ALL_TOOLS).toHaveLength(16);
+  it("registers 18 tools", () => {
+    expect(ALL_TOOLS).toHaveLength(18);
   });
 
   it("each tool has a unique name", () => {
@@ -178,5 +178,34 @@ describe("commentray_angles_add", () => {
     } finally {
       await cleanup();
     }
+  });
+});
+
+describe("commentray_serve", () => {
+  it("has port schema with default 4173", () => {
+    const t = tool("commentray_serve");
+    expect(t.schema).toHaveProperty("port");
+  });
+
+  it("errors when project is not initialized with static_site config", async () => {
+    const { repoRoot, cleanup } = await setupTempCommentrayProject();
+    try {
+      // No [static_site] in .commentray.toml — buildGithubPagesStaticSite will throw
+      const result = await tool("commentray_serve").handler(repoRoot, { port: 14173 });
+      expect(result.isError).toBe(true);
+    } finally {
+      // Ensure server is stopped even on error
+      await tool("commentray_stop_serve").handler("", {});
+      await cleanup();
+    }
+  });
+});
+
+describe("commentray_stop_serve", () => {
+  it("reports no server running when idle", async () => {
+    // First make sure no server is running
+    const result = await tool("commentray_stop_serve").handler("", {});
+    expect(result.isError).toBeFalsy();
+    expect(result.content[0].text).toContain("No server running");
   });
 });

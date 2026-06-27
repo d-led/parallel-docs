@@ -10,6 +10,8 @@ This repository pairs the root **`README.md`** with longer commentary under **`.
 
 ## Layout
 
+<!-- #region commentray:dev-layout -->
+
 - `packages/core` — shared library (`.commentray.toml` parsing, path
   normalization, metadata schema, validation, git adapter).
 - `packages/render` — Markdown → HTML renderer + client-side bundle for
@@ -19,6 +21,8 @@ This repository pairs the root **`README.md`** with longer commentary under **`.
 - `packages/code-commentray-static` (`@commentray/code-commentray-static` on npm) — static-site generator for the
   rendered commentary pages.
 - `packages/vscode` — VS Code / Cursor extension.
+
+<!-- #endregion commentray:dev-layout -->
 
 ## Clone and workspace setup
 
@@ -37,6 +41,8 @@ npm run cli:install    # bash scripts/install-cli.sh
 ```
 
 ## Quality gate
+
+<!-- #region commentray:dev-quality-gate -->
 
 One command gates every review:
 
@@ -89,7 +95,11 @@ If a check is failing, fix the root cause. Do not widen ignore lists or
 raise thresholds to hide it. `CONTRIBUTING.md` states the social contract;
 the bullets below are the day-to-day detail.
 
+<!-- #endregion commentray:dev-quality-gate -->
+
 ## Contributor expectations
+
+<!-- #region commentray:dev-contributor-expectations -->
 
 - **Slow lane:** `npm run ci:full` — quality gate, integration tests, then expensive tests (no Cypress). **`npm run test:all`** adds VS Code extension tests and Cypress on top; see [Full local test run](#full-local-test-run-testall) above.
 - **Tests:** run `npm run test:unit` before every PR; add `npm run test:integration` when you touch the Git SCM adapter, `.commentray/` layout, or fixture-backed behavior; use `npm run test:expensive` for fuzzed / large-repo suites when relevant. Never silence failures with `.skip`, swallowed errors, or widened thresholds — fix code or fix tests. When you change **`packages/vscode`**, run **`npm run test:vscode-extension`** and keep **`engines.vscode`**, **`@types/vscode`**, and the **minimum** row in [`.github/workflows/ci-vscode-extension.yml`](../.github/workflows/ci-vscode-extension.yml) aligned (see **VS Code engine compatibility** under Editor extension workflows below).
@@ -100,6 +110,8 @@ the bullets below are the day-to-day detail.
 - **Tests read like behavior:** prefer given / when / then; avoid asserting private implementation details.
 - **Small, reversible PRs** where practical; land behavior-neutral refactors separately when it keeps review honest.
 
+<!-- #endregion commentray:dev-contributor-expectations -->
+
 ## Package managers
 
 The repo is developed with **npm**. **Yarn** is an alternative path via `.yarnrc.yml` (`nodeLinker: node-modules`); if you use Yarn, keep `yarn.lock` policy explicit in PRs.
@@ -107,6 +119,8 @@ The repo is developed with **npm**. **Yarn** is an alternative path via `.yarnrc
 ## CLI, binaries, and Pages
 
 ### Static hub browse URLs
+
+<!-- #region commentray:dev-static-hub-urls -->
 
 The static hub and `_site/browse/` pages are meant to provide **working URLs**
 for sharing whose opaque browse slugs are **stable unless** you rename or move
@@ -127,6 +141,8 @@ URL shape or client navigation, update automated tests (including Cypress under
 - **Homebrew tap (binary formula):** After a tagged release is published, job **`update-homebrew-tap`** (same workflow) runs [`scripts/push-homebrew-tap.sh`](../scripts/push-homebrew-tap.sh): it clones [d-led/homebrew-d-led](https://github.com/d-led/homebrew-d-led), writes `commentray.rb` via [`scripts/generate-homebrew-formula.mjs`](../scripts/generate-homebrew-formula.mjs), and pushes to **`main`** when there are changes. Set repository secret **`HOMEBREW_TAP_PUSH_TOKEN`** to a fine-grained PAT with **Contents: Read and write** on that tap only (classic PAT with `repo` scope also works). **In GitHub Actions the job fails if that secret is missing** so a tag release cannot silently omit the formula; locally, the same script exits 0 without cloning when the token is unset. The formula uses the same four release assets as the CI matrix (**darwin-arm64**, **darwin-x64**, **linux-arm64**, **linux-x64**); Windows is release-only, not Homebrew.
 - **GitHub Pages:** set `[static_site]` in `.commentray.toml`; `npm run pages:build` writes `_site/`. [`.github/workflows/pages.yml`](../.github/workflows/pages.yml) deploys via `workflow_run` after [`ci.yml`](../.github/workflows/ci.yml) succeeds on `main` (includes Cypress in `e2e-static`). Re-run a failed **pages** job from Actions if deploy flaked. Enable **Settings → Pages → Build: GitHub Actions**.
 - **Local Pages preview (watch, dev-only):** The Node static server here is for **developers and the CLI**; **production** is still the built **`_site/`** tree on your real host (for example GitHub Pages above). **`npm run serve`** and **`npm run pages:serve`** both run [`scripts/serve.sh`](../scripts/serve.sh), which builds the CLI stack then runs [`scripts/serve-with-package-watch.mjs`](../scripts/serve-with-package-watch.mjs): that layer watches `packages/{core,render,code-commentray-static,cli}/src` (and render's `esbuild-code-browser-client.mjs`), rebuilds affected workspace packages on save, and **automatically restarts** **`commentray serve`** when needed so Node reloads `dist/`—you do **not** need to stop or restart the dev server by hand. Inside the CLI, **`commentray serve`** watches `.commentray.toml`, static-site inputs, companions under `.commentray/`, and `index.json`, rebuilds **`_site/`** on change, keeps the same HTTP listener, and injects a local **browser livereload** client into generated HTML after successful rebuilds. Default port **4173** (override with `npm run serve -- --port 8080`); livereload listens on the next port when available. Set **`COMMENTRAY_SERVE_NO_PACKAGE_WATCH=1`** to skip the workspace watcher (one-shot package builds only). For native file watching on the workspace tree, set **`COMMENTRAY_SERVE_PACKAGE_WATCH_POLL=0`** (defaults to polling to avoid **EMFILE** with small `ulimit -n`).
+
+<!-- #endregion commentray:dev-static-hub-urls -->
 
 ### macOS quarantine (standalone CLI)
 
@@ -193,6 +209,8 @@ editor and use the **Run and Debug** / **Extension** launch configuration (add
 
 ### VS Code engine compatibility (Commentray extension)
 
+<!-- #region commentray:dev-vscode-engine -->
+
 The extension is a normal VS Code extension: compatibility is a contract between
 **declared minimum**, **TypeScript typings**, **runtime behavior**, and **where
 users install it** (VS Code, VS Code forks, Cursor, etc.).
@@ -253,6 +271,8 @@ Commentray’s declared minimum (`^1.95.0` at the time this section was added) i
 intentionally **below** both reference rows: forks can lag upstream, and the
 extension should keep working on the declared range until you intentionally adopt
 newer-only APIs and raise `engines.vscode`.
+
+<!-- #endregion commentray:dev-vscode-engine -->
 
 ## Scroll sync and paired panes
 

@@ -1,3 +1,4 @@
+import { createServer, type Server } from "node:http";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { execSync } from "node:child_process";
@@ -52,6 +53,19 @@ function textResult(text: string): McpToolResult {
 
 function errorResult(message: string): McpToolResult {
   return { content: [{ type: "text", text: message }], isError: true };
+}
+
+// ── Serve state (module-level singleton) ────────────────────────────────
+
+let serveServer: Server | null = null;
+let servePort = 0;
+
+function stopServeServer(): void {
+  if (!serveServer) return;
+  serveServer.close();
+  serveServer.closeAllConnections?.();
+  serveServer = null;
+  servePort = 0;
 }
 
 // ── Tool definitions ─────────────────────────────────────────────────────
@@ -642,6 +656,87 @@ export const ALL_TOOLS: McpToolDef[] = [
         lines.push(`  ... (capped at ${args.maxFiles}; increase maxFiles to see more)`);
       }
       return textResult(lines.join("\n"));
+    },
+  },
+
+  // ── commentray_serve ─────────────────────────────────────────────────
+  {
+    name: "commentray_serve",
+    description:
+      "Build the Commentray static site and serve it over HTTP. " +
+      "Starts a local server on the given port (default 4173). " +
+      "Returns the URL. The server keeps running until stop_serve is called " +
+      "or the MCP session ends. Call again to rebuild and restart.",
+    schema: {
+      port: z
+        .number()
+        .int()
+        .min(1)
+        .max(65535)
+        .optional()
+        .default(4173)
+        .describe("Port to listen on"),
+    },
+    handler: async (repoRoot, args) => {
+      const port = Number(args.port ?? 4173);
+
+      // Stop existing server if running (on any port)
+      stopServeServer();
+
+      // Dynamic import: static-site stack may pull heavy dependencies
+      const { buildGithubPagesStaticSite } = await import(
+        "@commentray/code-commentray-static/github-pages-site"
+      );
+      const { default: serveHandler } = await import("serve-handler");
+
+      await buildGithubPagesStaticSite({ repoRoot });
+
+      const siteAbs = path.join(repoRoot, "_site");
+
+      const server = createServer((req, res) => {
+        void serveHandler(req, res, {
+          public: siteAbs,
+          etag: true,
+          cleanUrls: false,
+          rewrites: [{ source: "/", destination: "/index.html" }],
+        }).catch((err: unknown) => {
+          if (!res.headersSent) {
+            res.writeHead(500);
+            res.end(err instanceof Error ? err.message : String(err));
+          }
+        });
+      });
+
+      await new Promise<void>((resolve, reject) => {
+        server.once("error", reject);
+        server.once("listening", () => {
+          server.off("error", reject);
+          resolve();
+        });
+        server.listen(port, "0.0.0.0");
+      });
+
+      serveServer = server;
+      servePort = port;
+
+      return textResult(`Serving at http://127.0.0.1:${String(port)}/`);
+    },
+  },
+
+  // ── commentray_stop_serve ────────────────────────────────────────────
+  {
+    name: "commentray_stop_serve",
+    description:
+      "Stop the Commentray HTTP server started by commentray_serve. " +
+      "Safe to call when no server is running.",
+    schema: {},
+    handler: async () => {
+      if (!serveServer) {
+        return textResult("No server running.");
+      }
+      const wasPort = servePort;
+      stopServeServer();
+      return textResult(`Server stopped (was http://127.0.0.1:${String(wasPort)}/).`);
     },
   },
 

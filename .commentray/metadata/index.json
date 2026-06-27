@@ -88,6 +88,53 @@
           "anchor": "lines:1-2"
         }
       ]
+    },
+    ".commentray/source/SECURITY.md/main.md": {
+      "sourcePath": "SECURITY.md",
+      "commentrayPath": ".commentray/source/SECURITY.md/main.md",
+      "blocks": [
+        {
+          "id": "security-trust-model",
+          "anchor": "marker:security-trust-model",
+          "markerId": "security-trust-model"
+        },
+        {
+          "id": "security-not-hardened",
+          "anchor": "marker:security-not-hardened",
+          "markerId": "security-not-hardened"
+        }
+      ]
+    },
+    ".commentray/source/docs/development.md/main.md": {
+      "sourcePath": "docs/development.md",
+      "commentrayPath": ".commentray/source/docs/development.md/main.md",
+      "blocks": [
+        {
+          "id": "dev-layout",
+          "anchor": "marker:dev-layout",
+          "markerId": "dev-layout"
+        },
+        {
+          "id": "dev-quality-gate",
+          "anchor": "marker:dev-quality-gate",
+          "markerId": "dev-quality-gate"
+        },
+        {
+          "id": "dev-contributor-expectations",
+          "anchor": "marker:dev-contributor-expectations",
+          "markerId": "dev-contributor-expectations"
+        },
+        {
+          "id": "dev-static-hub-urls",
+          "anchor": "marker:dev-static-hub-urls",
+          "markerId": "dev-static-hub-urls"
+        },
+        {
+          "id": "dev-vscode-engine",
+          "anchor": "marker:dev-vscode-engine",
+          "markerId": "dev-vscode-engine"
+        }
+      ]
     }
   }
 }
