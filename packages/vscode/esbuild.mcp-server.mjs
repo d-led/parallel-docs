@@ -25,7 +25,7 @@ await esbuild.build({
   },
   minify: false,
   keepNames: true,
-  legalComments: "none",
+  legalComments: "eof",
   logLevel: "error",
 });
 

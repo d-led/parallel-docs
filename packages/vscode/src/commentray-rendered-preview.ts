@@ -411,22 +411,16 @@ export class CommentrayRenderedPreviewPanel {
     const csp = [
       `default-src 'none'`,
       `img-src ${this.panel.webview.cspSource} https: data:`,
-      `style-src ${this.panel.webview.cspSource} 'unsafe-inline' https://cdn.jsdelivr.net`,
-      `font-src ${this.panel.webview.cspSource} https://cdn.jsdelivr.net`,
+      `style-src ${this.panel.webview.cspSource} 'unsafe-inline'`,
+      `font-src ${this.panel.webview.cspSource}`,
       `script-src 'nonce-${nonce}'`,
     ].join("; ");
-    const hljsLight =
-      "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css";
-    const hljsDark =
-      "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css";
     this.panel.webview.html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta http-equiv="Content-Security-Policy" content="${csp}" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="${hljsLight}" media="(prefers-color-scheme: light)" />
-  <link rel="stylesheet" href="${hljsDark}" media="(prefers-color-scheme: dark)" />
   <style>
     :root { color-scheme: light dark; }
     body { margin: 0; font-family: var(--vscode-font-family); font-size: var(--vscode-font-size); color: var(--vscode-editor-foreground); background: var(--vscode-editor-background); }
@@ -435,6 +429,24 @@ export class CommentrayRenderedPreviewPanel {
     #preview-root img { max-width: 100%; height: auto; }
     #preview-root a { color: var(--vscode-textLink-foreground); }
     #preview-root pre { overflow: auto; }
+
+    /* highlight.js theme — minimal inline, no CDN */
+    .hljs { color: var(--vscode-editor-foreground); background: var(--vscode-textCodeBlock-background); }
+    .hljs-comment, .hljs-quote { color: var(--vscode-terminal-ansiGreen, #6a9955); font-style: italic; }
+    .hljs-keyword, .hljs-selector-tag, .hljs-type { color: var(--vscode-terminal-ansiBlue, #569cd6); }
+    .hljs-string, .hljs-regexp, .hljs-addition { color: var(--vscode-terminal-ansiRed, #ce9178); }
+    .hljs-number, .hljs-literal, .hljs-symbol, .hljs-bullet { color: var(--vscode-terminal-ansiCyan, #b5cea8); }
+    .hljs-title, .hljs-section, .hljs-name { color: var(--vscode-terminal-ansiYellow, #dcdcaa); }
+    .hljs-attr, .hljs-attribute, .hljs-variable, .hljs-template-variable { color: var(--vscode-terminal-ansiCyan, #9cdcfe); }
+    .hljs-built_in, .hljs-selector-class, .hljs-selector-id, .hljs-selector-attr, .hljs-selector-pseudo { color: var(--vscode-terminal-ansiYellow, #dcdcaa); }
+    .hljs-meta { color: var(--vscode-terminal-ansiMagenta, #c586c0); }
+    .hljs-tag { color: var(--vscode-terminal-ansiBlue, #569cd6); }
+    .hljs-deletion { color: var(--vscode-terminal-ansiRed, #ce9178); }
+    .hljs-emphasis { font-style: italic; }
+    .hljs-strong { font-weight: bold; }
+    .hljs-link { text-decoration: underline; }
+    .hljs-formula { font-style: italic; }
+    .hljs-params { color: var(--vscode-editor-foreground); }
   </style>
 </head>
 <body>

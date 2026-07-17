@@ -26,6 +26,7 @@
     "dupes": "bash scripts/find-duplicates.sh",
     "quality": "npm run lint && npm run dupes",
     "security:codeql-guards": "node scripts/security-codeql-guards.mjs",
+    "license:notices": "node scripts/generate-third-party-notices.mjs",
     "quality:gate": "bash scripts/quality-gate.sh",
     "typecheck": "tsc -b",
     "test": "bash scripts/test.sh",
