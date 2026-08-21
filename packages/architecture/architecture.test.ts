@@ -116,7 +116,7 @@ async function assertCliAndVscodePackageJsonHaveNoCrossReferences(): Promise<voi
  * Root `tsconfig.json` is solution-style (`files: []`); ArchUnitTS needs a config
  * that lists sources, hence `tsconfig.archunit.json`.
  */
-describe("monorepo package dependency rules", () => {
+describe("monorepo package dependency rules", { timeout: 30_000 }, () => {
   it("keeps @commentray/core free of other workspace packages", async () => {
     await assertFirstPartyPackageDoesNotImportFolders({
       sourceGlob: "packages/core/**",

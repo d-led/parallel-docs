@@ -75,7 +75,6 @@ let scrollSyncDisposable: vscode.Disposable | undefined;
 let ignoreScrollPairEvents = false;
 let blockRefreshTimer: ReturnType<typeof setTimeout> | undefined;
 let commentrayOutput: vscode.OutputChannel | undefined;
-let extensionContext: vscode.ExtensionContext | undefined;
 
 function logCommentray(line: string): void {
   commentrayOutput?.appendLine(line);
@@ -1475,51 +1474,6 @@ async function repairFileCommand(): Promise<void> {
   }
 }
 
-async function configureMcpServerCommand(): Promise<void> {
-  const extCtx = extensionContext;
-  if (!extCtx) {
-    void vscode.window.showErrorMessage(
-      "Extension context not available. Please reload the window.",
-    );
-    return;
-  }
-  const extUri = extCtx.extensionUri;
-  const mcpServerPath = vscode.Uri.joinPath(extUri, "dist", "mcp-server.js").fsPath;
-
-  const configSnippet = JSON.stringify(
-    {
-      servers: {
-        commentray: {
-          type: "stdio",
-          command: "node",
-          cwd: "${workspaceFolder}",
-          args: [mcpServerPath],
-        },
-      },
-    },
-    null,
-    2,
-  );
-
-  void vscode.window
-    .showInformationMessage(
-      `Commentray MCP Server — add this to your MCP client config:
-
-\`\`\`json
-${configSnippet}
-\`\`\`
-
-*Preferred (portable)*: run \`commentray mcp install\` in your repo instead.`,
-      { modal: true },
-      "Copy JSON",
-    )
-    .then((result) => {
-      if (result === "Copy JSON") {
-        void vscode.env.clipboard.writeText(configSnippet);
-      }
-    });
-}
-
 async function renameCompanionFile(
   oldCp: string,
   entry: SourceFileIndexEntry,
@@ -1828,7 +1782,6 @@ async function openRenderedPreviewChooseAngleCommand(arg?: unknown): Promise<voi
 }
 
 export function activate(context: vscode.ExtensionContext) {
-  extensionContext = context;
   const output = vscode.window.createOutputChannel("Commentray");
   commentrayOutput = output;
   const refreshUiContexts = () =>
@@ -1868,7 +1821,6 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand("commentray.removeBlock", removeBlockCommand),
     vscode.commands.registerCommand("commentray.cleanRegions", cleanRegionsCommand),
     vscode.commands.registerCommand("commentray.repairFile", repairFileCommand),
-    vscode.commands.registerCommand("commentray.configureMcpServer", configureMcpServerCommand),
     vscode.workspace.onDidChangeConfiguration((e) => {
       try {
         if (!e.affectsConfiguration("commentray.scrollSync")) return;

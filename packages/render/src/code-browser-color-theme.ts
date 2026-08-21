@@ -30,7 +30,7 @@ export function syncHighlightJsStylesheets(mode: CommentrayColorThemeMode): void
   if (!doc) return;
   const light = doc.getElementById("commentray-hljs-light");
   const darkEl = doc.getElementById("commentray-hljs-dark");
-  if (!(light instanceof HTMLLinkElement) || !(darkEl instanceof HTMLLinkElement)) return;
+  if (!(light instanceof HTMLStyleElement) || !(darkEl instanceof HTMLStyleElement)) return;
 
   if (mode === "light") {
     light.disabled = false;
@@ -73,7 +73,7 @@ export function commentrayColorThemeHeadBoot(): string {
     "document.documentElement.dataset.commentrayTheme=m;" +
     "var L=document.getElementById('commentray-hljs-light');" +
     "var D=document.getElementById('commentray-hljs-dark');" +
-    "if(!L||!D||!(L instanceof HTMLLinkElement)||!(D instanceof HTMLLinkElement))return;" +
+    "if(!L||!D||!(L instanceof HTMLStyleElement)||!(D instanceof HTMLStyleElement))return;" +
     "if(m==='light'){L.disabled=false;L.removeAttribute('media');D.disabled=true;D.setAttribute('media','(prefers-color-scheme: dark)');return;}" +
     "if(m==='dark'){D.disabled=false;D.removeAttribute('media');L.disabled=true;L.setAttribute('media','(prefers-color-scheme: light)');return;}" +
     "L.disabled=false;D.disabled=false;" +

@@ -87,6 +87,7 @@ export {
   DEFAULT_STRETCH_BUFFER_SYNC,
   loadCommentrayConfig,
   mergeCommentrayConfig,
+  resolveMermaidRuntimePath,
 } from "./config.js";
 export { githubRepoBlobFileUrl, parseGithubRepoWebUrl } from "./github-url.js";
 export { assertValidIndex, emptyIndex } from "./metadata.js";

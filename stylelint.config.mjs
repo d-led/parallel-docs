@@ -10,6 +10,8 @@ export default {
     "**/.cache/**",
     /** Generated-adjacent shell bundle: BEM + density rules predate strict standard config. */
     "packages/render/src/code-browser-shell.css",
+    /** Vendored third-party Highlight.js theme CSS (inlined into pages, not first-party). */
+    "packages/render/src/hljs-themes/**",
   ],
   rules: {
     /** System UI colors (`Canvas`, `CanvasText`) are valid in modern CSS. */

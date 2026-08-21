@@ -29,6 +29,8 @@ export type BuildCommentrayStaticOptions = {
    */
   filePath?: string;
   includeMermaidRuntime?: boolean;
+  /** Absolute path to a local Mermaid UMD build, used instead of the vendored one. */
+  mermaidRuntimePath?: string;
   /** Highlight.js theme base name (e.g. github, github-dark); forwarded to `renderCodeBrowserHtml`. */
   hljsTheme?: string;
   /** If set, toolbar shows an Octocat link to this repository (`http`/`https` only). Omitted when {@link siteHubUrl} is used for the same slot. */
@@ -156,6 +158,7 @@ export async function buildCommentrayStatic(opts: BuildCommentrayStaticOptions):
     language,
     commentrayMarkdown,
     includeMermaidRuntime: opts.includeMermaidRuntime ?? false,
+    mermaidRuntimePath: opts.mermaidRuntimePath,
     hljsTheme: opts.hljsTheme,
     githubRepoUrl: opts.githubRepoUrl,
     siteHubUrl: opts.siteHubUrl,

@@ -131,7 +131,7 @@ describe("Side-by-side static HTML layout", () => {
     expect(html).toContain("Notes");
   });
 
-  it("should link default highlight.js stylesheets for fenced code", async () => {
+  it("inlines default highlight.js theme CSS for fenced code without CDN", async () => {
     const html = await renderSideBySideHtml({
       title: "Demo",
       code: "x",
@@ -139,15 +139,13 @@ describe("Side-by-side static HTML layout", () => {
       commentrayMarkdown: "y",
       includeMermaidRuntime: false,
     });
-    expect(html).toContain(
-      "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.11.1/build/styles/github.min.css",
-    );
-    expect(html).toContain(
-      "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.11.1/build/styles/github-dark.min.css",
-    );
+    expect(html).not.toContain("cdn.jsdelivr.net");
+    expect(html).toContain('<style media="(prefers-color-scheme: light)">');
+    expect(html).toContain('<style media="(prefers-color-scheme: dark)">');
+    expect(html).toContain("Theme: GitHub");
   });
 
-  it("should reuse the chosen hljs theme for the dark color-scheme stylesheet when it is already a dark theme", async () => {
+  it("reuses the chosen dark hljs theme for the dark color-scheme slot without CDN", async () => {
     const html = await renderSideBySideHtml({
       title: "Demo",
       code: "x",
@@ -156,8 +154,10 @@ describe("Side-by-side static HTML layout", () => {
       hljsTheme: "github-dark",
       includeMermaidRuntime: false,
     });
-    expect(html).toMatch(/github\.min\.css" media="\(prefers-color-scheme: light\)"/);
-    expect(html).toMatch(/github-dark\.min\.css" media="\(prefers-color-scheme: dark\)"/);
+    expect(html).not.toContain("cdn.jsdelivr.net");
+    expect(html).toContain('<style media="(prefers-color-scheme: light)">');
+    expect(html).toContain('<style media="(prefers-color-scheme: dark)">');
+    expect(html).toContain("Theme: GitHub Dark");
   });
 
   it("should apply commentrayOutputUrls when rewriting links in the companion column", async () => {

@@ -14,7 +14,7 @@ await esbuild.build({
   platform: "browser",
   format: "iife",
   target: ["es2020"],
-  minify: true,
+  minify: false,
   legalComments: "none",
   outfile,
 });

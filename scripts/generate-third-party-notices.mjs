@@ -191,6 +191,29 @@ See the License for the specific language governing permissions and
 limitations under the License.`,
 };
 
+// ── vendored components ────────────────────────────────────────────────────
+
+/**
+ * Third-party assets copied into a shipped package (not installed as npm
+ * dependencies), which therefore need explicit attribution in the notices.
+ */
+const VENDORED_COMPONENTS = [
+  {
+    name: "mermaid",
+    version: "11.17.0",
+    license: "MIT",
+    copyright: "Copyright (c) 2014 - 2022 Knut Sveidqvist",
+    note: "Vendored as mermaid.min.js in @commentray/render (Mermaid diagram runtime).",
+  },
+  {
+    name: "highlight.js",
+    version: "11.11.1",
+    license: "BSD-3-Clause",
+    copyright: "Copyright (c) 2006, Ivan Sagalaev. All rights reserved.",
+    note: "Vendored theme CSS (github, github-dark) in @commentray/render.",
+  },
+];
+
 // ── generate ─────────────────────────────────────────────────────────────
 
 function generate() {
@@ -221,16 +244,10 @@ function generate() {
   const lines = [];
   lines.push("THIRD-PARTY SOFTWARE NOTICES");
   lines.push("");
-  lines.push(
-    "This VS Code extension (\"Commentray\") distributes the following third-party",
-  );
-  lines.push(
-    "open-source software components as direct dependencies of the bundled",
-  );
+  lines.push('This VS Code extension ("Commentray") distributes the following third-party');
+  lines.push("open-source software components as direct dependencies of the bundled");
   lines.push("@commentray/* workspace packages. Each component is governed by its");
-  lines.push(
-    "own license. Transitive dependencies of these components carry compatible",
-  );
+  lines.push("own license. Transitive dependencies of these components carry compatible");
   lines.push("licenses; refer to each package's documentation for details.");
   lines.push("");
   lines.push(
@@ -262,6 +279,27 @@ function generate() {
       lines.push(`  (Full license text: see ${license})`);
     }
 
+    lines.push("");
+  }
+
+  // Vendored assets copied into shipped packages (not npm dependencies).
+  lines.push("=".repeat(78));
+  lines.push("Vendored third-party components");
+  lines.push("=".repeat(78));
+  lines.push("");
+  lines.push("The following components are copied into the distributed package rather than");
+  lines.push("installed as npm dependencies, and are shipped with the extension:");
+  lines.push("");
+
+  for (const component of VENDORED_COMPONENTS) {
+    lines.push(`  ${component.name}@${component.version} (${component.license})`);
+    lines.push(`    ${component.copyright}`);
+    lines.push(`    ${component.note}`);
+    lines.push("");
+    const text = LICENSE_TEXTS[component.license];
+    if (text) {
+      lines.push("  " + text.replace(/\n/g, "\n  "));
+    }
     lines.push("");
   }
 

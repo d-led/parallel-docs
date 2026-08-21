@@ -11,6 +11,11 @@ export type CommentrayToml = {
   scm?: { provider?: string };
   render?: {
     mermaid?: boolean;
+    /**
+     * Absolute or repo-relative path to a local Mermaid runtime build (UMD) used
+     * instead of the bundled one. Keeps generated pages free of CDN references.
+     */
+    mermaid_runtime_path?: string;
     syntaxTheme?: string;
     /**
      * When true, `https://github.com/<owner>/<repo>/blob|tree/<branch>/…` links in commentray
@@ -110,7 +115,12 @@ export type ResolvedAngles = {
 export type ResolvedCommentrayConfig = {
   storageDir: string;
   scmProvider: "git";
-  render: { mermaid: boolean; syntaxTheme: string; relativeGithubBlobLinks: boolean };
+  render: {
+    mermaid: boolean;
+    syntaxTheme: string;
+    relativeGithubBlobLinks: boolean;
+    mermaidRuntimePath: string | null;
+  };
   anchors: { defaultStrategy: string[] };
   angles: ResolvedAngles;
   staticSite: ResolvedStaticSite;
@@ -134,7 +144,12 @@ const defaultAngles: ResolvedAngles = { defaultAngleId: null, definitions: [] };
 const defaultConfig: ResolvedCommentrayConfig = {
   storageDir: ".commentray",
   scmProvider: "git",
-  render: { mermaid: true, syntaxTheme: "github-dark", relativeGithubBlobLinks: false },
+  render: {
+    mermaid: true,
+    syntaxTheme: "github-dark",
+    relativeGithubBlobLinks: false,
+    mermaidRuntimePath: null,
+  },
   anchors: { defaultStrategy: ["symbol", "lines"] },
   angles: { ...defaultAngles },
   staticSite: { ...defaultStaticSite },
@@ -143,6 +158,18 @@ const defaultConfig: ResolvedCommentrayConfig = {
 function nonEmptyTrimmed(s: string | undefined): string | null {
   const t = s?.trim();
   return t ? t : null;
+}
+
+/**
+ * Resolves a config-relative asset path (e.g. `render.mermaid_runtime_path`) to
+ * an absolute path for the render functions to read.
+ */
+export function resolveMermaidRuntimePath(
+  repoRoot: string,
+  rel: string | null | undefined,
+): string | undefined {
+  const trimmed = rel?.trim();
+  return trimmed ? path.resolve(repoRoot, trimmed) : undefined;
 }
 
 /**
@@ -341,6 +368,17 @@ function assertSafeConfigPaths(parsed: CommentrayToml): void {
   }
 }
 
+function resolveRenderConfig(parsed: CommentrayToml | null): ResolvedCommentrayConfig["render"] {
+  const r = parsed?.render;
+  return {
+    mermaid: r?.mermaid ?? defaultConfig.render.mermaid,
+    syntaxTheme: r?.syntaxTheme ?? defaultConfig.render.syntaxTheme,
+    relativeGithubBlobLinks:
+      r?.relative_github_blob_links ?? defaultConfig.render.relativeGithubBlobLinks,
+    mermaidRuntimePath: nonEmptyTrimmed(r?.mermaid_runtime_path),
+  };
+}
+
 export function mergeCommentrayConfig(parsed: CommentrayToml | null): ResolvedCommentrayConfig {
   if (!parsed) return { ...defaultConfig };
   const scm = parsed.scm?.provider ?? defaultConfig.scmProvider;
@@ -352,12 +390,7 @@ export function mergeCommentrayConfig(parsed: CommentrayToml | null): ResolvedCo
   return {
     storageDir,
     scmProvider: "git",
-    render: {
-      mermaid: parsed.render?.mermaid ?? defaultConfig.render.mermaid,
-      syntaxTheme: parsed.render?.syntaxTheme ?? defaultConfig.render.syntaxTheme,
-      relativeGithubBlobLinks:
-        parsed.render?.relative_github_blob_links ?? defaultConfig.render.relativeGithubBlobLinks,
-    },
+    render: resolveRenderConfig(parsed),
     anchors: {
       defaultStrategy: parsed.anchors?.defaultStrategy ?? defaultConfig.anchors.defaultStrategy,
     },

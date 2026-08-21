@@ -16,6 +16,7 @@ import {
   parseGithubRepoWebUrl,
   readIndex,
   resolveCommentrayMarkdownPath,
+  resolveMermaidRuntimePath,
   runCommanderMain,
   type ValidationIssue,
   pruneOrphanCompanionMarkdown,
@@ -267,6 +268,7 @@ async function cmdRender(opts: RenderCliOptions & { mermaid: boolean }) {
     commentrayMarkdown: md,
     hljsTheme: cfg.render.syntaxTheme,
     includeMermaidRuntime: opts.mermaid,
+    mermaidRuntimePath: resolveMermaidRuntimePath(repoRoot, cfg.render.mermaidRuntimePath),
     commentrayOutputUrls,
   });
   await fs.mkdir(path.dirname(outPath), { recursive: true });

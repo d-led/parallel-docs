@@ -13,6 +13,7 @@ describe("Merging Commentray TOML configuration — basics", () => {
     expect(cfg.storageDir).toBe(".commentray");
     expect(cfg.scmProvider).toBe("git");
     expect(cfg.render.mermaid).toBe(true);
+    expect(cfg.render.mermaidRuntimePath).toBeNull();
     expect(cfg.render.relativeGithubBlobLinks).toBe(false);
     expect(cfg.angles.defaultAngleId).toBeNull();
     expect(cfg.angles.definitions).toEqual([]);
@@ -24,6 +25,13 @@ describe("Merging Commentray TOML configuration — basics", () => {
       render: { relative_github_blob_links: true },
     });
     expect(cfg.render.relativeGithubBlobLinks).toBe(true);
+  });
+
+  it("merges render.mermaid_runtime_path from TOML", () => {
+    const cfg = mergeCommentrayConfig({
+      render: { mermaid_runtime_path: "vendor/mermaid.min.js" },
+    });
+    expect(cfg.render.mermaidRuntimePath).toBe("vendor/mermaid.min.js");
   });
 
   it("rejects unsupported scm providers", () => {

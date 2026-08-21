@@ -1,5 +1,6 @@
 import { escapeHtml } from "./html-utils.js";
 import { COMMENTRAY_FAVICON_LINK_HTML } from "./inline-favicon.js";
+import { hljsThemeCss } from "./hljs-theme-css.js";
 import { hljsStylesheetThemes } from "./hljs-stylesheet-themes.js";
 import { SIDE_BY_SIDE_LAYOUT_CSS } from "./side-by-side-layout-css.js";
 import {
@@ -19,8 +20,10 @@ export type SideBySideOptions = {
   commentrayMarkdown: string;
   /** Highlight.js theme base name (e.g. `github`, `github-dark`); matches static code browser. */
   hljsTheme?: string;
-  /** When true, include Mermaid runtime from CDN in the footer. */
+  /** When true, include the Mermaid runtime (vendored or `mermaidRuntimePath`) in the footer. */
   includeMermaidRuntime?: boolean;
+  /** Absolute path to a local Mermaid UMD build, used instead of the vendored one. */
+  mermaidRuntimePath?: string;
   /** Optional static URL rewriting for the commentray pane (images, local links, GitHub blob). */
   commentrayOutputUrls?: CommentrayOutputUrlOptions;
 };
@@ -34,11 +37,15 @@ export async function renderSideBySideHtml(opts: SideBySideOptions): Promise<str
     }),
   ]);
 
-  const mermaidScript = mermaidRuntimeScriptHtml(opts.includeMermaidRuntime);
+  const mermaidScript = mermaidRuntimeScriptHtml(
+    opts.includeMermaidRuntime,
+    opts.mermaidRuntimePath,
+  );
 
   const title = opts.title ?? "Commentray";
   const { hljsLight, hljsDark } = hljsStylesheetThemes(opts.hljsTheme);
-  const hljsCdnBase = "https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.11.1/build/styles";
+  const hljsLightCss = hljsThemeCss(hljsLight);
+  const hljsDarkCss = hljsThemeCss(hljsDark);
 
   return `<!doctype html>
 <html lang="en">
@@ -47,8 +54,8 @@ export async function renderSideBySideHtml(opts: SideBySideOptions): Promise<str
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     ${COMMENTRAY_FAVICON_LINK_HTML}
     <title>${escapeHtml(title)}</title>
-    <link rel="stylesheet" href="${hljsCdnBase}/${escapeHtml(hljsLight)}.min.css" media="(prefers-color-scheme: light)" />
-    <link rel="stylesheet" href="${hljsCdnBase}/${escapeHtml(hljsDark)}.min.css" media="(prefers-color-scheme: dark)" />
+    <style media="(prefers-color-scheme: light)">${hljsLightCss}</style>
+    <style media="(prefers-color-scheme: dark)">${hljsDarkCss}</style>
     <style>
 ${SIDE_BY_SIDE_LAYOUT_CSS}
     </style>

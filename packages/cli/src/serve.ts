@@ -241,7 +241,7 @@ function listenHttp(server: Server, port: number): Promise<void> {
     };
     server.once("error", onErr);
     server.once("listening", onListen);
-    server.listen(port, "0.0.0.0");
+    server.listen(port, "127.0.0.1");
   });
 }
 

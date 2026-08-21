@@ -19,6 +19,7 @@ import {
 import { formatCommentrayBuiltAtLocal } from "./build-stamp.js";
 import { escapeHtml } from "./html-utils.js";
 import { commentrayColorThemeHeadBoot } from "./code-browser-color-theme.js";
+import { hljsThemeCss } from "./hljs-theme-css.js";
 import { hljsStylesheetThemes } from "./hljs-stylesheet-themes.js";
 import { renderHighlightedCodeLineRows } from "./highlighted-code-lines.js";
 import { COMMENTRAY_FAVICON_LINK_HTML } from "./inline-favicon.js";
@@ -65,6 +66,8 @@ export type CodeBrowserPageOptions = {
   language: string;
   commentrayMarkdown: string;
   includeMermaidRuntime?: boolean;
+  /** Absolute path to a local Mermaid UMD build, used instead of the vendored one. */
+  mermaidRuntimePath?: string;
   /** Highlight.js stylesheet base name (e.g. github, github-dark). */
   hljsTheme?: string;
   /**
@@ -652,8 +655,8 @@ type CodeBrowserPageParts = {
   scrollBlockLinksB64: string;
   /** When non-empty, ` data-documented-pairs-b64="…"` on `#shell` for offline tree hydration. */
   shellDocumentedPairsAttr: string;
-  hljs: string;
-  hljsDark: string;
+  hljsLightCss: string;
+  hljsDarkCss: string;
   mermaidScript: string;
   searchPlaceholder: string;
   shellSearchAttrs: string;
@@ -686,12 +689,8 @@ function buildCodeBrowserPageHtml(p: CodeBrowserPageParts): string {
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     ${COMMENTRAY_FAVICON_LINK_HTML}
     ${p.metaDescriptionHtml}${p.generatorMetaHtml}<title>${escapeHtml(p.title)}</title>
-    <link rel="stylesheet" id="commentray-hljs-light" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.11.1/build/styles/${escapeHtml(
-      p.hljs,
-    )}.min.css" media="(prefers-color-scheme: light)" />
-    <link rel="stylesheet" id="commentray-hljs-dark" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.11.1/build/styles/${escapeHtml(
-      p.hljsDark,
-    )}.min.css" media="(prefers-color-scheme: dark)" />
+    <style id="commentray-hljs-light" media="(prefers-color-scheme: light)">${p.hljsLightCss}</style>
+    <style id="commentray-hljs-dark" media="(prefers-color-scheme: dark)">${p.hljsDarkCss}</style>
     <script>
 ${commentrayColorThemeHeadBoot()}
     </script>
@@ -1392,8 +1391,13 @@ export async function renderCodeBrowserHtml(opts: CodeBrowserPageOptions): Promi
     pagesBuildCommitSha: normalizePagesBuildCommitSha(opts.pagesBuildCommitSha),
   });
   const { hljsLight, hljsDark } = hljsStylesheetThemes(opts.hljsTheme);
+  const hljsLightCss = hljsThemeCss(hljsLight);
+  const hljsDarkCss = hljsThemeCss(hljsDark);
 
-  const mermaidScript = mermaidRuntimeScriptHtml(opts.includeMermaidRuntime);
+  const mermaidScript = mermaidRuntimeScriptHtml(
+    opts.includeMermaidRuntime,
+    opts.mermaidRuntimePath,
+  );
 
   const relatedNavHtml = renderRelatedGithubNavHtml(opts.relatedGithubNav ?? []);
   const generatorMetaHtml = renderGeneratorMetaHtml(opts.generatorLabel);
@@ -1451,8 +1455,8 @@ export async function renderCodeBrowserHtml(opts: CodeBrowserPageOptions): Promi
     rawMdB64,
     scrollBlockLinksB64,
     shellDocumentedPairsAttr,
-    hljs: hljsLight,
-    hljsDark,
+    hljsLightCss,
+    hljsDarkCss,
     mermaidScript,
     searchPlaceholder,
     shellSearchAttrs,

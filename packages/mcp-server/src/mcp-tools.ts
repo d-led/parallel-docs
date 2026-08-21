@@ -21,6 +21,7 @@ import {
   readIndex,
   refreshIndexMigrationsOnDisk,
   resolveCommentrayMarkdownPath,
+  resolveMermaidRuntimePath,
   rewriteIndexKeysForAnglesMigration,
   upsertAngleDefinitionInCommentrayToml,
   validateProject,
@@ -322,6 +323,7 @@ export const ALL_TOOLS: McpToolDef[] = [
         commentrayMarkdown: mdText,
         hljsTheme: cfg.render.syntaxTheme,
         includeMermaidRuntime: Boolean(args.mermaid),
+        mermaidRuntimePath: resolveMermaidRuntimePath(repoRoot, cfg.render.mermaidRuntimePath),
       });
 
       await fs.mkdir(path.dirname(outAbs), { recursive: true });

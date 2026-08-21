@@ -45,6 +45,7 @@
   "devDependencies": {
     "@types/mdast": "^4.0.4",
     "@types/node": "^26.0.1",
-    "esbuild": "^0.28.1"
+    "esbuild": "^0.28.1",
+    "mermaid": "^11.17.0"
   }
 }

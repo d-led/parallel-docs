@@ -198,7 +198,7 @@ describe("Code browser page — layout shell and search", () => {
 });
 
 describe("Code browser page — document shell and chrome", () => {
-  it("should link github for light and the configured dark theme for dark when syntax theme is github-dark", async () => {
+  it("inlines github (light) and github-dark (dark) theme CSS with no CDN when syntax theme is github-dark", async () => {
     const html = await renderCodeBrowserHtml({
       title: "Demo",
       code: "const x = 1;",
@@ -206,8 +206,10 @@ describe("Code browser page — document shell and chrome", () => {
       commentrayMarkdown: "## Notes\n",
       hljsTheme: "github-dark",
     });
-    expect(html).toMatch(/github\.min\.css" media="\(prefers-color-scheme: light\)"/);
-    expect(html).toMatch(/github-dark\.min\.css" media="\(prefers-color-scheme: dark\)"/);
+    expect(html).not.toContain("cdn.jsdelivr.net");
+    expect(html).toContain('id="commentray-hljs-light" media="(prefers-color-scheme: light)"');
+    expect(html).toContain('id="commentray-hljs-dark" media="(prefers-color-scheme: dark)"');
+    expect(html).toContain("Theme: GitHub Dark");
   });
 
   it("given a TypeScript source and Markdown pair, should publish a navigable reading shell with search, split panes, wrap, and theme", async () => {

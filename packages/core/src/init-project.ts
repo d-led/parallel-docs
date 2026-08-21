@@ -24,6 +24,7 @@ export const DEFAULT_COMMENTRAY_TOML = [
   "",
   "[render]",
   "# mermaid = true",
+  '# mermaid_runtime_path = "vendor/mermaid.min.js"',
   '# syntaxTheme = "github-dark"',
   "# When true, GitHub blob/tree links for static_site.github_url rewrite to paths",
   "# relative to generated HTML (Pages, `commentray render`). Needs a repo home URL.",

@@ -9,6 +9,7 @@ import {
   loadCommentrayConfig,
   readIndex,
   resolveCommentrayMarkdownPath,
+  resolveMermaidRuntimePath,
   resolvePathUnderRepoRoot,
   staticBrowseIndexRelPathFromPair,
 } from "@commentray/core";
@@ -178,6 +179,10 @@ async function writeBrowsePageForPair(input: {
     title: p.sourcePath,
     filePath: p.sourcePath,
     includeMermaidRuntime: input.cfg.render.mermaid,
+    mermaidRuntimePath: resolveMermaidRuntimePath(
+      input.repoRoot,
+      input.cfg.render.mermaidRuntimePath,
+    ),
     hljsTheme: input.cfg.render.syntaxTheme,
     siteHubUrl: siteHubUrlRelativeFromBrowsePageDir(browsePageDirUnderSite),
     toolHomeUrl: input.toolHomeUrl,
@@ -309,6 +314,7 @@ function staticBrowseUrlForConfiguredPair(
 }
 
 function staticRenderOptions(input: {
+  repoRoot: string;
   sourceAbs: string;
   tmpMd: string;
   outHtml: string;
@@ -333,6 +339,10 @@ function staticRenderOptions(input: {
     filePath: input.ss.sourceFile,
     codeBrowserLayout: "auto",
     includeMermaidRuntime: input.cfg.render.mermaid,
+    mermaidRuntimePath: resolveMermaidRuntimePath(
+      input.repoRoot,
+      input.cfg.render.mermaidRuntimePath,
+    ),
     hljsTheme: input.cfg.render.syntaxTheme,
     siteHubUrl: "./",
     toolHomeUrl: input.toolHomeUrl,
@@ -426,6 +436,7 @@ async function emitGithubPagesSiteArtifacts(input: {
       : undefined;
 
   const staticOpts = staticRenderOptions({
+    repoRoot: input.repoRoot,
     sourceAbs: input.sourceAbs,
     tmpMd: input.tmpMd,
     outHtml: input.outHtml,

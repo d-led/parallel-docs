@@ -1,47 +1,91 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-
-import { findMonorepoPackagesDir, monorepoLayoutStartDir } from "@commentray/core";
+import { fileURLToPath } from "node:url";
 
 /**
- * Injects Mermaid only when the page is not served from `file:`.
- * Cross-origin `import()` from an opaque `file://` origin is browser-dependent and often
- * breaks or spams the console; the code browser should stay usable when opened locally.
+ * Injects a locally vendored, self-contained Mermaid build (no CDN) into
+ * generated pages. The UMD bundle defines `globalThis.mermaid`; the small
+ * bootstrap below initializes it and renders diagrams, dispatching the events
+ * the static code browser listens for (see `commentray-mermaid-events.ts`).
  */
-export function mermaidRuntimeScriptHtml(include: boolean | undefined): string {
+
+const MODULE_DIR = fileURLToPath(new URL(".", import.meta.url));
+
+const BOOTSTRAP_JS = `(function () {
+  var mermaid = globalThis.mermaid;
+  if (!mermaid) return;
+  mermaid.initialize({ startOnLoad: false, securityLevel: "antiscript" });
+  globalThis.commentrayMermaid = mermaid;
+  try {
+    globalThis.dispatchEvent(new CustomEvent("commentray-mermaid-module-ready"));
+  } catch (_) {}
+  var shell = document.getElementById("shell");
+  var layout = shell && shell.getAttribute("data-layout");
+  var skipInitial =
+    globalThis.matchMedia("(max-width:767px)").matches &&
+    shell &&
+    shell.getAttribute("data-dual-mobile-pane") === "code" &&
+    (layout === "dual" || layout === "stretch");
+  if (!skipInitial) {
+    void mermaid
+      .run({ querySelector: "#doc-pane-body pre.mermaid, .stretch-doc-inner pre.mermaid" })
+      .then(function () {
+        try {
+          globalThis.dispatchEvent(new CustomEvent("commentray-mermaid-done"));
+        } catch (_) {}
+      })
+      .catch(function (err) {
+        console.error("Commentray: mermaid.run failed", err);
+      });
+  }
+})();`;
+
+export function mermaidRuntimeScriptHtml(
+  include: boolean | undefined,
+  mermaidScriptPath?: string | null,
+): string {
   if (!include) return "";
-  const moduleSource = loadMermaidBootstrapModuleSource();
-  const asTextContent = JSON.stringify(moduleSource);
+  const umd = mermaidScriptPath ? loadMermaidFromPath(mermaidScriptPath) : loadVendoredMermaidUmd();
+  // Guard against a literal `</script>` in the bundled build breaking the HTML.
   return (
-    `<script>` +
-    `(function(){` +
-    `if(typeof location!=="undefined"&&location.protocol==="file:")return;` +
-    `var s=document.createElement("script");` +
-    `s.type="module";` +
-    `s.textContent=${asTextContent};` +
-    `document.body.appendChild(s);` +
-    `})();` +
-    `</script>`
+    `<script>${umd.replace(/<\/script/gi, "<\\/script")}</script>\n` +
+    `<script>${BOOTSTRAP_JS}</script>`
   );
 }
 
-let cachedMermaidBootstrapSource: string | undefined;
+const cachedMermaidByPath = new Map<string, string>();
 
-function loadMermaidBootstrapModuleSource(): string {
-  if (cachedMermaidBootstrapSource === undefined) {
-    const packagesDir = findMonorepoPackagesDir(monorepoLayoutStartDir(import.meta.url));
-    const renderDistDir = join(packagesDir, "render", "dist");
-    const inDist = join(renderDistDir, "mermaid-runtime-bootstrap.mjs");
-    const fromSrc = join(packagesDir, "render", "src", "mermaid-runtime-bootstrap.mjs");
-    for (const tryPath of [inDist, fromSrc]) {
-      if (existsSync(tryPath)) {
-        cachedMermaidBootstrapSource = readFileSync(tryPath, "utf8");
+function loadMermaidFromPath(absPath: string): string {
+  const cached = cachedMermaidByPath.get(absPath);
+  if (cached !== undefined) return cached;
+  if (!existsSync(absPath)) {
+    throw new Error(`Mermaid runtime not found at ${absPath} (check render.mermaid_runtime_path).`);
+  }
+  const source = readFileSync(absPath, "utf8");
+  cachedMermaidByPath.set(absPath, source);
+  return source;
+}
+
+let cachedMermaidUmd: string | undefined;
+
+function loadVendoredMermaidUmd(): string {
+  if (cachedMermaidUmd === undefined) {
+    const candidates = [
+      join(MODULE_DIR, "mermaid.min.js"),
+      join(MODULE_DIR, "..", "dist", "mermaid.min.js"),
+      join(MODULE_DIR, "..", "src", "mermaid.min.js"),
+    ];
+    for (const file of candidates) {
+      if (existsSync(file)) {
+        cachedMermaidUmd = readFileSync(file, "utf8");
         break;
       }
     }
-    if (cachedMermaidBootstrapSource === undefined) {
-      throw new Error("Missing mermaid-runtime-bootstrap.mjs under render/src or render/dist.");
+    if (cachedMermaidUmd === undefined) {
+      throw new Error(
+        "Missing vendored mermaid.min.js; run `npm run build -w @commentray/render`.",
+      );
     }
   }
-  return cachedMermaidBootstrapSource;
+  return cachedMermaidUmd;
 }
