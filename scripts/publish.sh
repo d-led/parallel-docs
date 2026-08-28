@@ -14,7 +14,7 @@ set -euo pipefail
 #   - unit tests       (scripts/test.sh)
 #   - npm publish      for each public workspace
 #
-# Skips the private 'parallel-docs-vscode' package.
+# Skips the private 'parallel-docs' package.
 #
 # After a successful publish, consumers can run the CLI with npx, e.g. npx parallel-docs
 # --help (prints "Usage: parallel-docs [options] [command]") without a global npm install.

@@ -16,7 +16,7 @@ import { mergeParallelDocsPreCommitHook } from "./git-hooks.js";
 import { installMcpConfigs } from "@parallel-docs/mcp-server";
 
 /** VS Code Marketplace id for the published ParallelDocs extension. */
-export const PARALLEL_DOCS_VSCODE_EXTENSION_ID = "d-led.parallel-docs-vscode" as const;
+export const PARALLEL_DOCS_VSCODE_EXTENSION_ID = "d-led.parallel-docs" as const;
 
 type VscodeExtensionsMergeResult = "wrote" | "unchanged" | "skipped";
 

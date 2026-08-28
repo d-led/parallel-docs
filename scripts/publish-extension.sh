@@ -34,13 +34,13 @@ echo "1/4 Building core + render + mcp-server + vscode..." >&2
 npm run build -w @parallel-docs/core
 npm run build -w @parallel-docs/render
 npm run build -w @parallel-docs/mcp-server
-npm run build -w parallel-docs-vscode
+npm run build -w parallel-docs
 
 echo "2/4 Packaging extension..." >&2
 EXT_DIR="$REPO_ROOT/packages/vscode"
 version=$(node -e "process.stdout.write(require('$EXT_DIR/package.json').version)")
-vsix_path="$EXT_DIR/dist/parallel-docs-vscode-${version}.vsix"
-(cd "$EXT_DIR" && npx --yes @vscode/vsce@^3 package --no-dependencies --out "dist/parallel-docs-vscode-${version}.vsix")
+vsix_path="$EXT_DIR/dist/parallel-docs-${version}.vsix"
+(cd "$EXT_DIR" && npx --yes @vscode/vsce@^3 package --no-dependencies --out "dist/parallel-docs-${version}.vsix")
 echo "   $vsix_path" >&2
 
 if [[ "$mode" == "package" ]]; then

@@ -56,7 +56,7 @@ parallel-docs doctor
 
 ## 4. Edit in the editor
 
-Install **`d-led.parallel-docs-vscode`** ([Install](install.md)). Use commands such as **Open parallel-docs beside source** and **Add block from selection** where available; validation output appears in a **ParallelDocs** output channel.
+Install **`d-led.parallel-docs`** ([Install](install.md)). Use commands such as **Open parallel-docs beside source** and **Add block from selection** where available; validation output appears in a **ParallelDocs** output channel.
 
 ## Where to go next
 

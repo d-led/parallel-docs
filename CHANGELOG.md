@@ -5,7 +5,7 @@
 ### Breaking
 
 - **Rebrand**: the project is renamed from Commentray to **ParallelDocs**.
-  - VS Code extension ID: `d-led.commentray-vscode` → `d-led.parallel-docs-vscode` (new Marketplace listing)
+  - VS Code extension ID: `d-led.commentray-vscode` → `d-led.parallel-docs` (new Marketplace listing)
   - npm packages: `@commentray/*` → `@parallel-docs/*`, CLI binary `commentray` → `parallel-docs`
   - Storage directory `.commentray/` → `.parallel-docs/`, config file `.commentray.toml` → `.parallel-docs.toml`
   - Command IDs, configuration namespace, MCP tool names, and Markdown markers now use `parallel-docs`

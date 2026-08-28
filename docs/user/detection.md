@@ -32,7 +32,7 @@ ParallelDocs spreads checks across **local hooks**, **CLI**, and the **editor**.
 - **When:** You want to opt into **Angles** on disk from an existing **flat** `.parallel-docs/source/{P}.md` tree.
 - **What:** Moves companions to `{storage}/source/{P}/{angle}.md`, writes the **`.default`** sentinel, merges **`[angles]`** into `.parallel-docs.toml`, rewrites **`[static_site].parallel_docs_markdown`** when it pointed at a moved file, and updates **`index.json`** keys. Use **`--dry-run`** first. Normative detail: [`docs/spec/storage.md`](../spec/storage.md).
 
-## Editor extension (`parallel-docs-vscode`)
+## Editor extension (`parallel-docs`)
 
 - **When:** While editing in VS Code or Cursor.
 - **What:** Open paired parallel-docs (from the active editor, or **Explorer** right-click on a file), **bidirectional scroll sync** when enabled in settings (block-aware when **index.json** and Markdown markers align), **add block from selection**, workspace validation in an **output channel**. Validate uses the workspace folder that contains the active file when possible (**multi-root** friendly).

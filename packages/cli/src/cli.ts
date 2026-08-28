@@ -283,7 +283,7 @@ const initCmd = program
   .command("init")
   .description(
     "Idempotent workspace setup: storage dirs, index.json if missing, .parallel-docs.toml if missing; " +
-      "merges d-led.parallel-docs-vscode into .vscode/extensions.json when mergeable; " +
+      "merges d-led.parallel-docs into .vscode/extensions.json when mergeable; " +
       "always refreshes index migrations and runs validate (exit 1 on validation errors)",
   );
 

@@ -112,14 +112,14 @@ echo "Rendering Marketplace icon from canonical SVG..." >&2
 bash "$REPO_ROOT/scripts/build-vscode-icon.sh"
 
 echo "Cleaning extension dependency workspaces (fresh dist + TS incremental state)..." >&2
-npm run clean -w @parallel-docs/core -w @parallel-docs/render -w parallel-docs-vscode 2>/dev/null || true
+npm run clean -w @parallel-docs/core -w @parallel-docs/render -w parallel-docs 2>/dev/null || true
 rm -f \
   "$REPO_ROOT/packages/core"/tsconfig*.tsbuildinfo \
   "$REPO_ROOT/packages/render"/tsconfig*.tsbuildinfo \
   "$REPO_ROOT/packages/vscode"/tsconfig*.tsbuildinfo
 
 echo "Building workspace packages the extension depends on, then bundling..." >&2
-npm run build -w @parallel-docs/core -w @parallel-docs/render -w @parallel-docs/mcp-server -w parallel-docs-vscode
+npm run build -w @parallel-docs/core -w @parallel-docs/render -w @parallel-docs/mcp-server -w parallel-docs
 
 echo "Packaging extension..." >&2
 pushd "$EXT_DIR" >/dev/null

@@ -53,7 +53,7 @@ That prints `Usage: parallel-docs [options] [command]` and lists subcommands—t
 
 ## VS Code / Cursor extension
 
-**Published:** install [`d-led.parallel-docs-vscode`](https://marketplace.visualstudio.com/items?itemName=d-led.parallel-docs-vscode) from the Marketplace (or your editor’s extensions UI). `parallel-docs init` merges this id into `.vscode/extensions.json` when that file is mergeable JSON.
+**Published:** install [`d-led.parallel-docs`](https://marketplace.visualstudio.com/items?itemName=d-led.parallel-docs) from the Marketplace (or your editor’s extensions UI). `parallel-docs init` merges this id into `.vscode/extensions.json` when that file is mergeable JSON.
 
 **From a built `.vsix` in this repo:**
 

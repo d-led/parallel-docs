@@ -51,7 +51,7 @@ jobs:
       - run: npm ci
 
       - name: Build CLI bundle
-        run: npm run build:bundle -w parallel-docs
+        run: npm run build:bundle -w @parallel-docs/cli
 
       - name: Build standalone binary
         shell: bash
@@ -93,7 +93,7 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: parallel-docs-vsix
-          path: packages/vscode/dist/parallel-docs-vscode-*.vsix
+          path: packages/vscode/dist/parallel-docs-*.vsix
           if-no-files-found: error
           retention-days: 14
 

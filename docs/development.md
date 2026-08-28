@@ -326,7 +326,7 @@ For extension code paths that touch the webview preview or for any
 
 `npm run extension:dogfood` installs the packaged build into your normal editor without a debugger; use **Run and Debug** on the `packages/vscode` workspace to attach one.
 
-If a `ParallelDocs:` command is missing after install, run `npm run extension:install` (or dogfood) and reload the window. After editing extension sources in the **Extension** dev host, run `npm run build -w parallel-docs-vscode` before reloading.
+If a `ParallelDocs:` command is missing after install, run `npm run extension:install` (or dogfood) and reload the window. After editing extension sources in the **Extension** dev host, run `npm run build -w parallel-docs` before reloading.
 
 ### The `.parallel-docs/` folder did not appear
 
@@ -379,7 +379,7 @@ Root shortcuts: `npm run version:bump`, `version:tag`, `version:sync`, `publish:
 
 **Stepwise** (e.g. wait for CI binaries before npm): `npm run version:bump -- minor` → commit → `npm run version:tag` → `git push && git push --tags` → `npm run publish:all`.
 
-The **`parallel-docs-vscode`** package is **private** on npm; ship it with `npm run extension:package` and upload the `.vsix`.
+The **`parallel-docs`** package is **private** on npm; ship it with `npm run extension:package` and upload the `.vsix`.
 
 Publishing is **manual** from a maintainer machine with **2FA** / OTP — not from GitHub Actions today. Prefer **OIDC trusted publishing** and **npm provenance** when automation lands: [npm trusted publishers](https://docs.npmjs.com/trusted-publishers), [GitHub OIDC](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect). Avoid long-lived npm tokens in repo secrets unless there is no alternative.
 

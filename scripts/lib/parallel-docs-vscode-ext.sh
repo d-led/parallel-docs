@@ -4,7 +4,7 @@
 # Must be sourced after `scripts/lib/pick-editor-cli.sh` when using
 # `parallel_docs_uninstall_packaged_parallel_docs_if_present`.
 
-PARALLEL_DOCS_VSCODE_EXTENSION_ID="d-led.parallel-docs-vscode"
+PARALLEL_DOCS_VSCODE_EXTENSION_ID="d-led.parallel-docs"
 
 # Removes the **installed** (Marketplace or prior .vsix) ParallelDocs so it cannot
 # shadow or duplicate the workspace under development / a new install.

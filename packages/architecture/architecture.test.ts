@@ -87,7 +87,7 @@ async function assertCliAndVscodePackageJsonHaveNoCrossReferences(): Promise<voi
   const cliKeys = dependencyKeysFromPackageJson(cli);
   const vscodeKeys = dependencyKeysFromPackageJson(vscode);
 
-  for (const name of ["parallel-docs-vscode", "@parallel-docs/vscode"] as const) {
+  for (const name of ["parallel-docs"] as const) {
     expect(
       cliKeys.has(name),
       `Remove "${name}" from packages/cli/package.json (dependencies / devDependencies / peerDependencies / optionalDependencies). The CLI must not depend on the VS Code extension package.`,
@@ -95,8 +95,8 @@ async function assertCliAndVscodePackageJsonHaveNoCrossReferences(): Promise<voi
   }
 
   expect(
-    vscodeKeys.has("parallel-docs"),
-    'Remove "parallel-docs" from packages/vscode/package.json (dependencies / devDependencies / peerDependencies / optionalDependencies). The extension must not depend on the CLI package.',
+    vscodeKeys.has("@parallel-docs/cli"),
+    'Remove "@parallel-docs/cli" from packages/vscode/package.json (dependencies / devDependencies / peerDependencies / optionalDependencies). The extension must not depend on the CLI package.',
   ).toBe(false);
 }
 
@@ -173,7 +173,7 @@ describe("monorepo package dependency rules", { timeout: 30_000 }, () => {
     await assertFirstPartyPackageDoesNotImportFolders({
       sourceGlob: "packages/vscode/**",
       forbiddenFolders: ["packages/render", "packages/code-parallel-docs-static", "packages/cli"],
-      failureMessage: (folder) => `parallel-docs-vscode must not depend on files under ${folder}`,
+      failureMessage: (folder) => `parallel-docs must not depend on files under ${folder}`,
     });
   });
 

@@ -16,7 +16,7 @@ flowchart TB
   pkgRender["parallel-docs/render"]
   ccStatic["parallel-docs/code-parallel-docs-static"]
   cli["parallel-docs"]
-  vscode["parallel-docs-vscode"]
+  vscode["parallel-docs"]
 
   core -->|npm dep| pkgRender
   core -->|npm dep| ccStatic

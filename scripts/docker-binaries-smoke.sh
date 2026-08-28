@@ -36,7 +36,7 @@ docker run --rm \
     apt-get update -qq
     apt-get install -y -qq librsvg2-bin >/dev/null
     npm ci
-    npm run build:bundle -w parallel-docs
+    npm run build:bundle -w @parallel-docs/cli
     node scripts/build-binary.mjs
     node scripts/smoke-binary.mjs
     npm run extension:package

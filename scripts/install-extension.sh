@@ -5,7 +5,7 @@ set -euo pipefail
 # Cursor / VS Code (not the Extension Development Host). Workspace packages
 # the extension depends on (@parallel-docs/core, @parallel-docs/render) are cleaned
 # then rebuilt so local runs never reuse stale dist or .tsbuildinfo output.
-# Before install, any existing `d-led.parallel-docs-vscode` copy is uninstalled
+# Before install, any existing `d-led.parallel-docs` copy is uninstalled
 # so Marketplace / old .vsix builds cannot linger beside the new package.
 #
 # Usage:
@@ -90,7 +90,7 @@ echo "Rendering Marketplace icon from canonical SVG..."
 bash "$REPO_ROOT/scripts/build-vscode-icon.sh"
 
 echo "Cleaning extension dependency workspaces (fresh dist + TS incremental state)..."
-npm run clean -w @parallel-docs/core -w @parallel-docs/render -w parallel-docs-vscode
+npm run clean -w @parallel-docs/core -w @parallel-docs/render -w parallel-docs
 rm -f \
   "$REPO_ROOT/packages/core"/tsconfig*.tsbuildinfo \
   "$REPO_ROOT/packages/render"/tsconfig*.tsbuildinfo \
@@ -99,14 +99,14 @@ rm -f \
 echo "Building workspace packages the extension depends on, then bundling..."
 npm run build -w @parallel-docs/core
 npm run build -w @parallel-docs/render
-npm run build -w parallel-docs-vscode
+npm run build -w parallel-docs
 
 # `--no-dependencies` skips vsce's node_modules traversal: the bundle has
 # no runtime deps, so the symlinked workspace package shouldn't be inspected.
 version="$(ext_version)"
-vsix_path="$EXT_DIR/dist/parallel-docs-vscode-${version}.vsix"
+vsix_path="$EXT_DIR/dist/parallel-docs-${version}.vsix"
 echo "Packaging .vsix at $vsix_path..."
-(cd "$EXT_DIR" && npx --yes @vscode/vsce@^3 package --no-dependencies --out "dist/parallel-docs-vscode-${version}.vsix")
+(cd "$EXT_DIR" && npx --yes @vscode/vsce@^3 package --no-dependencies --out "dist/parallel-docs-${version}.vsix")
 
 if [[ "$mode" == "package" ]]; then
   echo "Built $vsix_path (not installed)."

@@ -9,7 +9,7 @@
  * - Launches Electron with `--extensionDevelopmentPath`, dogfood workspace, `--remote-debugging-port`.
  * - Drives the UI with the keyboard and captures PNGs with Playwright `chromium.connectOverCDP`.
  *
- * Prerequisites: `npm run build -w @parallel-docs/core && npm run build -w parallel-docs-vscode` (or set
+ * Prerequisites: `npm run build -w @parallel-docs/core && npm run build -w parallel-docs` (or set
  * `PARALLEL_DOCS_DESKTOP_SCREENSHOT_SKIP_BUILD=1` if `packages/vscode/dist/extension.js` is fresh).
  * One-time: `npx playwright install chromium` (CDP client).
  *
@@ -93,7 +93,7 @@ async function ensureBuilt() {
     await access(extensionJs);
     return;
   }
-  execSync("npm run build -w @parallel-docs/core && npm run build -w parallel-docs-vscode", {
+  execSync("npm run build -w @parallel-docs/core && npm run build -w parallel-docs", {
     cwd: repoRoot,
     stdio: "inherit",
     env: process.env,

@@ -148,8 +148,8 @@ _Open paired markdown beside editor_.
 From a release `.vsix`:
 
 ```bash
-code --install-extension parallel-docs-vscode-<version>.vsix
-# or: cursor --install-extension parallel-docs-vscode-<version>.vsix
+code --install-extension parallel-docs-<version>.vsix
+# or: cursor --install-extension parallel-docs-<version>.vsix
 ```
 
 From the monorepo (builds + bundles + installs into your editor):

@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Install the ParallelDocs CLI globally by symlinking the local workspace
 # build via `npm link`. Fastest path for local use and dogfooding:
-# subsequent `npm run build -w parallel-docs` updates are picked up
+# subsequent `npm run build -w @parallel-docs/cli` updates are picked up
 # without reinstalling.
 #
 # For the published CLI without linking, use: npx parallel-docs …
@@ -25,10 +25,10 @@ if [[ "${1:-}" == "--unlink" ]]; then
   exit 0
 fi
 
-echo "Building @parallel-docs/core, @parallel-docs/render, parallel-docs..."
+echo "Building @parallel-docs/core, @parallel-docs/render, @parallel-docs/cli..."
 npm run build -w @parallel-docs/core
 npm run build -w @parallel-docs/render
-npm run build -w parallel-docs
+npm run build -w @parallel-docs/cli
 
 chmod +x packages/cli/dist/cli.js
 

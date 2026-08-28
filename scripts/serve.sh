@@ -19,7 +19,7 @@ if [ "${PARALLEL_DOCS_SERVE_NO_PACKAGE_WATCH:-}" = "1" ]; then
   npm run build -w @parallel-docs/core
   npm run build -w @parallel-docs/render
   npm run build -w @parallel-docs/code-parallel-docs-static
-  npm run build -w parallel-docs
+  npm run build -w @parallel-docs/cli
   exec node packages/cli/dist/cli.js serve "$@"
 fi
 

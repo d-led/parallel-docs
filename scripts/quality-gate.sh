@@ -126,7 +126,7 @@ run_step "lint" npm run lint
 run_step "dupes" npm run dupes
 run_step "security:codeql-guards" npm run security:codeql-guards
 run_step "typecheck" npm run typecheck
-run_step "parallel-docs validate" bash -c "npm run build -w parallel-docs && npm run parallel-docs -- validate"
+run_step "parallel-docs validate" bash -c "npm run build -w @parallel-docs/cli && npm run parallel-docs -- validate"
 run_step "test (unit)" env PARALLEL_DOCS_TEST_MODE=unit npm run test
 run_step "pages (build + validate)" bash -c "npm run pages:build && npm run pages:validate"
 
