@@ -20,7 +20,7 @@
     "url": "https://github.com/d-led/parallel-docs/issues"
   },
   "engines": {
-    "vscode": "^1.95.0"
+    "vscode": "^1.134.0"
   },
   "categories": [
     "Other"
@@ -235,11 +235,11 @@
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
-    "@types/node": "^26.0.1",
-    "@types/vscode": "^1.95.0",
+    "@types/node": "^26.4.0",
+    "@types/vscode": "^1.134.0",
     "@vscode/test-cli": "^0.0.15",
-    "@vscode/test-electron": "^3.0.0",
-    "esbuild": "^0.28.1",
+    "@vscode/test-electron": "^3.1.0",
+    "esbuild": "^0.28.2",
     "mocha": "^11.8.0"
   }
 }

@@ -29,8 +29,8 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@parallel-docs/core": "1.0.1",
     "@m31coding/fuzzy-search": "^2.0.0",
+    "@parallel-docs/core": "1.0.1",
     "rehype-highlight": "^7.0.2",
     "rehype-raw": "^7.0.0",
     "rehype-sanitize": "^6.0.0",
@@ -44,8 +44,8 @@
   },
   "devDependencies": {
     "@types/mdast": "^4.0.4",
-    "@types/node": "^26.0.1",
-    "esbuild": "^0.28.1",
-    "mermaid": "^11.17.0"
+    "@types/node": "^26.4.0",
+    "esbuild": "^0.28.2",
+    "mermaid": "^11.17.2"
   }
 }

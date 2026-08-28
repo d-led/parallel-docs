@@ -46,7 +46,11 @@ log_step "Running taze (${mode}, recursive) across all workspaces"
 # Exclude intra-monorepo packages: taze would try to fetch them from the
 # public npm registry and emit spurious 404s. sync-workspace-deps.sh
 # owns those pins.
-taze_exclude="@parallel-docs/*,parallel-docs"
+#
+# Also block typescript >= 6.1: typescript-eslint declares a peer range of
+# `>=4.8.4 <6.1.0`, and taze in `major` mode would otherwise bump typescript
+# to the `latest` dist-tag (7.x, the native compiler) and break resolution.
+taze_exclude="@parallel-docs/*,parallel-docs,typescript@>=6.1"
 taze_args=("$mode" --recursive --include-locked --force --exclude "$taze_exclude")
 if [[ "$check" == true ]]; then
   echo "(check mode — no files will be modified)"

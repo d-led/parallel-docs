@@ -25,15 +25,15 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "@parallel-docs/code-parallel-docs-static": "1.0.1",
     "@parallel-docs/core": "1.0.1",
     "@parallel-docs/render": "1.0.1",
-    "@modelcontextprotocol/sdk": "^1.29.0",
     "serve-handler": "^6.1.7",
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@types/node": "^26.0.1",
+    "@types/node": "^26.4.0",
     "@types/serve-handler": "^6.1.4"
   }
 }
