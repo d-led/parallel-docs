@@ -15,6 +15,7 @@ import {
   pairedMarkdownPath,
   resetGeneratedParallelDocsStorage,
   registerDogfoodWorkspaceLifecycle,
+  waitForActiveEditor,
 } from "./parallel-docs-dogfood-test-support.js";
 
 /** Opens dogfood `sample.ts`, runs paired-markdown beside, then focuses the paired Markdown buffer. */
@@ -756,9 +757,9 @@ function registerOpenCorrespondingSourceTests(dogfoodWorkspace: DogfoodWorkspace
 
       await vscode.commands.executeCommand("parallel-docs.openCorrespondingSource");
 
-      const active = vscode.window.activeTextEditor;
-      assert.ok(active, "Expected an active editor after opening corresponding source.");
       const sampleFs = vscode.Uri.joinPath(dogfoodWorkspace.root(), "src", "sample.ts").fsPath;
+      const active = await waitForActiveEditor(sampleFs);
+      assert.ok(active, "Expected the primary source editor to become active for the pair.");
       assert.strictEqual(
         active.document.uri.fsPath,
         sampleFs,

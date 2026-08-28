@@ -157,3 +157,24 @@ export async function openFixtureSourceFile(workspaceRoot: vscode.Uri): Promise<
   );
   return vscode.window.showTextDocument(doc);
 }
+
+/**
+ * Waits until the editor for `fsPath` is the active editor. VS Code updates
+ * `vscode.window.activeTextEditor` asynchronously after `showTextDocument`, so
+ * asserting focus immediately after a command can race the editor host.
+ */
+export async function waitForActiveEditor(
+  fsPath: string,
+  timeoutMs = 5000,
+): Promise<vscode.TextEditor | undefined> {
+  const deadline = Date.now() + timeoutMs;
+  let active = vscode.window.activeTextEditor;
+  while (active?.document.uri.fsPath !== fsPath) {
+    if (Date.now() >= deadline) {
+      return active;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 25));
+    active = vscode.window.activeTextEditor;
+  }
+  return active;
+}

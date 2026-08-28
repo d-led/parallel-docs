@@ -10,6 +10,7 @@ import {
   registerDogfoodWorkspaceLifecycle,
   resetGeneratedParallelDocsStorage,
   restoreDogfoodParallelDocsToml,
+  waitForActiveEditor,
 } from "./parallel-docs-dogfood-test-support.js";
 
 function registerAnglesDogfoodSuite() {
@@ -81,9 +82,9 @@ describe("ParallelDocs Angles: open paired markdown (integration)", () => {
 
     await vscode.commands.executeCommand("parallel-docs.openCorrespondingSource");
 
-    const active = vscode.window.activeTextEditor;
-    assert.ok(active, "Expected an active editor after opening corresponding source.");
     const sampleFs = vscode.Uri.joinPath(dogfoodWorkspace.root(), "src", "sample.ts").fsPath;
+    const active = await waitForActiveEditor(sampleFs);
+    assert.ok(active, "Expected the primary source editor to become active.");
     assert.strictEqual(active.document.uri.fsPath, sampleFs);
     const hasSample = vscode.window.visibleTextEditors.some(
       (e) => e.document.uri.fsPath === sampleFs,
