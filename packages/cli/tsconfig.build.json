@@ -3,6 +3,7 @@
   "references": [
     { "path": "../core" },
     { "path": "../render" },
-    { "path": "../code-parallel-docs-static" }
+    { "path": "../code-parallel-docs-static" },
+    { "path": "../mcp-server" }
   ]
 }
