@@ -102,14 +102,10 @@ function normalizeEntry(entry: unknown): SourceFileIndexEntry {
   if (typeof e.sidetrackPath === "string") {
     return e as SourceFileIndexEntry;
   }
-  /** Legacy on-disk field names from older releases (v2 `commentrayPath`, v1 `commentaryPath`). */
+  /** Legacy on-disk field name from older releases (v2 `commentrayPath`). */
   if (typeof e.commentrayPath === "string") {
     const { commentrayPath, ...rest } = e;
     return { ...rest, sidetrackPath: commentrayPath } as SourceFileIndexEntry;
-  }
-  if (typeof e.commentaryPath === "string") {
-    const { commentaryPath, ...rest } = e;
-    return { ...rest, sidetrackPath: commentaryPath } as SourceFileIndexEntry;
   }
   return e as SourceFileIndexEntry;
 }

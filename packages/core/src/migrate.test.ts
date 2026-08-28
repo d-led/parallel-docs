@@ -38,24 +38,6 @@ describe("In-memory index schema migration", () => {
     expect(index.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
     expect(index.bySideTrackPath[cp]?.blocks[0]?.id).toBe("b1");
   });
-
-  it("renames legacy commentaryPath to sidetrackPath and keys by sidetrackPath when migrating from v1", () => {
-    const { index, changed } = migrateIndex({
-      schemaVersion: 1,
-      bySourceFile: {
-        "src/a.ts": {
-          sourcePath: "src/a.ts",
-          commentaryPath: ".sidetrack/source/src/a.ts.md",
-          blocks: [],
-        },
-      },
-    });
-    expect(changed).toBe(true);
-    expect(index.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
-    const cp = ".sidetrack/source/src/a.ts.md";
-    expect(index.bySideTrackPath[cp]?.sidetrackPath).toBe(cp);
-    expect("commentaryPath" in (index.bySideTrackPath[cp] as object)).toBe(false);
-  });
 });
 
 describe("Loading index.json with automatic on-disk migration", () => {

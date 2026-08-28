@@ -9,7 +9,7 @@
   - npm packages: `@commentray/*` → `@sidetrack/*`, CLI binary `commentray` → `sidetrack`
   - Storage directory `.commentray/` → `.sidetrack/`, config file `.commentray.toml` → `.sidetrack.toml`
   - Command IDs, configuration namespace, MCP tool names, and Markdown markers now use `sidetrack`
-- Legacy on-disk index fields (`commentrayPath`, `commentaryPath`) are still read and migrated so existing workspaces keep working.
+- Legacy on-disk index field (`commentrayPath`) is still read and migrated so existing workspaces keep working.
 
 ### Added
 
