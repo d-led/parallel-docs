@@ -21,34 +21,36 @@ describe("Project validation — relocation hints from git-tracked files", () =>
   });
 
   it("given a marker only present in a tracked file that is not in the index, when validate runs, then the hint names that file", async () => {
-    repo = await mkdtemp(path.join(tmpdir(), "sidetrack-val-rel-"));
-    await mkdir(path.join(repo, ".sidetrack", "source"), { recursive: true });
-    await mkdir(path.join(repo, ".sidetrack", "metadata"), { recursive: true });
+    repo = await mkdtemp(path.join(tmpdir(), "parallel-docs-val-rel-"));
+    await mkdir(path.join(repo, ".parallel-docs", "source"), { recursive: true });
+    await mkdir(path.join(repo, ".parallel-docs", "metadata"), { recursive: true });
     await mkdir(path.join(repo, "src", "lib"), { recursive: true });
 
     const region =
-      "//#region sidetrack:relocateMe\n" + "// impl\n" + "//#endregion sidetrack:relocateMe\n";
+      "//#region parallelDocs:relocateMe\n" +
+      "// impl\n" +
+      "//#endregion parallelDocs:relocateMe\n";
     await writeFile(path.join(repo, "src", "lib", "handler.ts"), region, "utf8");
 
     const index = {
       schemaVersion: CURRENT_SCHEMA_VERSION,
-      bySideTrackPath: {
-        ".sidetrack/source/src/deleted.ts.md": {
+      byParallelDocsPath: {
+        ".parallel-docs/source/src/deleted.ts.md": {
           sourcePath: "src/deleted.ts",
-          sidetrackPath: ".sidetrack/source/src/deleted.ts.md",
+          parallelDocsPath: ".parallel-docs/source/src/deleted.ts.md",
           blocks: [{ id: "relocateMe", anchor: "marker:relocateMe" }],
         },
       },
     };
     await writeFile(
-      path.join(repo, ".sidetrack", "metadata", "index.json"),
+      path.join(repo, ".parallel-docs", "metadata", "index.json"),
       `${JSON.stringify(index, null, 2)}\n`,
       "utf8",
     );
 
     await git(repo, ["init", "-b", "main"]);
     await git(repo, ["config", "user.email", "test@example.com"]);
-    await git(repo, ["config", "user.name", "SideTrack Test"]);
+    await git(repo, ["config", "user.name", "ParallelDocs Test"]);
     await git(repo, ["add", "."]);
     await git(repo, ["commit", "-m", "init"]);
 

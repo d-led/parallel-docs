@@ -6,23 +6,23 @@ export type {
   DualPaneScrollSyncStrategyId,
   StretchBufferSyncStrategy,
 } from "./code-browser.js";
-export { sidetrackRenderVersion } from "./package-version.js";
+export { parallelDocsRenderVersion } from "./package-version.js";
 export type {
-  SideTrackOutputUrlOptions,
-  SideTrackStaticAssetCopy,
+  ParallelDocsOutputUrlOptions,
+  ParallelDocsStaticAssetCopy,
   MarkdownPipelineOptions,
 } from "./markdown-pipeline.js";
 export {
-  SIDETRACK_STATIC_COMPANION_ASSETS_SEGMENT,
+  PARALLEL_DOCS_STATIC_COMPANION_ASSETS_SEGMENT,
   renderFencedCode,
   renderMarkdownToHtml,
 } from "./markdown-pipeline.js";
 export {
-  renderSideTrackPreviewHtml,
-  type RenderSideTrackPreviewHtmlArgs,
-} from "./sidetrack-preview-html.js";
+  renderParallelDocsPreviewHtml,
+  type RenderParallelDocsPreviewHtmlArgs,
+} from "./parallel-docs-preview-html.js";
 export {
-  injectSideTrackDocAnchors,
+  injectParallelDocsDocAnchors,
   injectSourceMarkdownAnchors,
 } from "./inject-md-line-anchors.js";
 export { renderSideBySideHtml } from "./side-by-side.js";
@@ -33,13 +33,13 @@ export {
   appendHtmlToOpaqueBrowseRequestUrl,
 } from "./code-browser-pair-nav.js";
 export {
-  buildSideTrackNavSearchDocument,
-  SIDETRACK_NAV_SEARCH_SCHEMA_VERSION,
-} from "./build-sidetrack-nav-search.js";
+  buildParallelDocsNavSearchDocument,
+  PARALLEL_DOCS_NAV_SEARCH_SCHEMA_VERSION,
+} from "./build-parallel-docs-nav-search.js";
 export type {
-  BuildSideTrackNavSearchFallback,
-  BuildSideTrackNavSearchGithubBlobBase,
-  SideTrackNavSearchDocument,
-  SideTrackNavSearchRow,
+  BuildParallelDocsNavSearchFallback,
+  BuildParallelDocsNavSearchGithubBlobBase,
+  ParallelDocsNavSearchDocument,
+  ParallelDocsNavSearchRow,
   DocumentedPairNav,
-} from "./build-sidetrack-nav-search.js";
+} from "./build-parallel-docs-nav-search.js";

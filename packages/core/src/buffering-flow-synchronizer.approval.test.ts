@@ -4,7 +4,7 @@
  * `printApprovalSynchronizedFlow`, then snapshots with Approvals plus explicit invariants below.
  *
  * Maintainer orientation: diagrams, fixture naming, and how grid notation maps to the model live in
- * `.sidetrack/source/packages/core/src/buffering-flow-synchronizer.approval.test.ts/main.md`.
+ * `.parallel-docs/source/packages/core/src/buffering-flow-synchronizer.approval.test.ts/main.md`.
  * Core math (abstract flows) is documented separately from approval vocabulary.
  *
  * After every case we assert:

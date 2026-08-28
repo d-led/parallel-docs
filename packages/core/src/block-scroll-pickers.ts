@@ -1,16 +1,16 @@
-/** One block as needed for scroll correlation (0-based sidetrack line, 1-based source range). */
+/** One block as needed for scroll correlation (0-based parallel-docs line, 1-based source range). */
 export type BlockScrollLink = {
-  /** Same id as `<!-- sidetrack:block id=… -->` and `index.json` blocks[]. */
+  /** Same id as `<!-- parallelDocs:block id=… -->` and `index.json` blocks[]. */
   id: string;
-  sidetrackLine: number;
+  parallelDocsLine: number;
   /** 1-based inclusive inner lines between paired region markers (unchanged semantics). */
   sourceStart: number;
   sourceEnd: number;
-  /** 1-based half-open span; see block-scroll-pickers sidetrack. */
+  /** 1-based half-open span; see block-scroll-pickers parallel-docs. */
   markerViewportHalfOpen1Based: { lo: number; hiExclusive: number };
 };
 
-/** Strict `[lo, hi)` contain; `null` in gaps. See sidetrack for geometry. */
+/** Strict `[lo, hi)` contain; `null` in gaps. See parallel-docs for geometry. */
 export function blockStrictlyContainingSourceViewportLine(
   blocks: BlockScrollLink[],
   topSourceLine1Based: number,
@@ -26,7 +26,7 @@ export function blockStrictlyContainingSourceViewportLine(
   return null;
 }
 
-/** Prelude above every span; see sidetrack. */
+/** Prelude above every span; see parallel-docs. */
 export function sourceTopLineStrictlyBeforeFirstIndexLine(
   blocks: BlockScrollLink[],
   topSourceLine1Based: number,
@@ -39,31 +39,34 @@ export function sourceTopLineStrictlyBeforeFirstIndexLine(
   return topSourceLine1Based < minLo;
 }
 
-/** True when probe sits strictly between two `sidetrack:block` lines (interstitial prose). */
-export function sidetrackProbeInStrictInterMarkerGap(
+/** True when probe sits strictly between two `parallelDocs:block` lines (interstitial prose). */
+export function parallelDocsProbeInStrictInterMarkerGap(
   blocks: BlockScrollLink[],
-  topSideTrackLine0Based: number,
+  topParallelDocsLine0Based: number,
 ): boolean {
   if (blocks.length === 0) return false;
-  const s = [...blocks].sort((a, b) => a.sidetrackLine - b.sidetrackLine);
+  const s = [...blocks].sort((a, b) => a.parallelDocsLine - b.parallelDocsLine);
   const head = s[0];
   if (head === undefined) return false;
-  if (topSideTrackLine0Based < head.sidetrackLine) return false;
+  if (topParallelDocsLine0Based < head.parallelDocsLine) return false;
   for (let i = 0; i < s.length; i++) {
     const cur = s[i];
     if (!cur) continue;
     const next = s[i + 1];
     if (next === undefined) {
-      return topSideTrackLine0Based > cur.sidetrackLine;
+      return topParallelDocsLine0Based > cur.parallelDocsLine;
     }
-    if (cur.sidetrackLine < topSideTrackLine0Based && topSideTrackLine0Based < next.sidetrackLine) {
+    if (
+      cur.parallelDocsLine < topParallelDocsLine0Based &&
+      topParallelDocsLine0Based < next.parallelDocsLine
+    ) {
       return true;
     }
   }
   return false;
 }
 
-/** Naive source viewport pick (inside span / gap / prelude); see sidetrack. */
+/** Naive source viewport pick (inside span / gap / prelude); see parallel-docs. */
 export function pickBlockScrollLinkForSourceViewportTop(
   blocks: BlockScrollLink[],
   topSourceLine1Based: number,
@@ -94,7 +97,7 @@ export function pickBlockScrollLinkForSourceViewportTop(
   return best;
 }
 
-/** Mutable lock for {@link pickBlockScrollLinkForSourceViewportWithHysteresis} / sidetrack twin. */
+/** Mutable lock for {@link pickBlockScrollLinkForSourceViewportWithHysteresis} / parallel-docs twin. */
 export type BlockScrollStickyState = {
   lockedId: string | null;
 };
@@ -103,14 +106,14 @@ export type BlockScrollStickyState = {
 export const DEFAULT_SOURCE_VIEWPORT_HYSTERESIS_LINES = 2;
 
 /** Default: require this many **side-track markdown** lines into the naive winner before leaving the lock. */
-export const DEFAULT_SIDETRACK_VIEWPORT_HYSTERESIS_LINES = 4;
+export const DEFAULT_PARALLEL_DOCS_VIEWPORT_HYSTERESIS_LINES = 4;
 
 type StickyHysteresisLockResolution =
   | { outcome: "clear" }
   | { outcome: "return"; link: BlockScrollLink }
   | { outcome: "hysteresis"; naive: BlockScrollLink; locked: BlockScrollLink };
 
-/** Hysteresis lock resolution; diagram in sidetrack. */
+/** Hysteresis lock resolution; diagram in parallel-docs. */
 function resolveStickyHysteresisLock(
   naive: BlockScrollLink | null,
   blocks: BlockScrollLink[],
@@ -135,7 +138,7 @@ function resolveStickyHysteresisLock(
   return { outcome: "hysteresis", naive, locked };
 }
 
-/** Source→sidetrack hysteresis; see sidetrack. */
+/** Source→parallel-docs hysteresis; see parallel-docs. */
 export function pickBlockScrollLinkForSourceViewportWithHysteresis(
   blocks: BlockScrollLink[],
   topSourceLine1Based: number,
@@ -172,27 +175,27 @@ export function pickBlockScrollLinkForSourceViewportWithHysteresis(
   return locked;
 }
 
-/** Maps source viewport top → sidetrack line (naive pick); see sidetrack. */
-export function pickSideTrackLineForSourceScroll(
+/** Maps source viewport top → parallel-docs line (naive pick); see parallel-docs. */
+export function pickParallelDocsLineForSourceScroll(
   blocks: BlockScrollLink[],
   topSourceLine1Based: number,
 ): number | null {
   const b = pickBlockScrollLinkForSourceViewportTop(blocks, topSourceLine1Based);
-  return b ? b.sidetrackLine : null;
+  return b ? b.parallelDocsLine : null;
 }
 
 /**
  * Source viewport → companion markdown line for **dual-pane** hosts (VS Code, rendered preview):
  * when the source probe sits **strictly inside** a block’s indexed viewport span, map linearly from
- * `sourceStart`…`sourceEnd` onto markdown lines **after** that block’s `<!-- sidetrack:block` line
+ * `sourceStart`…`sourceEnd` onto markdown lines **after** that block’s `<!-- parallelDocs:block` line
  * up to (but not including) the next block marker (or end of file). Otherwise (prelude, gaps, after
  * the last span) call `gapFallback()` — typically a proportional mirror, matching
  * `docs/spec/dual-pane-scroll-sync.md` source-gap behaviour.
  */
-export function pickSideTrackLineForSourceDualPane(
+export function pickParallelDocsLineForSourceDualPane(
   blocks: BlockScrollLink[],
   topSourceLine1Based: number,
-  sidetrackMdLineCount: number,
+  parallelDocsMdLineCount: number,
   gapFallback: () => number,
 ): number {
   if (blocks.length === 0) {
@@ -202,28 +205,28 @@ export function pickSideTrackLineForSourceDualPane(
   if (inside === null) {
     return gapFallback();
   }
-  return sidetrackBodyLineWithinBlockFromSourceTop(
+  return parallelDocsBodyLineWithinBlockFromSourceTop(
     blocks,
     inside,
     topSourceLine1Based,
-    sidetrackMdLineCount,
+    parallelDocsMdLineCount,
   );
 }
 
-function sidetrackBodyLineWithinBlockFromSourceTop(
+function parallelDocsBodyLineWithinBlockFromSourceTop(
   blocks: BlockScrollLink[],
   block: BlockScrollLink,
   topSourceLine1Based: number,
-  sidetrackMdLineCount: number,
+  parallelDocsMdLineCount: number,
 ): number {
-  const sorted = [...blocks].sort((a, b) => a.sidetrackLine - b.sidetrackLine);
+  const sorted = [...blocks].sort((a, b) => a.parallelDocsLine - b.parallelDocsLine);
   const idx = sorted.findIndex((b) => b.id === block.id);
   const next = idx >= 0 ? sorted[idx + 1] : undefined;
-  const mdCeilExclusive = next !== undefined ? next.sidetrackLine : sidetrackMdLineCount;
-  const mdBodyFirst = block.sidetrackLine + 1;
+  const mdCeilExclusive = next !== undefined ? next.parallelDocsLine : parallelDocsMdLineCount;
+  const mdBodyFirst = block.parallelDocsLine + 1;
   const mdBodyLastInclusive = mdCeilExclusive - 1;
   if (mdBodyLastInclusive < mdBodyFirst) {
-    return block.sidetrackLine;
+    return block.parallelDocsLine;
   }
   const srcLo = block.sourceStart;
   const srcHi = block.sourceEnd;
@@ -234,21 +237,21 @@ function sidetrackBodyLineWithinBlockFromSourceTop(
   return Math.min(mdBodyLastInclusive, Math.max(mdBodyFirst, mdLine));
 }
 
-/** SideTrack→source hysteresis twin; see sidetrack. */
-export function pickBlockScrollLinkForSideTrackViewportWithHysteresis(
+/** ParallelDocs→source hysteresis twin; see parallel-docs. */
+export function pickBlockScrollLinkForParallelDocsViewportWithHysteresis(
   blocks: BlockScrollLink[],
-  topSideTrackLine0Based: number,
+  topParallelDocsLine0Based: number,
   state: BlockScrollStickyState,
-  hysteresisMdLines: number = DEFAULT_SIDETRACK_VIEWPORT_HYSTERESIS_LINES,
+  hysteresisMdLines: number = DEFAULT_PARALLEL_DOCS_VIEWPORT_HYSTERESIS_LINES,
 ): BlockScrollLink | null {
   const HYST = Math.max(1, Math.floor(hysteresisMdLines));
-  const naive = pickBlockScrollLinkForSideTrackScroll(blocks, topSideTrackLine0Based);
+  const naive = pickBlockScrollLinkForParallelDocsScroll(blocks, topParallelDocsLine0Based);
   const res = resolveStickyHysteresisLock(naive, blocks, state);
   if (res.outcome === "clear") return null;
   if (res.outcome === "return") return res.link;
   const { naive: n, locked } = res;
-  const lL = locked.sidetrackLine;
-  const lC = n.sidetrackLine;
+  const lL = locked.parallelDocsLine;
+  const lC = n.parallelDocsLine;
   const separatedBelow = lC > lL;
   const separatedAbove = lC < lL;
   if (!separatedBelow && !separatedAbove) {
@@ -256,13 +259,13 @@ export function pickBlockScrollLinkForSideTrackViewportWithHysteresis(
     return n;
   }
   if (separatedBelow) {
-    if (topSideTrackLine0Based >= lC + HYST) {
+    if (topParallelDocsLine0Based >= lC + HYST) {
       state.lockedId = n.id;
       return n;
     }
     return locked;
   }
-  if (topSideTrackLine0Based <= lL - HYST) {
+  if (topParallelDocsLine0Based <= lL - HYST) {
     state.lockedId = n.id;
     return n;
   }
@@ -270,26 +273,26 @@ export function pickBlockScrollLinkForSideTrackViewportWithHysteresis(
 }
 
 /** Naive pick: last block whose marker line ≤ viewport top (0-based MD lines). */
-export function pickBlockScrollLinkForSideTrackScroll(
+export function pickBlockScrollLinkForParallelDocsScroll(
   blocks: BlockScrollLink[],
-  topSideTrackLine0Based: number,
+  topParallelDocsLine0Based: number,
 ): BlockScrollLink | null {
   if (blocks.length === 0) return null;
-  const sorted = [...blocks].sort((a, b) => a.sidetrackLine - b.sidetrackLine);
+  const sorted = [...blocks].sort((a, b) => a.parallelDocsLine - b.parallelDocsLine);
   const head = sorted[0];
   if (head === undefined) return null;
   let best = head;
   for (const b of sorted) {
-    if (b.sidetrackLine <= topSideTrackLine0Based) best = b;
+    if (b.parallelDocsLine <= topParallelDocsLine0Based) best = b;
   }
   return best;
 }
 
-/** SideTrack viewport top → 0-based source line (`lo - 1` of winning block). */
-export function pickSourceLine0ForSideTrackScroll(
+/** ParallelDocs viewport top → 0-based source line (`lo - 1` of winning block). */
+export function pickSourceLine0ForParallelDocsScroll(
   blocks: BlockScrollLink[],
-  topSideTrackLine0Based: number,
+  topParallelDocsLine0Based: number,
 ): number | null {
-  const link = pickBlockScrollLinkForSideTrackScroll(blocks, topSideTrackLine0Based);
+  const link = pickBlockScrollLinkForParallelDocsScroll(blocks, topParallelDocsLine0Based);
   return link ? link.markerViewportHalfOpen1Based.lo - 1 : null;
 }

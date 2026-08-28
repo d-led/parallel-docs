@@ -3,21 +3,21 @@
  * Automated **desktop VS Code** screenshots for the extension README companion assets.
  *
  * **Entrypoint:** `bash scripts/refresh-vscode-readme-screenshots-desktop.sh` (see companion
- * `.sidetrack/source/packages/vscode/README.md/main.md` → Maintainer → how scenarios work).
+ * `.parallel-docs/source/packages/vscode/README.md/main.md` → Maintainer → how scenarios work).
  *
  * - Downloads VS Code via `@vscode/test-electron` (same cache as `packages/vscode/.vscode-test`).
  * - Launches Electron with `--extensionDevelopmentPath`, dogfood workspace, `--remote-debugging-port`.
  * - Drives the UI with the keyboard and captures PNGs with Playwright `chromium.connectOverCDP`.
  *
- * Prerequisites: `npm run build -w @sidetrack/core && npm run build -w sidetrack-vscode` (or set
- * `SIDETRACK_DESKTOP_SCREENSHOT_SKIP_BUILD=1` if `packages/vscode/dist/extension.js` is fresh).
+ * Prerequisites: `npm run build -w @parallel-docs/core && npm run build -w parallel-docs-vscode` (or set
+ * `PARALLEL_DOCS_DESKTOP_SCREENSHOT_SKIP_BUILD=1` if `packages/vscode/dist/extension.js` is fresh).
  * One-time: `npx playwright install chromium` (CDP client).
  *
  * Optional:
  * - `VSCODE_TEST_VERSION` (default `stable`).
- * - `SIDETRACK_VSCODE_VIEWPORT_WIDTH` / `SIDETRACK_VSCODE_VIEWPORT_HEIGHT` (defaults **1200×780**).
- * - `SIDETRACK_VSCODE_ZOOM_LEVEL` — `window.zoomLevel` for the temp profile (default **2**).
- * - `SIDETRACK_VSCODE_CDP_PORT` — fixed CDP port (default random 20k–60k).
+ * - `PARALLEL_DOCS_VSCODE_VIEWPORT_WIDTH` / `PARALLEL_DOCS_VSCODE_VIEWPORT_HEIGHT` (defaults **1200×780**).
+ * - `PARALLEL_DOCS_VSCODE_ZOOM_LEVEL` — `window.zoomLevel` for the temp profile (default **2**).
+ * - `PARALLEL_DOCS_VSCODE_CDP_PORT` — fixed CDP port (default random 20k–60k).
  *
  * Profile tweaks (cleaner shots): hide the secondary (Agent/Chat) sidebar and bump UI zoom via
  * `User/settings.json` in the disposable user-data dir.
@@ -25,8 +25,8 @@
  * Workspace: a **temporary copy** of `packages/vscode/fixtures/dogfood` with Angles enabled so
  * “choose angle” shows the Quick Pick (the tracked fixture stays flat for extension tests).
  *
- * Output PNGs (all under `.sidetrack/source/packages/vscode/README.md/assets/`):
- *   vscode-palette-sidetrack.png
+ * Output PNGs (all under `.parallel-docs/source/packages/vscode/README.md/assets/`):
+ *   vscode-palette-parallel-docs.png
  *   vscode-open-paired-beside.png
  *   vscode-open-paired-choose-angle.png
  *   vscode-add-block-from-selection.png
@@ -55,7 +55,7 @@ const extRoot = vscodePkg;
 const dogfood = path.join(extRoot, "fixtures", "dogfood");
 const assetsDir = path.join(
   repoRoot,
-  ".sidetrack",
+  ".parallel-docs",
   "source",
   "packages",
   "vscode",
@@ -66,16 +66,16 @@ const extensionJs = path.join(vscodePkg, "dist", "extension.js");
 
 const viewportWidth = Math.max(
   800,
-  Number(process.env.SIDETRACK_VSCODE_VIEWPORT_WIDTH ?? "1200", 10),
+  Number(process.env.PARALLEL_DOCS_VSCODE_VIEWPORT_WIDTH ?? "1200", 10),
 );
 const viewportHeight = Math.max(
   600,
-  Number(process.env.SIDETRACK_VSCODE_VIEWPORT_HEIGHT ?? "780", 10),
+  Number(process.env.PARALLEL_DOCS_VSCODE_VIEWPORT_HEIGHT ?? "780", 10),
 );
 
 /** Palette shows contributed commands as `Category: title` (see `packages/vscode/package.json`). */
-function sidetrackCommand(title) {
-  return `SideTrack: ${title}`;
+function parallelDocsCommand(title) {
+  return `ParallelDocs: ${title}`;
 }
 
 function sleep(ms) {
@@ -89,11 +89,11 @@ const focusGroup = (n) => (process.platform === "darwin" ? `Meta+${n}` : `Contro
 
 async function ensureBuilt() {
   // Screenshot runs should use the current extension code, not a stale dist artifact.
-  if ((process.env.SIDETRACK_DESKTOP_SCREENSHOT_SKIP_BUILD ?? "").trim() === "1") {
+  if ((process.env.PARALLEL_DOCS_DESKTOP_SCREENSHOT_SKIP_BUILD ?? "").trim() === "1") {
     await access(extensionJs);
     return;
   }
-  execSync("npm run build -w @sidetrack/core && npm run build -w sidetrack-vscode", {
+  execSync("npm run build -w @parallel-docs/core && npm run build -w parallel-docs-vscode", {
     cwd: repoRoot,
     stdio: "inherit",
     env: process.env,
@@ -158,7 +158,7 @@ async function dismissOverlays(page) {
 }
 
 /**
- * Open the command palette in **command (run) mode** so `SideTrack: …` matches contributed
+ * Open the command palette in **command (run) mode** so `ParallelDocs: …` matches contributed
  * commands. Without a leading `>`, the unified picker often stays in file-search mode → "No matching results".
  *
  * @param {import('playwright').Page} page
@@ -177,7 +177,7 @@ async function openCommandPaletteCommandMode(page) {
 
 /**
  * @param {import('playwright').Page} page
- * @param {string} commandQuery text after the leading `>` (e.g. `SideTrack: Validate workspace`)
+ * @param {string} commandQuery text after the leading `>` (e.g. `ParallelDocs: Validate workspace`)
  */
 async function runPaletteQuery(page, commandQuery, { afterEnterMs = 3500, typeDelay = 20 } = {}) {
   await openCommandPaletteCommandMode(page);
@@ -205,7 +205,7 @@ async function typeInCommandPalette(page, commandQuery, { typeDelay = 20 } = {})
 async function writeScreenshotProfileSettings(userDataDir) {
   const userDir = path.join(userDataDir, "User");
   await mkdir(userDir, { recursive: true });
-  const zoomRaw = process.env.SIDETRACK_VSCODE_ZOOM_LEVEL ?? "2";
+  const zoomRaw = process.env.PARALLEL_DOCS_VSCODE_ZOOM_LEVEL ?? "2";
   const zoom = Number.parseFloat(zoomRaw);
   const settings = {
     "window.zoomLevel": Number.isFinite(zoom) ? zoom : 2,
@@ -258,7 +258,8 @@ async function downloadVscodeForScreenshots() {
 
 function resolveCdpPort() {
   return Number(
-    process.env.SIDETRACK_VSCODE_CDP_PORT ?? String(20_000 + Math.floor(Math.random() * 40_000)),
+    process.env.PARALLEL_DOCS_VSCODE_CDP_PORT ??
+      String(20_000 + Math.floor(Math.random() * 40_000)),
     10,
   );
 }
@@ -280,7 +281,7 @@ function vscodeLaunchArgs(cdpPort, extensionsDir, userDataDir, workspaceFolder) 
 }
 
 async function prepareDisposableProfile() {
-  const profileRoot = await mkdtemp(path.join(os.tmpdir(), "sidetrack-desktop-shot-"));
+  const profileRoot = await mkdtemp(path.join(os.tmpdir(), "parallel-docs-desktop-shot-"));
   const userDataDir = path.join(profileRoot, "user-data");
   const extensionsDir = path.join(profileRoot, "extensions");
   await mkdir(userDataDir, { recursive: true });
@@ -290,7 +291,7 @@ async function prepareDisposableProfile() {
 }
 
 /**
- * Copy dogfood into the disposable profile and enable Angles (sentinel + `.sidetrack.toml`)
+ * Copy dogfood into the disposable profile and enable Angles (sentinel + `.parallel-docs.toml`)
  * so palette screenshots match multi-angle workflows without mutating the git-tracked fixture.
  *
  * @param {string} profileRoot
@@ -302,15 +303,15 @@ const SCREENSHOT_MAIN_MD = `## Sample companion — Main
 
 This companion file is intentionally **verbose** for desktop README screenshots: the rendered preview should show real paragraphs, headings, and a visible **page break**—not a one-line stub that becomes unreadable when the frame is small.
 
-### Why keep sidetrack beside the source?
+### Why keep parallel-docs beside the source?
 
-Teams accumulate context that does not belong inline: release checklists, product nuance, links to specs, and “gotchas” from review. SideTrack stores that prose next to the repository while keeping the primary source file approachable for day-to-day coding.
+Teams accumulate context that does not belong inline: release checklists, product nuance, links to specs, and “gotchas” from review. ParallelDocs stores that prose next to the repository while keeping the primary source file approachable for day-to-day coding.
 
-<!-- sidetrack:page-break -->
+<!-- parallelDocs:page-break -->
 
 ### How the rendered preview differs from the built-in Markdown preview
 
-**Open rendered SideTrack preview (default angle)** uses the same HTML pipeline as static pages: GitHub-flavored Markdown, syntax highlighting, and SideTrack anchors so scroll sync can follow the source editor. The built-in preview is still useful while editing raw \`.md\`; this mode matches what readers see on the site.
+**Open rendered ParallelDocs preview (default angle)** uses the same HTML pipeline as static pages: GitHub-flavored Markdown, syntax highlighting, and ParallelDocs anchors so scroll sync can follow the source editor. The built-in preview is still useful while editing raw \`.md\`; this mode matches what readers see on the site.
 
 #### Practical workflow
 
@@ -328,7 +329,7 @@ const SCREENSHOT_ALT_MD = `## Sample companion — Alt
 
 Use this angle for **friendlier onboarding** aimed at new contributors: what to install, which palette commands to try first, and how to sanity-check a change before opening a pull request.
 
-README automation opens this file when exercising **Open rendered SideTrack preview (choose angle)…** so the rendered preview is clearly different from the default **Main** companion.
+README automation opens this file when exercising **Open rendered ParallelDocs preview (choose angle)…** so the rendered preview is clearly different from the default **Main** companion.
 
 ### Before you ask for review
 
@@ -344,11 +345,11 @@ Point readers at \`docs/\` for diagrams and long-form specs; keep this angle sho
 async function materializeScreenshotWorkspaceWithAngles(profileRoot) {
   const ws = path.join(profileRoot, "screenshot-dogfood");
   await cp(dogfood, ws, { recursive: true });
-  const defaultSentinel = path.join(ws, ".sidetrack", "source", ".default");
+  const defaultSentinel = path.join(ws, ".parallel-docs", "source", ".default");
   await mkdir(path.dirname(defaultSentinel), { recursive: true });
-  await writeFile(defaultSentinel, "# SideTrack Angles layout sentinel.\n", "utf-8");
+  await writeFile(defaultSentinel, "# ParallelDocs Angles layout sentinel.\n", "utf-8");
   const anglesToml = `[storage]
-dir = ".sidetrack"
+dir = ".parallel-docs"
 
 [angles]
 default_angle = "main"
@@ -361,29 +362,29 @@ title = "Main"
 id = "alt"
 title = "Alt"
 `;
-  await writeFile(path.join(ws, ".sidetrack.toml"), `${anglesToml}\n`, "utf-8");
+  await writeFile(path.join(ws, ".parallel-docs.toml"), `${anglesToml}\n`, "utf-8");
 
-  const companionDir = path.join(ws, ".sidetrack", "source", "src", "sample.ts");
+  const companionDir = path.join(ws, ".parallel-docs", "source", "src", "sample.ts");
   await mkdir(companionDir, { recursive: true });
   await writeFile(path.join(companionDir, "main.md"), SCREENSHOT_MAIN_MD, "utf-8");
   await writeFile(path.join(companionDir, "alt.md"), SCREENSHOT_ALT_MD, "utf-8");
 
-  // MCP server config — show the SideTrack entry with its description
+  // MCP server config — show the ParallelDocs entry with its description
   const vscodeDir = path.join(ws, ".vscode");
   await mkdir(vscodeDir, { recursive: true });
   const mcpConfig = {
     servers: {
-      sidetrack: {
+      parallelDocs: {
         type: "stdio",
-        command: "sidetrack",
+        command: "parallel-docs",
         args: ["mcp", "serve"],
         cwd: "${workspaceFolder}",
         description:
-          "SideTrack: out-of-file sidetrack anchored to code. " +
+          "ParallelDocs: out-of-file parallel-docs anchored to code. " +
           "Explains design decisions, trade-offs, and rationale — " +
           'the "why" that doesn\'t belong in comments or docs. ' +
           "Strict separation: code comments (inline), documentation (standalone), " +
-          "SideTrack (anchored, cross-linked).",
+          "ParallelDocs (anchored, cross-linked).",
       },
     },
   };
@@ -404,19 +405,19 @@ async function runScreenshotScenarios(page) {
   await sleep(15_000);
 
   await openCommandPaletteCommandMode(page);
-  await page.keyboard.type("SideTrack", { delay: 22 });
+  await page.keyboard.type("ParallelDocs", { delay: 22 });
   await sleep(700);
-  await shot(page, "vscode-palette-sidetrack.png");
+  await shot(page, "vscode-palette-parallel-docs.png");
   await dismissOverlays(page);
 
   await openSampleTs(page);
 
-  await runPaletteQuery(page, sidetrackCommand("Open paired markdown beside editor"), {
+  await runPaletteQuery(page, parallelDocsCommand("Open paired markdown beside editor"), {
     afterEnterMs: 5500,
   });
   await shot(page, "vscode-open-paired-beside.png");
 
-  await runPaletteQuery(page, sidetrackCommand("Open paired markdown (choose angle)"), {
+  await runPaletteQuery(page, parallelDocsCommand("Open paired markdown (choose angle)"), {
     afterEnterMs: 4000,
   });
   await shot(page, "vscode-open-paired-choose-angle.png");
@@ -426,13 +427,13 @@ async function runScreenshotScenarios(page) {
   await sleep(500);
   await page.keyboard.press(selectAllShortcut);
   await sleep(350);
-  await runPaletteQuery(page, sidetrackCommand("Add side-track block from selection"), {
+  await runPaletteQuery(page, parallelDocsCommand("Add side-track block from selection"), {
     afterEnterMs: 6500,
   });
   await shot(page, "vscode-add-block-from-selection.png");
   await dismissOverlays(page);
 
-  await runPaletteQuery(page, sidetrackCommand(`Add angle to project\u2026`), {
+  await runPaletteQuery(page, parallelDocsCommand(`Add angle to project\u2026`), {
     afterEnterMs: 2800,
   });
   await shot(page, "vscode-add-angle-to-project.png");
@@ -440,7 +441,7 @@ async function runScreenshotScenarios(page) {
 
   await page.keyboard.press(focusGroup(2));
   await sleep(700);
-  await runPaletteQuery(page, sidetrackCommand("Open Markdown preview for paired file"), {
+  await runPaletteQuery(page, parallelDocsCommand("Open Markdown preview for paired file"), {
     afterEnterMs: 4500,
   });
   await shot(page, "vscode-markdown-preview.png");
@@ -452,7 +453,7 @@ async function runScreenshotScenarios(page) {
   await openSampleTs(page);
   await typeInCommandPalette(
     page,
-    sidetrackCommand("Open rendered SideTrack preview (default angle)"),
+    parallelDocsCommand("Open rendered ParallelDocs preview (default angle)"),
   );
   await shot(page, "vscode-rendered-preview-default-palette.png");
   await page.keyboard.press("Enter");
@@ -468,7 +469,7 @@ async function runScreenshotScenarios(page) {
   await openSampleTs(page);
   await typeInCommandPalette(
     page,
-    sidetrackCommand(`Open rendered SideTrack preview (choose angle)\u2026`),
+    parallelDocsCommand(`Open rendered ParallelDocs preview (choose angle)\u2026`),
   );
   await shot(page, "vscode-rendered-preview-angle-palette.png");
   await page.keyboard.press("Enter");
@@ -482,7 +483,7 @@ async function runScreenshotScenarios(page) {
   await shot(page, "vscode-rendered-preview-angle.png");
   await dismissOverlays(page);
 
-  await runPaletteQuery(page, sidetrackCommand("Validate workspace"), { afterEnterMs: 3500 });
+  await runPaletteQuery(page, parallelDocsCommand("Validate workspace"), { afterEnterMs: 3500 });
   await runPaletteQuery(page, "Output: Focus on Output View", { afterEnterMs: 3200 });
   await shot(page, "vscode-validate-workspace.png");
   await dismissOverlays(page);
@@ -494,12 +495,12 @@ async function runScreenshotScenarios(page) {
  * @param {import('playwright').Page} page
  */
 async function captureMcpScreenshots(page) {
-  // Show SideTrack MCP setup in the command palette
-  await typeInCommandPalette(page, "SideTrack Configure MCP");
+  // Show ParallelDocs MCP setup in the command palette
+  await typeInCommandPalette(page, "ParallelDocs Configure MCP");
   await shot(page, "vscode-mcp-palette.png");
   await dismissOverlays(page);
 
-  // Open .vscode/mcp.json to show the SideTrack MCP server entry
+  // Open .vscode/mcp.json to show the ParallelDocs MCP server entry
   await dismissOverlays(page);
   await page.keyboard.press(quickOpenShortcut);
   await sleep(700);

@@ -2,15 +2,15 @@ import { describe, expect, it } from "vitest";
 import { assertValidIndex } from "./metadata.js";
 import { CURRENT_SCHEMA_VERSION } from "./model.js";
 
-const cp = ".sidetrack/source/src/a.ts.md";
+const cp = ".parallel-docs/source/src/a.ts.md";
 
 function indexWithBlock(block: Record<string, unknown>): Record<string, unknown> {
   return {
     schemaVersion: CURRENT_SCHEMA_VERSION,
-    bySideTrackPath: {
+    byParallelDocsPath: {
       [cp]: {
         sourcePath: "src/a.ts",
-        sidetrackPath: cp,
+        parallelDocsPath: cp,
         blocks: [block],
       },
     },
@@ -20,7 +20,7 @@ function indexWithBlock(block: Record<string, unknown>): Record<string, unknown>
 describe("Index JSON shape validation", () => {
   it("accepts a minimal valid index", () => {
     const idx = assertValidIndex(indexWithBlock({ id: "b1", anchor: "lines:1-2" }));
-    expect(idx.bySideTrackPath[cp]?.blocks[0]?.id).toBe("b1");
+    expect(idx.byParallelDocsPath[cp]?.blocks[0]?.id).toBe("b1");
   });
 
   it("accepts schemaVersion as an integer string and canonicalizes to a number", () => {
@@ -34,22 +34,22 @@ describe("Index JSON shape validation", () => {
 
   it("rejects invalid shapes", () => {
     expect(() => assertValidIndex(null)).toThrow();
-    expect(() => assertValidIndex({ schemaVersion: 999, bySideTrackPath: {} })).toThrow();
+    expect(() => assertValidIndex({ schemaVersion: 999, byParallelDocsPath: {} })).toThrow();
   });
 
-  it("rejects when index key does not match entry.sidetrackPath", () => {
+  it("rejects when index key does not match entry.parallelDocsPath", () => {
     expect(() =>
       assertValidIndex({
         schemaVersion: CURRENT_SCHEMA_VERSION,
-        bySideTrackPath: {
+        byParallelDocsPath: {
           [cp]: {
             sourcePath: "src/a.ts",
-            sidetrackPath: ".sidetrack/source/wrong.md",
+            parallelDocsPath: ".parallel-docs/source/wrong.md",
             blocks: [],
           },
         },
       }),
-    ).toThrow(/index key must equal entry\.sidetrackPath/);
+    ).toThrow(/index key must equal entry\.parallelDocsPath/);
   });
 
   it("accepts an optional snippet string and markerId on a block when id matches the marker anchor", () => {
@@ -59,7 +59,7 @@ describe("Index JSON shape validation", () => {
           id: "b1",
           anchor: "marker:b1",
           markerId: "b1",
-          snippet: "sidetrack-snippet/v1\n x",
+          snippet: "parallel-docs-snippet/v1\n x",
         }),
       ),
     ).not.toThrow();

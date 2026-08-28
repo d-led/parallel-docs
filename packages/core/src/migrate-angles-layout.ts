@@ -2,17 +2,17 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 import { assertValidAngleId } from "./angles.js";
-import type { SideTrackIndex, SourceFileIndexEntry } from "./model.js";
+import type { ParallelDocsIndex, SourceFileIndexEntry } from "./model.js";
 import {
-  sidetrackAnglesLayoutEnabled,
-  sidetrackMarkdownPathForAngle,
+  parallelDocsAnglesLayoutEnabled,
+  parallelDocsMarkdownPathForAngle,
   normalizeRepoRelativePath,
 } from "./paths.js";
-import { collectMdRelPathsUnderSourceAbs } from "./walk-sidetrack-source-md.js";
+import { collectMdRelPathsUnderSourceAbs } from "./walk-parallel-docs-source-md.js";
 
 export type FlatCompanionEntry = {
-  /** Repo-relative path, e.g. `.sidetrack/source/README.md.md`. */
-  flatSideTrackPath: string;
+  /** Repo-relative path, e.g. `.parallel-docs/source/README.md.md`. */
+  flatParallelDocsPath: string;
   /** Repo-relative primary source path, e.g. `README.md`. */
   sourcePath: string;
 };
@@ -35,9 +35,9 @@ export type AnglesMigrationPlan = {
  */
 export async function discoverFlatCompanionMarkdownFiles(
   repoRoot: string,
-  storageDir = ".sidetrack",
+  storageDir = ".parallel-docs",
 ): Promise<FlatCompanionEntry[]> {
-  if (sidetrackAnglesLayoutEnabled(repoRoot, storageDir)) {
+  if (parallelDocsAnglesLayoutEnabled(repoRoot, storageDir)) {
     return [];
   }
   const storageNorm = normalizeRepoRelativePath(storageDir.replaceAll("\\", "/"));
@@ -58,10 +58,10 @@ export async function discoverFlatCompanionMarkdownFiles(
     if (rel === ".default" || rel.startsWith(".default/")) continue;
     if (!rel.endsWith(".md")) continue;
     const sourcePath = flatRelToSourcePath(rel);
-    const flatSideTrackPath = path.posix.join(storageNorm, "source", rel);
-    out.push({ flatSideTrackPath, sourcePath });
+    const flatParallelDocsPath = path.posix.join(storageNorm, "source", rel);
+    out.push({ flatParallelDocsPath, sourcePath });
   }
-  out.sort((a, b) => a.flatSideTrackPath.localeCompare(b.flatSideTrackPath));
+  out.sort((a, b) => a.flatParallelDocsPath.localeCompare(b.flatParallelDocsPath));
   return out;
 }
 
@@ -82,26 +82,26 @@ export function planAnglesMigrationFromCompanions(
   const moves: AnglesMigrationMove[] = [];
   const flatToAnglePath = new Map<string, string>();
   for (const c of companions) {
-    const toRepoRel = sidetrackMarkdownPathForAngle(c.sourcePath, id, storageDir);
-    if (c.flatSideTrackPath === toRepoRel) continue;
+    const toRepoRel = parallelDocsMarkdownPathForAngle(c.sourcePath, id, storageDir);
+    if (c.flatParallelDocsPath === toRepoRel) continue;
     moves.push({
-      fromRepoRel: c.flatSideTrackPath,
+      fromRepoRel: c.flatParallelDocsPath,
       toRepoRel: toRepoRel,
       sourcePath: c.sourcePath,
     });
-    flatToAnglePath.set(c.flatSideTrackPath, toRepoRel);
+    flatToAnglePath.set(c.flatParallelDocsPath, toRepoRel);
   }
   return { moves, flatToAnglePath };
 }
 
 export function rewriteIndexKeysForAnglesMigration(
-  index: SideTrackIndex,
+  index: ParallelDocsIndex,
   flatToAnglePath: Map<string, string>,
-): SideTrackIndex {
+): ParallelDocsIndex {
   const next: Record<string, SourceFileIndexEntry> = {};
-  for (const [k, entry] of Object.entries(index.bySideTrackPath)) {
+  for (const [k, entry] of Object.entries(index.byParallelDocsPath)) {
     const newKey = flatToAnglePath.get(k) ?? k;
-    next[newKey] = { ...entry, sidetrackPath: newKey };
+    next[newKey] = { ...entry, parallelDocsPath: newKey };
   }
-  return { ...index, bySideTrackPath: next };
+  return { ...index, byParallelDocsPath: next };
 }

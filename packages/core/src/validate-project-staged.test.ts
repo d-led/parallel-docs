@@ -9,23 +9,23 @@ import { validateProject } from "./validate-project.js";
 describe("validateProject — staged scope", () => {
   it("narrows marker checks to index entries touched by staged paths", async () => {
     const dir = await mkdtemp(path.join(tmpdir(), "cr-val-staged-"));
-    await mkdir(path.join(dir, ".sidetrack", "metadata"), { recursive: true });
-    await mkdir(path.join(dir, ".sidetrack", "source", "src"), { recursive: true });
+    await mkdir(path.join(dir, ".parallel-docs", "metadata"), { recursive: true });
+    await mkdir(path.join(dir, ".parallel-docs", "source", "src"), { recursive: true });
     await mkdir(path.join(dir, "src"), { recursive: true });
     await writeFile(
-      path.join(dir, ".sidetrack", "metadata", "index.json"),
+      path.join(dir, ".parallel-docs", "metadata", "index.json"),
       JSON.stringify(
         {
           schemaVersion: CURRENT_SCHEMA_VERSION,
-          bySideTrackPath: {
-            ".sidetrack/source/src/a.ts.md": {
+          byParallelDocsPath: {
+            ".parallel-docs/source/src/a.ts.md": {
               sourcePath: "src/a.ts",
-              sidetrackPath: ".sidetrack/source/src/a.ts.md",
+              parallelDocsPath: ".parallel-docs/source/src/a.ts.md",
               blocks: [],
             },
-            ".sidetrack/source/src/b.ts.md": {
+            ".parallel-docs/source/src/b.ts.md": {
               sourcePath: "src/b.ts",
-              sidetrackPath: ".sidetrack/source/src/b.ts.md",
+              parallelDocsPath: ".parallel-docs/source/src/b.ts.md",
               blocks: [],
             },
           },
@@ -36,10 +36,10 @@ describe("validateProject — staged scope", () => {
       "utf8",
     );
     await writeFile(
-      path.join(dir, ".sidetrack.toml"),
+      path.join(dir, ".parallel-docs.toml"),
       [
         "[storage]",
-        'dir = ".sidetrack"',
+        'dir = ".parallel-docs"',
         "",
         "[static_site]",
         'title = "Fixture"',
@@ -50,16 +50,16 @@ describe("validateProject — staged scope", () => {
     );
     await writeFile(
       path.join(dir, "src", "a.ts"),
-      ["// sidetrack:start id=ok", "1", "// sidetrack:end id=ok", ""].join("\n"),
+      ["// parallelDocs:start id=ok", "1", "// parallelDocs:end id=ok", ""].join("\n"),
       "utf8",
     );
     await writeFile(
       path.join(dir, "src", "b.ts"),
-      ["// sidetrack:start id=bad", "broken", ""].join("\n"),
+      ["// parallelDocs:start id=bad", "broken", ""].join("\n"),
       "utf8",
     );
-    await writeFile(path.join(dir, ".sidetrack", "source", "src", "a.ts.md"), "# A\n", "utf8");
-    await writeFile(path.join(dir, ".sidetrack", "source", "src", "b.ts.md"), "# B\n", "utf8");
+    await writeFile(path.join(dir, ".parallel-docs", "source", "src", "a.ts.md"), "# A\n", "utf8");
+    await writeFile(path.join(dir, ".parallel-docs", "source", "src", "b.ts.md"), "# B\n", "utf8");
 
     const full = await validateProject(dir);
     expect(full.issues.some((i) => i.message.includes("no matching end"))).toBe(true);

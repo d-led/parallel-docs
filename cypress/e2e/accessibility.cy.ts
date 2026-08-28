@@ -1,4 +1,4 @@
-describe("The shipped SideTrack home page", () => {
+describe("The shipped ParallelDocs home page", () => {
   beforeEach(() => {
     cy.GoToStaticSiteHome();
   });

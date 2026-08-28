@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Check all internal links in the built SideTrack static site using lychee.
+# Check all internal links in the built ParallelDocs static site using lychee.
 # Checks ALL HTML files under _site/ with --root-dir for relative link resolution.
 # Installs lychee if not already present (brew on macOS, cargo with Rust, or binary download).
 #

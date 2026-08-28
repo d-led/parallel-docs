@@ -1,4 +1,4 @@
-describe("The SideTrack GitHub Pages static build", () => {
+describe("The ParallelDocs GitHub Pages static build", () => {
   describe("The nav search JSON artifact", () => {
     it("responds with 200 and a schemaVersion field", () => {
       cy.NavSearchArtifactGetRequestShouldReturnSchemaVersion();
@@ -16,22 +16,22 @@ describe("The SideTrack GitHub Pages static build", () => {
 
     it("presents a coherent browsable documentation workspace", () => {
       cy.CurrentPageShouldDisplayCodeBrowserShell();
-      cy.SideTrackPaneReadmeLinksShouldUseGithubBlobUrls();
-      cy.SideTrackPaneEmphasisShouldRenderAfterBlocks();
+      cy.ParallelDocsPaneReadmeLinksShouldUseGithubBlobUrls();
+      cy.ParallelDocsPaneEmphasisShouldRenderAfterBlocks();
       cy.DocumentationHomeLinkShouldPointToRelativeIndex();
       cy.ShellPairBrowseLinkShouldAdvertiseOnSiteBrowsePage();
-      cy.OpenSideTrackedFilesDisclosure();
-      cy.SideTrackedFilesTreeShouldExposeAtLeastOneFileLink();
+      cy.OpenParallelDocsedFilesDisclosure();
+      cy.ParallelDocsedFilesTreeShouldExposeAtLeastOneFileLink();
     });
 
     it("closes the Side-tracked files hub when Escape is pressed", () => {
-      cy.OpenSideTrackedFilesDisclosure();
-      cy.SideTrackedFilesTreeShouldExposeAtLeastOneFileLink();
-      cy.CloseSideTrackedFilesHubWithEscape();
+      cy.OpenParallelDocsedFilesDisclosure();
+      cy.ParallelDocsedFilesTreeShouldExposeAtLeastOneFileLink();
+      cy.CloseParallelDocsedFilesHubWithEscape();
     });
 
     it("keeps pair-browse routes from stacking under repeated /browse/ segments", () => {
-      cy.OpenSideTrackedFilesDisclosure();
+      cy.OpenParallelDocsedFilesDisclosure();
       cy.FollowFirstBrowseFileLinkInTree();
       cy.CurrentPageShouldDisplayCodeBrowserShell();
       cy.ShellPairBrowseLinkShouldAvoidStackedBrowseSegments();
@@ -39,7 +39,7 @@ describe("The SideTrack GitHub Pages static build", () => {
 
     it("keeps relative pair-browse links stable when landing on a direct browse permalink", () => {
       cy.get(".shell")
-        .invoke("attr", "data-sidetrack-pair-browse-href")
+        .invoke("attr", "data-parallel-docs-pair-browse-href")
         .then((browseHref) => {
           expect(browseHref)
             .to.be.a("string")
@@ -66,7 +66,7 @@ describe("The SideTrack GitHub Pages static build", () => {
       cy.ApplyDualPaneScrollTestViewport();
       cy.location("href").then((href) => {
         cy.get(".shell")
-          .invoke("attr", "data-sidetrack-pair-browse-href")
+          .invoke("attr", "data-parallel-docs-pair-browse-href")
           .then((browseHref) => {
             expect(browseHref)
               .to.be.a("string")
@@ -78,7 +78,10 @@ describe("The SideTrack GitHub Pages static build", () => {
             cy.wrap(browsePath).as("humaneBrowsePath");
             cy.visit(browsePath, {
               onBeforeLoad(win) {
-                win.localStorage.setItem("sidetrack.codeSideTrackStatic.wideModeIntro.v1", "1");
+                win.localStorage.setItem(
+                  "parallel-docs.codeParallelDocsStatic.wideModeIntro.v1",
+                  "1",
+                );
               },
             });
           });
@@ -94,7 +97,7 @@ describe("The SideTrack GitHub Pages static build", () => {
       cy.get("@humaneBrowsePath").then((browsePath) => {
         cy.visit(String(browsePath), {
           onBeforeLoad(win) {
-            win.localStorage.setItem("sidetrack.codeSideTrackStatic.wideModeIntro.v1", "1");
+            win.localStorage.setItem("parallel-docs.codeParallelDocsStatic.wideModeIntro.v1", "1");
           },
         });
       });
@@ -106,7 +109,7 @@ describe("The SideTrack GitHub Pages static build", () => {
     it("returns 404 for humane browse paths without a documented pair", () => {
       cy.request({
         method: "GET",
-        url: "/browse/this-path-has-no-sidetrack.md",
+        url: "/browse/this-path-has-no-parallel-docs.md",
         failOnStatusCode: false,
       })
         .its("status")
@@ -114,7 +117,7 @@ describe("The SideTrack GitHub Pages static build", () => {
     });
 
     it("clears in-page search and hides hits when Escape is pressed", () => {
-      cy.TypeTextInSearchField("sidetrack");
+      cy.TypeTextInSearchField("parallel-docs");
       cy.SearchResultsPanelShouldBeVisible();
       cy.PressEscapeInSearchField();
       cy.SearchFieldValueShouldBeEmpty();
@@ -122,7 +125,7 @@ describe("The SideTrack GitHub Pages static build", () => {
     });
 
     it("highlights matched query tokens inside search hit snippets", () => {
-      cy.TypeTextInSearchField("sidetrack");
+      cy.TypeTextInSearchField("parallel-docs");
       cy.SearchResultsPanelShouldBeVisible();
       cy.SearchResultsHitMarksShouldExist();
     });
@@ -130,19 +133,19 @@ describe("The SideTrack GitHub Pages static build", () => {
     it("switches documentation angle while keeping on-site pair-browse targets", () => {
       cy.OptionsOfAngleSelectShouldIncludeMainAndArchitecture();
       cy.DisplayedValueOfAngleSelectShouldBe("main");
-      cy.SideTrackPaneShouldContainText("quick-start");
+      cy.ParallelDocsPaneShouldContainText("quick-start");
       cy.ShellPairBrowseLinkShouldMatchRelativeBrowseHtml();
       cy.ShellPairBrowseLinkShouldNotPointAtGithubHost();
 
       cy.ChooseValueOfAngleSelect("architecture");
       cy.DisplayedValueOfAngleSelectShouldBe("architecture");
-      cy.SideTrackPaneShouldContainText("architecture angle");
+      cy.ParallelDocsPaneShouldContainText("architecture angle");
       cy.ShellPairBrowseLinkShouldMatchRelativeBrowseHtml();
       cy.ShellPairBrowseLinkShouldNotPointAtGithubHost();
 
       cy.ChooseValueOfAngleSelect("main");
       cy.DisplayedValueOfAngleSelectShouldBe("main");
-      cy.SideTrackPaneShouldContainText("quick-start");
+      cy.ParallelDocsPaneShouldContainText("quick-start");
       cy.ShellPairBrowseLinkShouldMatchRelativeBrowseHtml();
       cy.ShellPairBrowseLinkShouldNotPointAtGithubHost();
     });
@@ -170,8 +173,8 @@ describe("The SideTrack GitHub Pages static build", () => {
     });
 
     it("still exposes README through the side-tracked files tree", () => {
-      cy.OpenSideTrackedFilesDisclosure();
-      cy.SideTrackedFilesTreeShouldContainReadmeLink();
+      cy.OpenParallelDocsedFilesDisclosure();
+      cy.ParallelDocsedFilesTreeShouldContainReadmeLink();
     });
   });
 });

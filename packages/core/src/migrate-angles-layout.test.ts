@@ -3,14 +3,14 @@ import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { sidetrackAnglesSentinelPath, sidetrackMarkdownPathForAngle } from "./paths.js";
+import { parallelDocsAnglesSentinelPath, parallelDocsMarkdownPathForAngle } from "./paths.js";
 import {
   discoverFlatCompanionMarkdownFiles,
   flatRelToSourcePath,
   planAnglesMigrationFromCompanions,
   rewriteIndexKeysForAnglesMigration,
 } from "./migrate-angles-layout.js";
-import type { SideTrackIndex } from "./model.js";
+import type { ParallelDocsIndex } from "./model.js";
 
 describe("Flat companion paths to primary source paths", () => {
   it("strips the trailing companion .md suffix", () => {
@@ -24,52 +24,52 @@ describe("Planning migration from flat companions to angles layout", () => {
     const plan = planAnglesMigrationFromCompanions(
       [
         {
-          flatSideTrackPath: ".sidetrack/source/README.md.md",
+          flatParallelDocsPath: ".parallel-docs/source/README.md.md",
           sourcePath: "README.md",
         },
       ],
       "main",
-      ".sidetrack",
+      ".parallel-docs",
     );
     expect(plan.moves).toHaveLength(1);
     expect(plan.moves[0]?.toRepoRel).toBe(
-      sidetrackMarkdownPathForAngle("README.md", "main", ".sidetrack"),
+      parallelDocsMarkdownPathForAngle("README.md", "main", ".parallel-docs"),
     );
-    expect(plan.flatToAnglePath.get(".sidetrack/source/README.md.md")).toBe(
+    expect(plan.flatToAnglePath.get(".parallel-docs/source/README.md.md")).toBe(
       plan.moves[0]?.toRepoRel,
     );
   });
 });
 
 describe("Rewriting index keys after an angles migration", () => {
-  it("rewrites bySideTrackPath keys and entry.sidetrackPath", () => {
-    const index: SideTrackIndex = {
+  it("rewrites byParallelDocsPath keys and entry.parallelDocsPath", () => {
+    const index: ParallelDocsIndex = {
       schemaVersion: 3,
-      bySideTrackPath: {
-        ".sidetrack/source/README.md.md": {
+      byParallelDocsPath: {
+        ".parallel-docs/source/README.md.md": {
           sourcePath: "README.md",
-          sidetrackPath: ".sidetrack/source/README.md.md",
+          parallelDocsPath: ".parallel-docs/source/README.md.md",
           blocks: [],
         },
       },
     };
     const map = new Map([
       [
-        ".sidetrack/source/README.md.md",
-        sidetrackMarkdownPathForAngle("README.md", "main", ".sidetrack"),
+        ".parallel-docs/source/README.md.md",
+        parallelDocsMarkdownPathForAngle("README.md", "main", ".parallel-docs"),
       ],
     ]);
     const next = rewriteIndexKeysForAnglesMigration(index, map);
-    const k = sidetrackMarkdownPathForAngle("README.md", "main", ".sidetrack");
-    expect(Object.keys(next.bySideTrackPath)).toEqual([k]);
-    expect(next.bySideTrackPath[k]?.sidetrackPath).toBe(k);
+    const k = parallelDocsMarkdownPathForAngle("README.md", "main", ".parallel-docs");
+    expect(Object.keys(next.byParallelDocsPath)).toEqual([k]);
+    expect(next.byParallelDocsPath[k]?.parallelDocsPath).toBe(k);
   });
 });
 
 describe("Discovering flat companion Markdown files", () => {
   it("given a repo with only flat companions, lists every *.md under source", async () => {
     const dir = await mkdtemp(path.join(os.tmpdir(), "cr-migrate-discover-"));
-    const storage = ".sidetrack";
+    const storage = ".parallel-docs";
     const sourceDir = path.join(dir, storage, "source");
     await mkdir(path.join(sourceDir, "docs", "spec"), { recursive: true });
     await writeFile(path.join(sourceDir, "README.md.md"), "# x\n", "utf8");
@@ -83,8 +83,8 @@ describe("Discovering flat companion Markdown files", () => {
 
   it("given the angles sentinel exists, returns an empty list", async () => {
     const dir = await mkdtemp(path.join(os.tmpdir(), "cr-migrate-sentinel-"));
-    const storage = ".sidetrack";
-    const sentinel = path.join(dir, ...sidetrackAnglesSentinelPath(storage).split("/"));
+    const storage = ".parallel-docs";
+    const sentinel = path.join(dir, ...parallelDocsAnglesSentinelPath(storage).split("/"));
     await mkdir(path.dirname(sentinel), { recursive: true });
     await writeFile(sentinel, "", "utf8");
     await writeFile(path.join(dir, storage, "source", "README.md.md"), "# x\n", "utf8");

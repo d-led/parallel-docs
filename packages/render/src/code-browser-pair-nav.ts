@@ -5,9 +5,9 @@
 
 export type DocumentedPairNavLike = {
   sourcePath: string;
-  sidetrackPath: string;
+  parallelDocsPath: string;
   staticBrowseUrl?: string;
-  sidetrackOnGithub?: string;
+  parallelDocsOnGithub?: string;
 };
 
 export function normPosixPath(s: string): string {
@@ -80,7 +80,7 @@ export function resolveStaticBrowseHref(
 }
 
 /**
- * Value for `#shell` `data-sidetrack-pair-browse-href`: keep portable `./browse/…` hub-relative
+ * Value for `#shell` `data-parallel-docs-pair-browse-href`: keep portable `./browse/…` hub-relative
  * URLs when the static site emits them (`*.html` or `…/index.html`); otherwise resolve like
  * {@link resolveStaticBrowseHref} for anchors and odd relative forms.
  */
@@ -100,13 +100,13 @@ export function staticBrowseHrefForShellDataAttribute(
 
 export function findDocumentedPair<T extends DocumentedPairNavLike>(
   pairs: readonly T[],
-  sidetrackPath: string,
+  parallelDocsPath: string,
   sourcePath: string,
 ): T | undefined {
-  const cr = normPosixPath(sidetrackPath);
+  const cr = normPosixPath(parallelDocsPath);
   const sp = normPosixPath(sourcePath);
   if (cr.length > 0) {
-    const hit = pairs.find((x) => normPosixPath(x.sidetrackPath) === cr);
+    const hit = pairs.find((x) => normPosixPath(x.parallelDocsPath) === cr);
     if (hit) return hit;
   }
   if (sp.length > 0) {
@@ -146,10 +146,10 @@ export function appendHtmlToOpaqueBrowseRequestUrl(rawUrl: string): string {
 export function isSameDocumentedPair(
   a: DocumentedPairNavLike,
   curSourcePath: string,
-  curSideTrackPath: string,
+  curParallelDocsPath: string,
 ): boolean {
   return (
     normPosixPath(a.sourcePath) === normPosixPath(curSourcePath) &&
-    normPosixPath(a.sidetrackPath) === normPosixPath(curSideTrackPath)
+    normPosixPath(a.parallelDocsPath) === normPosixPath(curParallelDocsPath)
   );
 }

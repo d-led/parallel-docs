@@ -19,7 +19,7 @@ export const NON_SYNC_TAIL_SLACK_ITEM_ID = "__NON_SYNC_TAIL_SLACK__";
  * **Local segments:** All other ids are column-local — no cross-column pairing, shared region height,
  * or coordinated start alignment.
  *
- * **Pipeline** (see `.sidetrack/source/packages/core/src/buffering-flow-synchronizer.ts/main.md`):
+ * **Pipeline** (see `.parallel-docs/source/packages/core/src/buffering-flow-synchronizer.ts/main.md`):
  * (1) Per shared sync-region id, add `bufferBelow` on the shorter copy so both sides span the same
  * region height; (2) align the row index of each region’s first content line, preferring to lower
  * `bufferAbove` on the later-starting side before raising slack on the earlier side; (3) pad the

@@ -12,8 +12,8 @@ export type ParsedAnchor =
  * Minimal anchor grammar (versioned; see docs/spec/anchors.md).
  * - lines:12-34
  * - symbol:SomeName
- * - marker:<id> (paired **region** comments in source — `//#region sidetrack:<id>` /
- *   `//#endregion sidetrack:<id>` in JS/TS, matching [Region Marker](https://marketplace.visualstudio.com/items?itemName=txava.region-marker) defaults; legacy `sidetrack:start id=<id>` / `sidetrack:end` still parses)
+ * - marker:<id> (paired **region** comments in source — `//#region parallelDocs:<id>` /
+ *   `//#endregion parallelDocs:<id>` in JS/TS, matching [Region Marker](https://marketplace.visualstudio.com/items?itemName=txava.region-marker) defaults; legacy `parallelDocs:start id=<id>` / `parallelDocs:end` still parses)
  */
 export function parseAnchor(anchor: string): ParsedAnchor {
   const trimmed = anchor.trim();

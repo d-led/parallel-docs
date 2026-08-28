@@ -1,6 +1,6 @@
 # Dual-pane scroll sync (normative)
 
-This document states **required** behaviour for the **code + sidetrack** dual-pane layout in static HTML (GitHub Pages, `sidetrack serve`, any host). It is implemented in the `@sidetrack/render` client bundle (`code-browser-client`).
+This document states **required** behaviour for the **code + parallel-docs** dual-pane layout in static HTML (GitHub Pages, `parallel-docs serve`, any host). It is implemented in the `@parallel-docs/render` client bundle (`code-browser-client`).
 
 ## Monotonicity (no opposite motion)
 
@@ -31,11 +31,11 @@ Block-aware sync, proportional sync, and mobile single-pane flip are **orthogona
 
 ## Source gaps and markdown inter-marker gaps
 
-Indexed blocks expose half-open source spans `[lo, hiExclusive)` per block. When the **source** viewport top falls **outside** every such span (a true gap between regions, including after the last span), the companion **MUST NOT** snap to the “nearest preceding” block head — that produces large backward jumps (e.g. sidetrack jumping to the top while the reader scrolls **down** through blank source). In those gaps the client **MUST** use the same proportional mirror mapping as the no-index fallback (`mirrorI` / `mirrorW`).
+Indexed blocks expose half-open source spans `[lo, hiExclusive)` per block. When the **source** viewport top falls **outside** every such span (a true gap between regions, including after the last span), the companion **MUST NOT** snap to the “nearest preceding” block head — that produces large backward jumps (e.g. parallel-docs jumping to the top while the reader scrolls **down** through blank source). In those gaps the client **MUST** use the same proportional mirror mapping as the no-index fallback (`mirrorI` / `mirrorW`).
 
 To avoid **block ↔ gap** flicker when the probe jitters at `hiExclusive`, the client **SHOULD** keep the last snapped block active for a small **trailing slack** (a few source lines after `hiExclusive`) before switching to gap mirror, and clear that lock only once the viewport is clearly past that slack.
 
-SideTrack-driven sync **SHOULD** continue to use the block whose marker is at or above the doc probe for normal companion prose between markers; that prose is not a “gap” in the source sense above.
+ParallelDocs-driven sync **SHOULD** continue to use the block whose marker is at or above the doc probe for normal companion prose between markers; that prose is not a “gap” in the source sense above.
 
 When the source pane shows **rendered Markdown** (`code-md-line-*` anchors), code→doc **SHOULD** still use the same block-aware mapping as raw `code-line-*` mode: viewport line probes are sparser (blank lines, fences, tables omit per-line anchors), but the **block trailing slack** above prevents block↔gap flicker when the probe lands in fenced/table neighborhoods inside a block. True inter-block gaps fall back to proportional mirror per the source-gap rule above.
 

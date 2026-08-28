@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { sidetrackRenderVersion } from "./package-version.js";
+import { parallelDocsRenderVersion } from "./package-version.js";
 
-describe("@sidetrack/render package version string", () => {
+describe("@parallel-docs/render package version string", () => {
   it("reads a semver-like version from this package.json", () => {
-    const v = sidetrackRenderVersion();
+    const v = parallelDocsRenderVersion();
     expect(v).toMatch(/^\d+\.\d+\.\d+/);
   });
 });

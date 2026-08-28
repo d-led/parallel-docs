@@ -1,16 +1,16 @@
 import { rm, stat, unlink } from "node:fs/promises";
 import path from "node:path";
 
-import { sidetrackAnglesLayoutEnabled, normalizeRepoRelativePath } from "./paths.js";
+import { parallelDocsAnglesLayoutEnabled, normalizeRepoRelativePath } from "./paths.js";
 import {
-  sidetrackPairSourceFileExistsOnDisk,
-  pairFromSideTrackSourceRel,
-} from "./sidetrack-disk-pairs.js";
-import { collectMdRelPathsUnderSourceAbs } from "./walk-sidetrack-source-md.js";
+  parallelDocsPairSourceFileExistsOnDisk,
+  pairFromParallelDocsSourceRel,
+} from "./parallel-docs-disk-pairs.js";
+import { collectMdRelPathsUnderSourceAbs } from "./walk-parallel-docs-source-md.js";
 
 export type OrphanCompanionMarkdownTarget = {
-  /** Repo-relative companion path (POSIX, e.g. `.sidetrack/source/docs/plan/plan.md/main.md`). */
-  sidetrackPath: string;
+  /** Repo-relative companion path (POSIX, e.g. `.parallel-docs/source/docs/plan/plan.md/main.md`). */
+  parallelDocsPath: string;
   /** Inferred primary source path the companion belongs to (missing as a regular file). */
   sourcePath: string;
   /** Absolute path to remove: a single `.md` file (flat) or an Angles directory under `source/`. */
@@ -46,7 +46,7 @@ export function orphanCompanionCleanupAbsPath(
  */
 export async function collectOrphanCompanionMarkdownTargets(
   repoRoot: string,
-  storageDir = ".sidetrack",
+  storageDir = ".parallel-docs",
 ): Promise<OrphanCompanionMarkdownTarget[]> {
   const storageNorm = normalizeRepoRelativePath(storageDir.replaceAll("\\", "/"));
   const sourceAbs = path.join(repoRoot, ...storageNorm.split("/"), "source");
@@ -56,13 +56,13 @@ export async function collectOrphanCompanionMarkdownTargets(
   } catch {
     return [];
   }
-  const anglesOn = sidetrackAnglesLayoutEnabled(repoRoot, storageDir);
+  const anglesOn = parallelDocsAnglesLayoutEnabled(repoRoot, storageDir);
   const byCleanupAbs = new Map<string, OrphanCompanionMarkdownTarget>();
 
   for (const rel of rels) {
-    const pair = pairFromSideTrackSourceRel(storageNorm, rel, anglesOn);
+    const pair = pairFromParallelDocsSourceRel(storageNorm, rel, anglesOn);
     if (!pair) continue;
-    if (await sidetrackPairSourceFileExistsOnDisk(repoRoot, pair.sourcePath)) continue;
+    if (await parallelDocsPairSourceFileExistsOnDisk(repoRoot, pair.sourcePath)) continue;
 
     const absCleanupPath = orphanCompanionCleanupAbsPath(repoRoot, storageNorm, rel, anglesOn);
     let cleanupIsDirectory: boolean;
@@ -76,14 +76,16 @@ export async function collectOrphanCompanionMarkdownTargets(
     const key = absCleanupPath;
     if (byCleanupAbs.has(key)) continue;
     byCleanupAbs.set(key, {
-      sidetrackPath: pair.sidetrackPath,
+      parallelDocsPath: pair.parallelDocsPath,
       sourcePath: pair.sourcePath,
       absCleanupPath,
       cleanupIsDirectory,
     });
   }
 
-  return [...byCleanupAbs.values()].sort((a, b) => a.sidetrackPath.localeCompare(b.sidetrackPath));
+  return [...byCleanupAbs.values()].sort((a, b) =>
+    a.parallelDocsPath.localeCompare(b.parallelDocsPath),
+  );
 }
 
 export type PruneOrphanCompanionMarkdownResult = {
@@ -97,7 +99,7 @@ export type PruneOrphanCompanionMarkdownResult = {
  */
 export async function pruneOrphanCompanionMarkdown(
   repoRoot: string,
-  storageDir = ".sidetrack",
+  storageDir = ".parallel-docs",
   options?: { dryRun?: boolean },
 ): Promise<PruneOrphanCompanionMarkdownResult> {
   const targets = await collectOrphanCompanionMarkdownTargets(repoRoot, storageDir);

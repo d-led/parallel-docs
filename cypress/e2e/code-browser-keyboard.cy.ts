@@ -6,7 +6,7 @@
  * `cypress/support/custom-commands/code-browser-keyboard.ts` so specs stay readable.
  *
  * Ordering note: indexed browse rows are sorted by `sourcePath` (`uniqueSourceFilePreviewRows` in
- * `@sidetrack/render`). On the default README@main home, the first row is therefore not README,
+ * `@parallel-docs/render`). On the default README@main home, the first row is therefore not README,
  * so Enter from the search field is expected to change `location.pathname` (navigate to another pair).
  */
 describe("Code browser keyboard usability on the static site", () => {
@@ -76,7 +76,7 @@ describe("Code browser keyboard usability on the static site", () => {
       describe("when they type a token query and wait for merged hits", () => {
         beforeEach(() => {
           cy.FocusOnSearchField();
-          cy.TypeTextInSearchField("sidetrack");
+          cy.TypeTextInSearchField("parallel-docs");
           cy.SearchResultsPanelShouldBeVisible();
           cy.SearchResultsHitButtonsShouldExist();
         });
@@ -96,51 +96,51 @@ describe("Code browser keyboard usability on the static site", () => {
     describe("the Side-tracked files hub", () => {
       describe("when they open it and the tree has finished loading", () => {
         beforeEach(() => {
-          cy.OpenSideTrackedFilesHubWithTreeVisible();
+          cy.OpenParallelDocsedFilesHubWithTreeVisible();
         });
 
         it("then ArrowDown from the filter moves focus onto the first file link", () => {
-          cy.MoveKeyboardFocusFromSideTrackedFilterToFirstTreeLink();
-          cy.FirstSideTrackedTreeFileLinkShouldBeFocused();
+          cy.MoveKeyboardFocusFromParallelDocsedFilterToFirstTreeLink();
+          cy.FirstParallelDocsedTreeFileLinkShouldBeFocused();
         });
 
         it("then ArrowUp from the first file link returns focus to the filter", () => {
-          cy.MoveKeyboardFocusFromSideTrackedFilterToFirstTreeLink();
-          cy.FirstSideTrackedTreeFileLinkShouldBeFocused();
+          cy.MoveKeyboardFocusFromParallelDocsedFilterToFirstTreeLink();
+          cy.FirstParallelDocsedTreeFileLinkShouldBeFocused();
           cy.PressArrowUpInFocusedElement();
-          cy.SideTrackedFilesFilterShouldBeFocused();
+          cy.ParallelDocsedFilesFilterShouldBeFocused();
         });
 
         describe("and the tree exposes at least two file links", () => {
           beforeEach(() => {
-            cy.SideTrackedFilesTreeFileLinksShouldBeAtLeast(2);
-            cy.MoveKeyboardFocusFromSideTrackedFilterToFirstTreeLink();
-            cy.FirstSideTrackedTreeFileLinkShouldBeFocused();
+            cy.ParallelDocsedFilesTreeFileLinksShouldBeAtLeast(2);
+            cy.MoveKeyboardFocusFromParallelDocsedFilterToFirstTreeLink();
+            cy.FirstParallelDocsedTreeFileLinkShouldBeFocused();
           });
 
           it("then ArrowDown moves focus to the second file link", () => {
             cy.PressArrowDownInFocusedElement();
-            cy.SideTrackedTreeFileLinkAtIndexShouldBeFocused(1);
+            cy.ParallelDocsedTreeFileLinkAtIndexShouldBeFocused(1);
           });
 
           it("then ArrowUp from the second link focuses the first link again", () => {
             cy.PressArrowDownInFocusedElement();
-            cy.SideTrackedTreeFileLinkAtIndexShouldBeFocused(1);
+            cy.ParallelDocsedTreeFileLinkAtIndexShouldBeFocused(1);
             cy.PressArrowUpInFocusedElement();
-            cy.SideTrackedTreeFileLinkAtIndexShouldBeFocused(0);
+            cy.ParallelDocsedTreeFileLinkAtIndexShouldBeFocused(0);
           });
 
           it("then ArrowDown through the list scrolls the tree so the focused link stays visible", () => {
-            cy.ConstrainSideTrackedFilesTreeHeightForScrollCoverage();
+            cy.ConstrainParallelDocsedFilesTreeHeightForScrollCoverage();
             cy.TreeKeyboardNavigateFromFirstLinkToLastLink();
-            cy.SideTrackedFilesTreeScrollTopShouldBeGreaterThan(0);
+            cy.ParallelDocsedFilesTreeScrollTopShouldBeGreaterThan(0);
           });
         });
 
         it("then clicking outside the hub on the page footer closes the tree", () => {
-          cy.SideTrackedFilesHubOpenPropShouldBe(true);
-          cy.ClickPageFooterToDismissSideTrackedFilesHub();
-          cy.SideTrackedFilesHubOpenPropShouldBe(false);
+          cy.ParallelDocsedFilesHubOpenPropShouldBe(true);
+          cy.ClickPageFooterToDismissParallelDocsedFilesHub();
+          cy.ParallelDocsedFilesHubOpenPropShouldBe(false);
         });
       });
     });
@@ -154,12 +154,12 @@ describe("Code browser keyboard usability on the static site", () => {
 
     describe("the Side-tracked files hub", () => {
       it("then the reader can still move between the filter and the first tree link with the arrow keys", () => {
-        cy.OpenSideTrackedFilesHubWithTreeVisible();
-        cy.SideTrackedFilesTreeShouldContainReadmeLink();
-        cy.MoveKeyboardFocusFromSideTrackedFilterToFirstTreeLink();
-        cy.FirstSideTrackedTreeFileLinkShouldBeFocused();
+        cy.OpenParallelDocsedFilesHubWithTreeVisible();
+        cy.ParallelDocsedFilesTreeShouldContainReadmeLink();
+        cy.MoveKeyboardFocusFromParallelDocsedFilterToFirstTreeLink();
+        cy.FirstParallelDocsedTreeFileLinkShouldBeFocused();
         cy.PressArrowUpInFocusedElement();
-        cy.SideTrackedFilesFilterShouldBeFocused();
+        cy.ParallelDocsedFilesFilterShouldBeFocused();
       });
     });
   });

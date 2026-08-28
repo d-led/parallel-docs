@@ -24,7 +24,7 @@ describe("applyBlockStretchRowBuffers", () => {
     const dom = new JSDOM(
       `<!doctype html><html><body>
         <table class="block-stretch"><tbody>
-        <tr class="stretch-row stretch-row--block" data-sidetrack-stretch-sync-id="r1">
+        <tr class="stretch-row stretch-row--block" data-parallel-docs-stretch-sync-id="r1">
           <td class="stretch-code"><div class="stretch-cell-measure"><div class="stretch-code-stack"></div></div></td>
           <td class="stretch-doc"><div class="stretch-cell-measure"><div class="stretch-doc-inner"></div></div></td>
         </tr>
@@ -57,11 +57,11 @@ describe("applyBlockStretchRowBuffers", () => {
     const dom = new JSDOM(
       `<!doctype html><html><body>
         <table class="block-stretch"><tbody>
-        <tr class="stretch-row stretch-row--block" data-sidetrack-stretch-sync-id="r1">
+        <tr class="stretch-row stretch-row--block" data-parallel-docs-stretch-sync-id="r1">
           <td class="stretch-code"><div class="stretch-cell-measure"><div class="stretch-code-stack"></div></div></td>
           <td class="stretch-doc"><div class="stretch-cell-measure"><div class="stretch-doc-inner"></div></div></td>
         </tr>
-        <tr class="stretch-row stretch-row--gap" data-sidetrack-stretch-sync-id="__gap__0">
+        <tr class="stretch-row stretch-row--gap" data-parallel-docs-stretch-sync-id="__gap__0">
           <td class="stretch-code"><div class="stretch-cell-measure"><div class="stretch-code-stack"></div></div></td>
           <td class="stretch-doc"><div class="stretch-cell-measure"><div class="stretch-doc-inner"></div></div></td>
         </tr>

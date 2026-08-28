@@ -2,13 +2,13 @@
 /**
  * Serves prebuilt `_site` for Cypress E2E (see `package.json` `e2e:server`).
  *
- * Uses the same `serve-handler` wiring as `sidetrack serve` (`packages/cli/src/serve.ts`):
+ * Uses the same `serve-handler` wiring as `parallel-docs serve` (`packages/cli/src/serve.ts`):
  * `serve.json` `renderSingle`, `/` → `index.html`, and opaque `/browse/…` URL normalization.
  * That matches `npm run serve` and GitHub Pages without the external Vercel **`serve`** CLI
  * (it is not a workspace dependency and was never required for local dev).
  *
- * Default port **14173** — override with **`SIDETRACK_E2E_PORT`** so it does not collide with
- * **`sidetrack serve`** on **4173**.
+ * Default port **14173** — override with **`PARALLEL_DOCS_E2E_PORT`** so it does not collide with
+ * **`parallel-docs serve`** on **4173**.
  */
 import { existsSync, readFileSync } from "node:fs";
 import { createServer } from "node:http";
@@ -19,10 +19,10 @@ import handler from "serve-handler";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const siteAbs = path.join(repoRoot, "_site");
-const port = Number.parseInt((process.env.SIDETRACK_E2E_PORT ?? "14173").trim(), 10);
+const port = Number.parseInt((process.env.PARALLEL_DOCS_E2E_PORT ?? "14173").trim(), 10);
 
 if (!Number.isFinite(port) || port < 1 || port > 65535) {
-  process.stderr.write("e2e-static-serve: SIDETRACK_E2E_PORT must be 1–65535\n");
+  process.stderr.write("e2e-static-serve: PARALLEL_DOCS_E2E_PORT must be 1–65535\n");
   process.exit(1);
 }
 

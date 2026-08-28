@@ -3,12 +3,12 @@ import { ALL_TOOLS, type McpToolDef } from "./mcp-tools.js";
 import serverPackage from "../package.json" with { type: "json" };
 
 /**
- * Create a configured MCP server with all SideTrack tools registered.
- * @param repoRoot Absolute path to the SideTrack project root
+ * Create a configured MCP server with all ParallelDocs tools registered.
+ * @param repoRoot Absolute path to the ParallelDocs project root
  */
 export function createMcpServer(repoRoot: string): McpServer {
   const server = new McpServer({
-    name: "sidetrack-mcp",
+    name: "parallel-docs-mcp",
     version: serverPackage.version,
   });
 

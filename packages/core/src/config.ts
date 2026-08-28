@@ -4,9 +4,9 @@ import { parse as parseToml } from "@iarna/toml";
 
 import { assertValidAngleId } from "./angles.js";
 import { githubRepoBlobFileUrl, parseGithubRepoWebUrl } from "./github-url.js";
-import { sidetrackMarkdownPathForAngle, normalizeRepoRelativePath } from "./paths.js";
+import { parallelDocsMarkdownPathForAngle, normalizeRepoRelativePath } from "./paths.js";
 
-export type SideTrackToml = {
+export type ParallelDocsToml = {
   storage?: { dir?: string };
   scm?: { provider?: string };
   render?: {
@@ -18,7 +18,7 @@ export type SideTrackToml = {
     mermaid_runtime_path?: string;
     syntaxTheme?: string;
     /**
-     * When true, `https://github.com/<owner>/<repo>/blob|tree/<branch>/…` links in sidetrack
+     * When true, `https://github.com/<owner>/<repo>/blob|tree/<branch>/…` links in parallel-docs
      * Markdown are rewritten to paths relative to the generated HTML file (see
      * `static_site.github_url` for owner/repo). Requires a parseable repository URL.
      */
@@ -26,7 +26,7 @@ export type SideTrackToml = {
   };
   anchors?: { defaultStrategy?: string[] };
   /**
-   * Named **Angles** — multiple sidetracks per source file (see `docs/spec/storage.md`).
+   * Named **Angles** — multiple parallel-docss per source file (see `docs/spec/storage.md`).
    * Keys use snake_case in TOML (`[angles]`).
    */
   angles?: {
@@ -41,7 +41,7 @@ export type SideTrackToml = {
    */
   static_site?: {
     title?: string;
-    /** Markdown shown above the optional sidetrack file and GitHub link. */
+    /** Markdown shown above the optional parallel-docs file and GitHub link. */
     intro?: string;
     github_url?: string;
     /** Optional prefix used for source links when static hosting does not serve repo files. */
@@ -56,8 +56,8 @@ export type SideTrackToml = {
      * This intentionally does not control editor defaults (`[angles].default_angle`).
      */
     default_angle?: string;
-    /** Repo-relative path to additional sidetrack Markdown (optional). */
-    sidetrack_markdown?: string;
+    /** Repo-relative path to additional parallel-docs Markdown (optional). */
+    parallel_docs_markdown?: string;
     /** Branch name embedded in GitHub blob URLs for `related_github_files` (default `main`). */
     github_blob_branch?: string;
     /**
@@ -96,7 +96,7 @@ export type ResolvedStaticSite = {
   githubBlobBranch: string;
   sourceFile: string;
   defaultAngleId: string | null;
-  sidetrackMarkdownFile: string;
+  parallelDocsMarkdownFile: string;
   /** Toolbar “Also on GitHub …” links for the static code browser. */
   relatedGithubNav: ResolvedGithubNavLink[];
   stretchBufferSync: StaticSiteStretchBufferSync;
@@ -110,7 +110,7 @@ export type ResolvedAngles = {
   definitions: ResolvedAngleDefinition[];
 };
 
-export type ResolvedSideTrackConfig = {
+export type ResolvedParallelDocsConfig = {
   storageDir: string;
   scmProvider: "git";
   render: {
@@ -125,22 +125,22 @@ export type ResolvedSideTrackConfig = {
 };
 
 const defaultStaticSite: ResolvedStaticSite = {
-  title: "SideTrack",
+  title: "ParallelDocs",
   introMarkdown: "",
   githubUrl: null,
   sourceLinkPrefix: null,
   githubBlobBranch: "main",
   sourceFile: "README.md",
   defaultAngleId: null,
-  sidetrackMarkdownFile: "",
+  parallelDocsMarkdownFile: "",
   relatedGithubNav: [],
   stretchBufferSync: DEFAULT_STRETCH_BUFFER_SYNC,
 };
 
 const defaultAngles: ResolvedAngles = { defaultAngleId: null, definitions: [] };
 
-const defaultConfig: ResolvedSideTrackConfig = {
-  storageDir: ".sidetrack",
+const defaultConfig: ResolvedParallelDocsConfig = {
+  storageDir: ".parallel-docs",
   scmProvider: "git",
   render: {
     mermaid: true,
@@ -171,9 +171,9 @@ export function resolveMermaidRuntimePath(
 }
 
 /**
- * Reject `.sidetrack.toml` path values that would escape the repository
- * root. Trusting raw config strings would let a malicious `.sidetrack.toml`
- * redirect SideTrack's `mkdir`/read operations outside the repo on an
+ * Reject `.parallel-docs.toml` path values that would escape the repository
+ * root. Trusting raw config strings would let a malicious `.parallel-docs.toml`
+ * redirect ParallelDocs's `mkdir`/read operations outside the repo on an
  * otherwise unsuspecting developer machine.
  */
 function assertSafeRepoRelativePath(label: string, value: string | undefined): void {
@@ -182,13 +182,13 @@ function assertSafeRepoRelativePath(label: string, value: string | undefined): v
     normalizeRepoRelativePath(value);
   } catch {
     throw new Error(
-      `.sidetrack.toml ${label} must be a repository-relative path without ".." segments (got: ${value})`,
+      `.parallel-docs.toml ${label} must be a repository-relative path without ".." segments (got: ${value})`,
     );
   }
 }
 
 /**
- * SideTrack's storage directory must never live inside `.git/`. Git treats
+ * ParallelDocs's storage directory must never live inside `.git/`. Git treats
  * `.git/` as opaque metadata; colocating our storage there would both
  * confuse Git (adding untracked-but-inside-.git files) and risk being wiped
  * by routine Git operations (e.g. `git gc`, `git clean -fdx`, re-clone).
@@ -199,7 +199,7 @@ function assertStorageDirNotInsideGit(value: string | undefined): void {
   const firstSegment = normalized.split("/")[0] ?? "";
   if (firstSegment.toLowerCase() === ".git") {
     throw new Error(
-      `.sidetrack.toml storage.dir must not live inside .git/ (got: ${value}). ` +
+      `.parallel-docs.toml storage.dir must not live inside .git/ (got: ${value}). ` +
         `Git treats .git/ as opaque metadata and routine operations can wipe it.`,
     );
   }
@@ -223,7 +223,7 @@ function mergeAngleDefinitions(
   return out;
 }
 
-function resolveAngles(parsed: SideTrackToml): ResolvedAngles {
+function resolveAngles(parsed: ParallelDocsToml): ResolvedAngles {
   const a = parsed.angles;
   if (!a) {
     return { ...defaultAngles };
@@ -266,7 +266,7 @@ function mergeRelatedGithubNav(
   return out;
 }
 
-function resolvedStaticSiteSourceFile(ss: SideTrackToml["static_site"] | undefined): string {
+function resolvedStaticSiteSourceFile(ss: ParallelDocsToml["static_site"] | undefined): string {
   return (
     nonEmptyTrimmed(ss?.default_source_file) ??
     nonEmptyTrimmed(ss?.source_file) ??
@@ -275,25 +275,25 @@ function resolvedStaticSiteSourceFile(ss: SideTrackToml["static_site"] | undefin
 }
 
 function resolvedStaticSiteDefaultAngleId(
-  ss: SideTrackToml["static_site"] | undefined,
+  ss: ParallelDocsToml["static_site"] | undefined,
 ): string | null {
   const raw = nonEmptyTrimmed(ss?.default_angle);
   return raw ? assertValidAngleId(raw) : null;
 }
 
 function resolvedStaticSiteMarkdownFile(
-  ss: SideTrackToml["static_site"] | undefined,
+  ss: ParallelDocsToml["static_site"] | undefined,
   sourceFile: string,
   storageDir: string,
   defaultAngleId: string | null,
 ): string {
-  const explicit = nonEmptyTrimmed(ss?.sidetrack_markdown) ?? null;
+  const explicit = nonEmptyTrimmed(ss?.parallel_docs_markdown) ?? null;
   if (explicit) return explicit;
-  if (!defaultAngleId) return defaultStaticSite.sidetrackMarkdownFile;
-  return sidetrackMarkdownPathForAngle(sourceFile, defaultAngleId, storageDir);
+  if (!defaultAngleId) return defaultStaticSite.parallelDocsMarkdownFile;
+  return parallelDocsMarkdownPathForAngle(sourceFile, defaultAngleId, storageDir);
 }
 
-function resolveStaticSite(parsed: SideTrackToml, storageDir: string): ResolvedStaticSite {
+function resolveStaticSite(parsed: ParallelDocsToml, storageDir: string): ResolvedStaticSite {
   const ss = parsed.static_site;
   const githubUrl = nonEmptyTrimmed(ss?.github_url);
   const githubBlobBranch =
@@ -308,7 +308,7 @@ function resolveStaticSite(parsed: SideTrackToml, storageDir: string): ResolvedS
     githubBlobBranch,
     sourceFile,
     defaultAngleId,
-    sidetrackMarkdownFile: resolvedStaticSiteMarkdownFile(
+    parallelDocsMarkdownFile: resolvedStaticSiteMarkdownFile(
       ss,
       sourceFile,
       storageDir,
@@ -324,7 +324,7 @@ function resolvedStretchBufferSync(raw: string | undefined): StaticSiteStretchBu
   if (t === undefined || t === "") return DEFAULT_STRETCH_BUFFER_SYNC;
   if (t === "table" || t === "flow-synchronizer") return t;
   throw new Error(
-    `.sidetrack.toml static_site.stretch_buffer_sync must be "table" or "flow-synchronizer" (got: ${String(raw)})`,
+    `.parallel-docs.toml static_site.stretch_buffer_sync must be "table" or "flow-synchronizer" (got: ${String(raw)})`,
   );
 }
 
@@ -337,24 +337,24 @@ function assertValidSourceLinkPrefix(value: string | undefined): void {
     u = new URL(t);
   } catch {
     throw new Error(
-      `.sidetrack.toml static_site.source_link_prefix must be an absolute path prefix or http(s) URL (got: ${value})`,
+      `.parallel-docs.toml static_site.source_link_prefix must be an absolute path prefix or http(s) URL (got: ${value})`,
     );
   }
   const proto = u.protocol.toLowerCase();
   if (proto !== "http:" && proto !== "https:") {
     throw new Error(
-      `.sidetrack.toml static_site.source_link_prefix must be an absolute path prefix or http(s) URL (got: ${value})`,
+      `.parallel-docs.toml static_site.source_link_prefix must be an absolute path prefix or http(s) URL (got: ${value})`,
     );
   }
 }
 
-function assertSafeConfigPaths(parsed: SideTrackToml): void {
+function assertSafeConfigPaths(parsed: ParallelDocsToml): void {
   assertSafeRepoRelativePath("storage.dir", parsed.storage?.dir);
   assertStorageDirNotInsideGit(parsed.storage?.dir);
   const ss = parsed.static_site;
   assertSafeRepoRelativePath("static_site.default_source_file", ss?.default_source_file);
   assertSafeRepoRelativePath("static_site.source_file", ss?.source_file);
-  assertSafeRepoRelativePath("static_site.sidetrack_markdown", ss?.sidetrack_markdown);
+  assertSafeRepoRelativePath("static_site.parallel_docs_markdown", ss?.parallel_docs_markdown);
   assertValidSourceLinkPrefix(ss?.source_link_prefix);
   for (let i = 0; i < (ss?.related_github_files?.length ?? 0); i++) {
     assertSafeRepoRelativePath(
@@ -364,7 +364,9 @@ function assertSafeConfigPaths(parsed: SideTrackToml): void {
   }
 }
 
-function resolveRenderConfig(parsed: SideTrackToml | null): ResolvedSideTrackConfig["render"] {
+function resolveRenderConfig(
+  parsed: ParallelDocsToml | null,
+): ResolvedParallelDocsConfig["render"] {
   const r = parsed?.render;
   return {
     mermaid: r?.mermaid ?? defaultConfig.render.mermaid,
@@ -375,7 +377,9 @@ function resolveRenderConfig(parsed: SideTrackToml | null): ResolvedSideTrackCon
   };
 }
 
-export function mergeSideTrackConfig(parsed: SideTrackToml | null): ResolvedSideTrackConfig {
+export function mergeParallelDocsConfig(
+  parsed: ParallelDocsToml | null,
+): ResolvedParallelDocsConfig {
   if (!parsed) return { ...defaultConfig };
   const scm = parsed.scm?.provider ?? defaultConfig.scmProvider;
   if (scm !== "git") {
@@ -395,13 +399,15 @@ export function mergeSideTrackConfig(parsed: SideTrackToml | null): ResolvedSide
   };
 }
 
-export async function loadSideTrackConfig(repoRoot: string): Promise<ResolvedSideTrackConfig> {
-  const configPath = path.join(repoRoot, ".sidetrack.toml");
+export async function loadParallelDocsConfig(
+  repoRoot: string,
+): Promise<ResolvedParallelDocsConfig> {
+  const configPath = path.join(repoRoot, ".parallel-docs.toml");
   try {
     const raw = await fs.readFile(configPath, "utf8");
     if (!raw.trim()) return { ...defaultConfig };
-    const parsed = parseToml(raw) as SideTrackToml;
-    return mergeSideTrackConfig(parsed);
+    const parsed = parseToml(raw) as ParallelDocsToml;
+    return mergeParallelDocsConfig(parsed);
   } catch (err) {
     const code = (err as NodeJS.ErrnoException).code;
     if (code === "ENOENT") return { ...defaultConfig };

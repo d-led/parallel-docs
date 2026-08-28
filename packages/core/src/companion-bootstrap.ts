@@ -1,29 +1,29 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
-import { loadSideTrackConfig } from "./config.js";
+import { loadParallelDocsConfig } from "./config.js";
 import { emptyIndex } from "./metadata.js";
 import type { SourceFileIndexEntry } from "./model.js";
-import { resolveSideTrackMarkdownPath } from "./sidetrack-path-resolution.js";
+import { resolveParallelDocsMarkdownPath } from "./parallel-docs-path-resolution.js";
 import { normalizeRepoRelativePath } from "./paths.js";
 import { readIndex, writeIndex } from "./validate-project.js";
 
 export type EnsureCompanionForSourceOptions = {
   angleId?: string | null;
   initialMarkdown?: string;
-  sidetrackPath?: string;
+  parallelDocsPath?: string;
 };
 
 export type EnsureCompanionForSourceResult = {
   sourcePath: string;
-  sidetrackPath: string;
+  parallelDocsPath: string;
   createdMarkdown: boolean;
   createdIndexEntry: boolean;
 };
 
 export function companionPlaceholderMarkdown(sourcePath?: string): string {
   const normalized = sourcePath?.trim();
-  if (!normalized) return "# SideTrack\n\n";
+  if (!normalized) return "# ParallelDocs\n\n";
   return `# ${normalized}\n\nWrite documentation for ${normalized} here.\n`;
 }
 
@@ -41,7 +41,7 @@ function ensureEntryMatchesSource(entry: SourceFileIndexEntry, sourcePath: strin
   const requested = normalizeRepoRelativePath(sourcePath);
   if (existing !== requested) {
     throw new Error(
-      `sidetrack path ${entry.sidetrackPath} is already indexed for ${entry.sourcePath}, not ${sourcePath}`,
+      `parallel-docs path ${entry.parallelDocsPath} is already indexed for ${entry.sourcePath}, not ${sourcePath}`,
     );
   }
 }
@@ -51,15 +51,19 @@ export async function ensureCompanionForSource(
   sourcePath: string,
   opts: EnsureCompanionForSourceOptions = {},
 ): Promise<EnsureCompanionForSourceResult> {
-  const cfg = await loadSideTrackConfig(repoRoot);
+  const cfg = await loadParallelDocsConfig(repoRoot);
   const normalizedSourcePath = normalizeRepoRelativePath(sourcePath.replaceAll("\\", "/"));
-  const explicitSideTrackPath = opts.sidetrackPath?.trim();
-  const sidetrackPath =
-    explicitSideTrackPath && explicitSideTrackPath.length > 0
-      ? normalizeRepoRelativePath(explicitSideTrackPath.replaceAll("\\", "/"))
-      : resolveSideTrackMarkdownPath(repoRoot, normalizedSourcePath, cfg, opts.angleId ?? undefined)
-          .sidetrackPath;
-  const mdAbs = path.resolve(repoRoot, sidetrackPath);
+  const explicitParallelDocsPath = opts.parallelDocsPath?.trim();
+  const parallelDocsPath =
+    explicitParallelDocsPath && explicitParallelDocsPath.length > 0
+      ? normalizeRepoRelativePath(explicitParallelDocsPath.replaceAll("\\", "/"))
+      : resolveParallelDocsMarkdownPath(
+          repoRoot,
+          normalizedSourcePath,
+          cfg,
+          opts.angleId ?? undefined,
+        ).parallelDocsPath;
+  const mdAbs = path.resolve(repoRoot, parallelDocsPath);
 
   let createdMarkdown = false;
   if (!(await pathExists(mdAbs))) {
@@ -73,16 +77,16 @@ export async function ensureCompanionForSource(
   }
 
   let index = (await readIndex(repoRoot)) ?? emptyIndex();
-  const existing = index.bySideTrackPath[sidetrackPath];
+  const existing = index.byParallelDocsPath[parallelDocsPath];
   let createdIndexEntry = false;
   if (!existing) {
     index = {
       ...index,
-      bySideTrackPath: {
-        ...index.bySideTrackPath,
-        [sidetrackPath]: {
+      byParallelDocsPath: {
+        ...index.byParallelDocsPath,
+        [parallelDocsPath]: {
           sourcePath: normalizedSourcePath,
-          sidetrackPath,
+          parallelDocsPath,
           blocks: [],
         },
       },
@@ -95,7 +99,7 @@ export async function ensureCompanionForSource(
 
   return {
     sourcePath: normalizedSourcePath,
-    sidetrackPath,
+    parallelDocsPath,
     createdMarkdown,
     createdIndexEntry,
   };

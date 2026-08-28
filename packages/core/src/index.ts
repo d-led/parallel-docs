@@ -1,4 +1,4 @@
-export type { SideTrackBlock, SideTrackIndex, SourceFileIndexEntry } from "./model.js";
+export type { ParallelDocsBlock, ParallelDocsIndex, SourceFileIndexEntry } from "./model.js";
 export { coerceIndexSchemaVersion, CURRENT_SCHEMA_VERSION } from "./model.js";
 export type {
   AddBlockToIndexInput,
@@ -6,27 +6,27 @@ export type {
   BlockRange,
   CreateBlockForRangeInput,
   CreatedBlock,
-  WrapSourceLineRangeWithSideTrackMarkersInput,
-  WrapSourceLineRangeWithSideTrackMarkersResult,
+  WrapSourceLineRangeWithParallelDocsMarkersInput,
+  WrapSourceLineRangeWithParallelDocsMarkersResult,
 } from "./blocks.js";
 export {
   addBlockToIndex,
   alignAndCleanRegions,
-  appendBlockToSideTrack,
+  appendBlockToParallelDocs,
   createBlockForRange,
   generateBlockId,
   insertBlockBySourceMarkerOrder,
-  removeBlockFromSideTrack,
+  removeBlockFromParallelDocs,
   removeBlockFromIndex,
   removeSourceMarkersFromText,
-  wrapSourceLineRangeWithSideTrackMarkers,
+  wrapSourceLineRangeWithParallelDocsMarkers,
 } from "./blocks.js";
 export { healSourceFile } from "./self-healing.js";
 export { assertValidAngleId } from "./angles.js";
 export {
-  applyAnglesFlatMigrationToSideTrackToml,
+  applyAnglesFlatMigrationToParallelDocsToml,
   ensureAnglesSentinelFile,
-  upsertAngleDefinitionInSideTrackToml,
+  upsertAngleDefinitionInParallelDocsToml,
 } from "./angles-toml.js";
 export type {
   ApplyAnglesFlatMigrationTomlInput,
@@ -35,36 +35,36 @@ export type {
 export {
   defaultAngleIdForOpen,
   FALLBACK_DEFAULT_ANGLE_ID,
-  resolveSideTrackMarkdownPath,
-} from "./sidetrack-path-resolution.js";
-export type { ResolvedSideTrackMarkdownPath } from "./sidetrack-path-resolution.js";
+  resolveParallelDocsMarkdownPath,
+} from "./parallel-docs-path-resolution.js";
+export type { ResolvedParallelDocsMarkdownPath } from "./parallel-docs-path-resolution.js";
 export {
-  sidetrackAnglesLayoutEnabled,
-  sidetrackAnglesSentinelPath,
-  sidetrackMarkdownPath,
-  sidetrackMarkdownPathForAngle,
+  parallelDocsAnglesLayoutEnabled,
+  parallelDocsAnglesSentinelPath,
+  parallelDocsMarkdownPath,
+  parallelDocsMarkdownPathForAngle,
   defaultMetadataIndexPath,
   normalizeRepoRelativePath,
   resolvePathUnderRepoRoot,
 } from "./paths.js";
 export { findMonorepoPackagesDir, monorepoLayoutStartDir } from "./monorepo-layout.js";
 export type {
-  SideTrackStaticBrowsePairPaths,
-  SideTrackStaticBrowsePathResolver,
+  ParallelDocsStaticBrowsePairPaths,
+  ParallelDocsStaticBrowsePathResolver,
 } from "./browse-contract.js";
-export { defaultSideTrackStaticBrowsePathResolver } from "./browse-path-default.js";
-export { staticBrowseIndexRelPathFromPair } from "./sidetrack-static-browse-path.js";
+export { defaultParallelDocsStaticBrowsePathResolver } from "./browse-path-default.js";
+export { staticBrowseIndexRelPathFromPair } from "./parallel-docs-static-browse-path.js";
 export {
-  sidetrackActiveEditorUiFlags,
-  sidetrackStorageSourcePrefix,
-} from "./sidetrack-active-editor-ui-context.js";
-export type { SideTrackActiveEditorUiFlags } from "./sidetrack-active-editor-ui-context.js";
+  parallelDocsActiveEditorUiFlags,
+  parallelDocsStorageSourcePrefix,
+} from "./parallel-docs-active-editor-ui-context.js";
+export type { ParallelDocsActiveEditorUiFlags } from "./parallel-docs-active-editor-ui-context.js";
 export {
-  sidetrackPairSourceFileExistsOnDisk,
-  discoverSideTrackPairsOnDisk,
-  pairFromSideTrackSourceRel,
-} from "./sidetrack-disk-pairs.js";
-export type { DiskSideTrackPair } from "./sidetrack-disk-pairs.js";
+  parallelDocsPairSourceFileExistsOnDisk,
+  discoverParallelDocsPairsOnDisk,
+  pairFromParallelDocsSourceRel,
+} from "./parallel-docs-disk-pairs.js";
+export type { DiskParallelDocsPair } from "./parallel-docs-disk-pairs.js";
 export {
   collectOrphanCompanionMarkdownTargets,
   orphanCompanionCleanupAbsPath,
@@ -75,18 +75,18 @@ export type {
   PruneOrphanCompanionMarkdownResult,
 } from "./orphan-companion-markdown.js";
 export type {
-  SideTrackToml,
+  ParallelDocsToml,
   ResolvedAngleDefinition,
   ResolvedAngles,
-  ResolvedSideTrackConfig,
+  ResolvedParallelDocsConfig,
   ResolvedGithubNavLink,
   ResolvedStaticSite,
   StaticSiteStretchBufferSync,
 } from "./config.js";
 export {
   DEFAULT_STRETCH_BUFFER_SYNC,
-  loadSideTrackConfig,
-  mergeSideTrackConfig,
+  loadParallelDocsConfig,
+  mergeParallelDocsConfig,
   resolveMermaidRuntimePath,
 } from "./config.js";
 export { githubRepoBlobFileUrl, parseGithubRepoWebUrl } from "./github-url.js";
@@ -109,10 +109,10 @@ export { formatLineRange, parseAnchor } from "./anchors.js";
 export type { ScmPathRename, ScmProvider } from "./scm/scm-provider.js";
 export { GitScmProvider, parseGitRenameLines } from "./scm/git-scm-provider.js";
 export {
-  applyPathRenamesToSideTrackIndex,
-  inferAngleIdFromSideTrackPath,
-} from "./sidetrack-index-renames.js";
-export type { PathRename } from "./sidetrack-index-renames.js";
+  applyPathRenamesToParallelDocsIndex,
+  inferAngleIdFromParallelDocsPath,
+} from "./parallel-docs-index-renames.js";
+export type { PathRename } from "./parallel-docs-index-renames.js";
 export type { BlockDiagnostic } from "./staleness.js";
 export { diagnoseBlock } from "./staleness.js";
 export type {
@@ -127,14 +127,14 @@ export {
   writeIndex,
 } from "./validate-project.js";
 export {
-  DEFAULT_SIDETRACK_TOML,
-  initializeSideTrackProject,
-  isSideTrackProjectInitialized,
+  DEFAULT_PARALLEL_DOCS_TOML,
+  initializeParallelDocsProject,
+  isParallelDocsProjectInitialized,
   pathExists,
 } from "./init-project.js";
 export type {
-  InitializeSideTrackProjectOptions,
-  InitializeSideTrackProjectResult,
+  InitializeParallelDocsProjectOptions,
+  InitializeParallelDocsProjectResult,
 } from "./init-project.js";
 export { ensureCompanionForSource } from "./companion-bootstrap.js";
 export type {
@@ -178,29 +178,29 @@ export { runCommanderMain } from "./cli-bootstrap.js";
 export type {
   BlockScrollLink,
   BlockScrollStickyState,
-  MarkdownHtmlSideTrackRegion,
+  MarkdownHtmlParallelDocsRegion,
 } from "./scroll-sync.js";
 export {
   blockStrictlyContainingSourceViewportLine,
   buildBlockScrollLinks,
-  sidetrackProbeInStrictInterMarkerGap,
-  DEFAULT_SIDETRACK_VIEWPORT_HYSTERESIS_LINES,
+  parallelDocsProbeInStrictInterMarkerGap,
+  DEFAULT_PARALLEL_DOCS_VIEWPORT_HYSTERESIS_LINES,
   DEFAULT_SOURCE_VIEWPORT_HYSTERESIS_LINES,
-  pickBlockScrollLinkForSideTrackScroll,
-  pickBlockScrollLinkForSideTrackViewportWithHysteresis,
+  pickBlockScrollLinkForParallelDocsScroll,
+  pickBlockScrollLinkForParallelDocsViewportWithHysteresis,
   pickBlockScrollLinkForSourceViewportTop,
   pickBlockScrollLinkForSourceViewportWithHysteresis,
-  pickSideTrackLineForSourceDualPane,
-  pickSideTrackLineForSourceScroll,
-  pickSourceLine0ForSideTrackScroll,
-  parseMarkdownHtmlSideTrackRegions,
+  pickParallelDocsLineForSourceDualPane,
+  pickParallelDocsLineForSourceScroll,
+  pickSourceLine0ForParallelDocsScroll,
+  parseMarkdownHtmlParallelDocsRegions,
   sourceTopLineStrictlyBeforeFirstIndexLine,
 } from "./scroll-sync.js";
 export {
-  sidetrackRegionInsertions,
+  parallelDocsRegionInsertions,
   lineCommentLeaderForLanguage,
   markerViewportHalfOpen1Based,
-  parseSideTrackRegionBoundary,
+  parseParallelDocsRegionBoundary,
   sourceLineRangeForMarkerId,
 } from "./source-markers.js";
 export type {
@@ -222,17 +222,17 @@ export {
   tryNormaliseContextLabelToMarkerId,
   tryTomlTablePathAboveSelection,
 } from "./region-marker-naming.js";
-export type { SideTrackMarkerPair } from "./region-marker-convert.js";
+export type { ParallelDocsMarkerPair } from "./region-marker-convert.js";
 export {
-  convertSideTrackSourceMarkersToLanguage,
-  findSideTrackMarkerPairs,
+  convertParallelDocsSourceMarkersToLanguage,
+  findParallelDocsMarkerPairs,
   leadingIndentOfLine,
 } from "./region-marker-convert.js";
 export { MARKER_ID_BODY, assertValidMarkerId, normaliseMarkerSlugOrThrow } from "./marker-ids.js";
 export type { MarkerValidationIssue } from "./marker-validation.js";
 export {
-  extractSideTrackBlockIdsInMarkdownOrder,
-  extractSideTrackBlockIdsFromMarkdown,
+  extractParallelDocsBlockIdsInMarkdownOrder,
+  extractParallelDocsBlockIdsFromMarkdown,
   validateIndexMarkerSemantics,
   validateMarkerBoundariesInSource,
   validateMarkerRegionsAgainstIndexedSources,

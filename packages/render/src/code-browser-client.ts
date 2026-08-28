@@ -6,15 +6,15 @@ import {
   SubstringSearcher,
 } from "@m31coding/fuzzy-search";
 import {
-  activeBlockIdForSideTrackLine0,
+  activeBlockIdForParallelDocsLine0,
   activeBlockIdForViewport,
   clampViewportYToGutterLocal,
   codeLineDomIndex0,
   dedupeBlockScrollLinksById,
   gutterRayBezierPaths,
-  sidetrackGutterDocBandBottomViewport,
-  maxRenderableSideTrackContentBottomViewport,
-  nextBlockLinkInSideTrackOrder,
+  parallelDocsGutterDocBandBottomViewport,
+  maxRenderableParallelDocsContentBottomViewport,
+  nextBlockLinkInParallelDocsOrder,
   sortBlockLinksBySource,
 } from "./code-browser-block-rays.js";
 import {
@@ -22,10 +22,10 @@ import {
   type BlockScrollLink,
   type BlockScrollStickyState,
   mirroredScrollTop,
-  pickBlockScrollLinkForSideTrackScroll,
+  pickBlockScrollLinkForParallelDocsScroll,
   sourceTopLineStrictlyBeforeFirstIndexLine,
 } from "./code-browser-scroll-sync.js";
-import { maxSideTrackAnchorLine0AtOrAboveViewportY } from "./sidetrack-anchor-viewport-probe.js";
+import { maxParallelDocsAnchorLine0AtOrAboveViewportY } from "./parallel-docs-anchor-viewport-probe.js";
 import { decodeBase64Utf8 } from "./code-browser-encoding.js";
 import { readEmbeddedRawB64Strings } from "./code-browser-embedded-payload.js";
 import {
@@ -48,11 +48,11 @@ import {
   staticBrowseHrefForShellDataAttribute,
 } from "./code-browser-pair-nav.js";
 import {
-  SIDETRACK_COLOR_THEME_STORAGE_KEY,
-  applySideTrackColorTheme,
-  nextSideTrackColorThemeMode,
-  parseSideTrackColorThemeMode,
-  type SideTrackColorThemeMode,
+  PARALLEL_DOCS_COLOR_THEME_STORAGE_KEY,
+  applyParallelDocsColorTheme,
+  nextParallelDocsColorThemeMode,
+  parseParallelDocsColorThemeMode,
+  type ParallelDocsColorThemeMode,
 } from "./code-browser-color-theme.js";
 import { shouldRevertPartnerScrollForMonotonicity } from "./code-browser-scroll-sync-monotonic.js";
 import { SMOOTH_REVEAL_INFLIGHT_DEDUP_MS } from "./code-browser-smooth-reveal-dedup.js";
@@ -67,11 +67,11 @@ import { wireWideModeIntroTour } from "./code-browser-wide-intro-controller.js";
 import { readWebStorageItem, writeWebStorageItem } from "./code-browser-web-storage.js";
 import {
   applyBlockStretchRowBuffers,
-  dispatchSideTrackMermaidDone,
+  dispatchParallelDocsMermaidDone,
   wireBlockStretchBufferSync,
   type BlockStretchBufferSyncHandle,
 } from "./block-stretch-buffer-sync.js";
-import { SIDETRACK_MERMAID_MODULE_READY_EVENT } from "./sidetrack-mermaid-events.js";
+import { PARALLEL_DOCS_MERMAID_MODULE_READY_EVENT } from "./parallel-docs-mermaid-events.js";
 
 /**
  * Hub pages emit `./browse/…` relative to the site root. From `/…/browse/current.html` the browser
@@ -89,15 +89,15 @@ function rewriteHubRelativeBrowseAnchorsIn(root: ParentNode): void {
 }
 
 /** Set by the Mermaid module script in {@link ./mermaid-runtime-html.ts} (same origin, not `file:`). */
-type SideTrackMermaidGlobal = {
+type ParallelDocsMermaidGlobal = {
   run: (opts: { nodes?: HTMLElement[]; querySelector?: string }) => Promise<unknown>;
 };
 
 /**
  * The Mermaid bundle is loaded via a trailing `type="module"` script (async `import()`). The main
  * client runs as a classic inline script **before** that module executes, so `cy.visit` + an
- * immediate pane flip can call {@link runMermaidOnFreshDocNodes} while `sidetrackMermaid` is still
- * undefined. We enqueue roots and flush on {@link SIDETRACK_MERMAID_MODULE_READY_EVENT}.
+ * immediate pane flip can call {@link runMermaidOnFreshDocNodes} while `parallelDocsMermaid` is still
+ * undefined. We enqueue roots and flush on {@link PARALLEL_DOCS_MERMAID_MODULE_READY_EVENT}.
  */
 const pendingMermaidDocRoots = new Set<HTMLElement>();
 const queuedMermaidDocRoots = new Set<HTMLElement>();
@@ -107,7 +107,7 @@ function collectFreshMermaidPreNodes(roots: Iterable<HTMLElement>): HTMLElement[
   const uniq = new Set<HTMLElement>();
   for (const root of roots) {
     for (const pre of Array.from(root.querySelectorAll("pre.mermaid")) as HTMLElement[]) {
-      const wrap = pre.closest(".sidetrack-mermaid");
+      const wrap = pre.closest(".parallel-docs-mermaid");
       if (wrap !== null && wrap.querySelector("svg") !== null) continue;
       uniq.add(pre);
     }
@@ -119,8 +119,8 @@ function pumpQueuedMermaidRuns(): Promise<void> {
   if (mermaidQueueInFlight) return mermaidQueueInFlight;
   mermaidQueueInFlight = (async () => {
     while (queuedMermaidDocRoots.size > 0) {
-      const m = (globalThis as unknown as { sidetrackMermaid?: SideTrackMermaidGlobal })
-        .sidetrackMermaid;
+      const m = (globalThis as unknown as { parallelDocsMermaid?: ParallelDocsMermaidGlobal })
+        .parallelDocsMermaid;
       if (!m) {
         for (const root of queuedMermaidDocRoots) pendingMermaidDocRoots.add(root);
         queuedMermaidDocRoots.clear();
@@ -132,9 +132,9 @@ function pumpQueuedMermaidRuns(): Promise<void> {
       if (nodes.length === 0) continue;
       try {
         await m.run({ nodes });
-        dispatchSideTrackMermaidDone();
+        dispatchParallelDocsMermaidDone();
       } catch (err: unknown) {
-        console.error("SideTrack: mermaid.run failed", err);
+        console.error("ParallelDocs: mermaid.run failed", err);
       }
     }
   })().finally(() => {
@@ -157,14 +157,17 @@ function flushPendingMermaidDocRoots(): void {
   }
 }
 
-globalThis.addEventListener(SIDETRACK_MERMAID_MODULE_READY_EVENT, () => {
+globalThis.addEventListener(PARALLEL_DOCS_MERMAID_MODULE_READY_EVENT, () => {
   flushPendingMermaidDocRoots();
 });
 
 function runMermaidOnFreshDocNodes(docBody: HTMLElement): Promise<void> {
   if (typeof globalThis.location !== "undefined" && globalThis.location.protocol === "file:")
     return Promise.resolve();
-  if (!(globalThis as unknown as { sidetrackMermaid?: SideTrackMermaidGlobal }).sidetrackMermaid) {
+  if (
+    !(globalThis as unknown as { parallelDocsMermaid?: ParallelDocsMermaidGlobal })
+      .parallelDocsMermaid
+  ) {
     pendingMermaidDocRoots.add(docBody);
     return Promise.resolve();
   }
@@ -260,7 +263,7 @@ function enforceScrollSyncMonotonic(args: {
   const partnerAfter = readPaneVerticalScroll(partnerPane);
   if (shouldRevertPartnerScrollForMonotonicity({ driverDelta, partnerBefore, partnerAfter })) {
     if (scrollSyncTraceFeatureFlag()) {
-      globalThis.console.warn("[sidetrack:scroll-sync] monotonic.revert", {
+      globalThis.console.warn("[parallelDocs:scroll-sync] monotonic.revert", {
         t: Math.round(performance.now()),
         axis: axis ?? "?",
         driverDelta,
@@ -307,7 +310,7 @@ function applyRevealChildInPane(scrollport: HTMLElement, child: Element, leadCss
 
 /**
  * True when `child` is already placed like {@link applyRevealChildInPane} would (same few-pixel
- * tolerance as code→doc’s {@link sidetrackBlockAnchorAlignedWithLead}).
+ * tolerance as code→doc’s {@link parallelDocsBlockAnchorAlignedWithLead}).
  */
 function revealTargetAlreadyAtLead(
   scrollport: HTMLElement,
@@ -325,12 +328,12 @@ function revealTargetAlreadyAtLead(
 }
 
 /** True when the block anchor for `mdLine0` is already aligned like {@link applyRevealChildInPane} would. */
-function sidetrackBlockAnchorAlignedWithLead(
+function parallelDocsBlockAnchorAlignedWithLead(
   docPane: HTMLElement,
   mdLine0: number,
   leadCssPx: number,
 ): boolean {
-  const anchor = docPane.querySelector(`[data-sidetrack-line="${String(mdLine0)}"]`);
+  const anchor = docPane.querySelector(`[data-parallel-docs-line="${String(mdLine0)}"]`);
   if (!(anchor instanceof HTMLElement)) return false;
   return revealTargetAlreadyAtLead(docPane, anchor, leadCssPx);
 }
@@ -409,7 +412,7 @@ function blockForCodeToDocSync(
   return null;
 }
 
-/** Captured sidetrack→source scroll state for a narrow single-pane flip (see {@link DualPaneScrollSyncRunners}). */
+/** Captured parallel-docs→source scroll state for a narrow single-pane flip (see {@link DualPaneScrollSyncRunners}). */
 type DocToCodeFlipPlan =
   | {
       k: "noop";
@@ -424,7 +427,7 @@ type DocToCodeFlipPlan =
   | { k: "mirrorI"; docTop: number; docSH: number; docCH: number }
   | { k: "mirrorW"; ratio: number };
 
-/** Captured source→sidetrack scroll state for a narrow single-pane flip. */
+/** Captured source→parallel-docs scroll state for a narrow single-pane flip. */
 type CodeToDocFlipPlan =
   | { k: "noop" }
   | { k: "block"; mdLine0: number; winRatio: number }
@@ -437,7 +440,7 @@ function windowScrollRatio(): number {
   return maxY > 0 ? clamp(root.scrollTop / maxY, 0, 1) : 0;
 }
 
-const SCROLL_SYNC_DEBUG_FLAG = "sidetrackDebugScroll";
+const SCROLL_SYNC_DEBUG_FLAG = "parallelDocsDebugScroll";
 
 function scrollSyncDebugQueryOn(): boolean {
   const v = new URLSearchParams(globalThis.location.search).get(SCROLL_SYNC_DEBUG_FLAG);
@@ -459,7 +462,7 @@ function scrollSyncDebugHashOn(): boolean {
 }
 
 /**
- * True on common dev hostnames (`sidetrack serve`, local preview). Used only for the one-line
+ * True on common dev hostnames (`parallel-docs serve`, local preview). Used only for the one-line
  * boot banner — **not** for high-volume per-scroll tracing (that stays opt-in below).
  */
 function scrollSyncDebugDevHostOn(): boolean {
@@ -473,11 +476,11 @@ function scrollSyncDebugDevHostOn(): boolean {
  * during normal reading).
  *
  * Turn on any one of:
- * - Query: `?sidetrackDebugScroll=1` (or `=true`, or present with an empty value)
- * - Hash: `#sidetrackDebugScroll` or `#sidetrackDebugScroll=1` (fragment is not sent to the server)
- * - DevTools, then reload: `sessionStorage.setItem("sidetrackDebugScroll", "1")` or the same for `localStorage`
+ * - Query: `?parallelDocsDebugScroll=1` (or `=true`, or present with an empty value)
+ * - Hash: `#parallelDocsDebugScroll` or `#parallelDocsDebugScroll=1` (fragment is not sent to the server)
+ * - DevTools, then reload: `sessionStorage.setItem("parallelDocsDebugScroll", "1")` or the same for `localStorage`
  *
- * Log lines (filter DevTools console on `[sidetrack:scroll-sync]`):
+ * Log lines (filter DevTools console on `[parallelDocs:scroll-sync]`):
  * - `code→doc.plan` / `doc→code.plan` — which branch built the flip plan (`reason` field)
  * - `code→doc.apply` / `doc→code.apply` — partner `scrollTop` before vs after apply, `driverDelta`, `plan`
  * - `wire.code.driver` / `wire.doc.driver` — RAF-coalesced driver flush (delta, pane `scrollTop`)
@@ -537,7 +540,7 @@ function announceScrollSyncTraceOnBoot(): void {
   const devHost = scrollSyncDebugDevHostOn();
   const traceVerbose = scrollSyncVerboseTraceEnabled();
   if (!devHost && !traceVerbose) return;
-  globalThis.console.log("[sidetrack:scroll-sync] boot", {
+  globalThis.console.log("[parallelDocs:scroll-sync] boot", {
     t: Math.round(performance.now()),
     href: globalThis.location.href,
     devHost,
@@ -556,7 +559,7 @@ function announceScrollSyncTraceOnBoot(): void {
  */
 function scrollSyncTrace(tag: string, fields: Record<string, unknown>): void {
   if (!scrollSyncTraceFeatureFlag()) return;
-  globalThis.console.log(`[sidetrack:scroll-sync] ${tag}`, {
+  globalThis.console.log(`[parallelDocs:scroll-sync] ${tag}`, {
     t: Math.round(performance.now()),
     ...fields,
   });
@@ -629,7 +632,7 @@ function applyCodeToDocFlipPlanImpl(
 ): void {
   if (plan.k === "noop") return;
   if (plan.k === "block") {
-    const anchor = docPane.querySelector(`[data-sidetrack-line="${String(plan.mdLine0)}"]`);
+    const anchor = docPane.querySelector(`[data-parallel-docs-line="${String(plan.mdLine0)}"]`);
     if (anchor instanceof HTMLElement) {
       applyRevealChildInPane(docPane, anchor, DUAL_PANE_BLOCK_REVEAL_LEAD_CSS_PX);
     }
@@ -661,7 +664,7 @@ function applyCodeToDocFlipPlanImpl(
 
 type BlockAwareStickyBundle = {
   sourceSticky: BlockScrollStickyState;
-  sidetrackSticky: BlockScrollStickyState;
+  parallelDocsSticky: BlockScrollStickyState;
   /** When the indexed block set changes (e.g. another angle), Schmitt locks must not carry over. */
   linksKey: { current: string };
 };
@@ -673,7 +676,7 @@ function resetBlockScrollStickyIfLinksChanged(
   const key = links.map((l) => l.id).join("\0");
   if (key !== sticky.linksKey.current) {
     sticky.sourceSticky.lockedId = null;
-    sticky.sidetrackSticky.lockedId = null;
+    sticky.parallelDocsSticky.lockedId = null;
     sticky.linksKey.current = key;
   }
 }
@@ -687,10 +690,10 @@ function tryDocToCodeFlipPlanFromMdProbe(
   mdLine0: number | null,
 ): DocToCodeFlipPlan | null {
   if (mdLine0 === null) return null;
-  const block = pickBlockScrollLinkForSideTrackScroll(links, mdLine0);
+  const block = pickBlockScrollLinkForParallelDocsScroll(links, mdLine0);
   const src0 = block !== null ? block.markerViewportHalfOpen1Based.lo - 1 : null;
   if (block !== null) {
-    sticky.sidetrackSticky.lockedId = block.id;
+    sticky.parallelDocsSticky.lockedId = block.id;
   }
   if (src0 === null) return null;
   const alignedNoop = docToCodePlanIfCodeAnchorAlreadyAligned(
@@ -761,7 +764,7 @@ function buildDocToCodeFlipPlanBlockAware(
    */
   const links = getLinks();
   resetBlockScrollStickyIfLinksChanged(sticky, links);
-  const mdLine0 = probeSideTrackLine0FromDoc(docPane);
+  const mdLine0 = probeParallelDocsLine0FromDoc(docPane);
   const fromMd = tryDocToCodeFlipPlanFromMdProbe(
     codePane,
     links,
@@ -781,7 +784,7 @@ function buildDocToCodeFlipPlanBlockAware(
   if (fromPb !== null) return fromPb;
   /**
    * Index-backed pair but no confident block anchor for this viewport (e.g. missing
-   * `.sidetrack-block-anchor` nodes, or probe could not map the doc band to a link).
+   * `.parallel-docs-block-anchor` nodes, or probe could not map the doc band to a link).
    * With {@link allowProportionalMirror}, mirror like the no-index path so static dual
    * browse still scrolls both panes together; block-snap-only keeps the historical noop.
    */
@@ -853,8 +856,10 @@ function preludeBlockAwareCodeToDocPlan(
     return { k: "noop" };
   }
   sticky.sourceSticky.lockedId = first.id;
-  const mdLine0 = first.sidetrackLine;
-  if (sidetrackBlockAnchorAlignedWithLead(docPane, mdLine0, DUAL_PANE_BLOCK_REVEAL_LEAD_CSS_PX)) {
+  const mdLine0 = first.parallelDocsLine;
+  if (
+    parallelDocsBlockAnchorAlignedWithLead(docPane, mdLine0, DUAL_PANE_BLOCK_REVEAL_LEAD_CSS_PX)
+  ) {
     scrollSyncTrace("code→doc.plan", {
       reason: "prelude-anchor-already-aligned-noop",
       line1,
@@ -884,10 +889,12 @@ function activeBlockCodeToDocPlan(
   winRatio: number,
 ): CodeToDocFlipPlan {
   sticky.sourceSticky.lockedId = active.id;
-  const mdLine0 = active.sidetrackLine;
+  const mdLine0 = active.parallelDocsLine;
   const pickMode =
     strictContaining !== null && strictContaining.id === active.id ? "strict" : "trailing-slack";
-  if (sidetrackBlockAnchorAlignedWithLead(docPane, mdLine0, DUAL_PANE_BLOCK_REVEAL_LEAD_CSS_PX)) {
+  if (
+    parallelDocsBlockAnchorAlignedWithLead(docPane, mdLine0, DUAL_PANE_BLOCK_REVEAL_LEAD_CSS_PX)
+  ) {
     scrollSyncTrace("code→doc.plan", {
       reason: "active-block-anchor-aligned-noop",
       line1,
@@ -1118,12 +1125,12 @@ function buildOrderedPathHitsFromRows(pathRows: Row[], tokens: string[]): Hit[] 
   return out;
 }
 
-type SearchScope = "full" | "sidetrack-and-paths";
+type SearchScope = "full" | "parallel-docs-and-paths";
 
 type MergedSearchHitInput = {
   scope: SearchScope;
   filePathLabel: string;
-  sidetrackPathLabel: string;
+  parallelDocsPathLabel: string;
   rawCode: string;
   rawMd: string;
   searcher: ReturnType<typeof SearcherFactory.createDefaultSearcher<Row, string>>;
@@ -1139,7 +1146,7 @@ function computeMergedSearchHits(input: MergedSearchHitInput): Hit[] {
   const {
     scope,
     filePathLabel,
-    sidetrackPathLabel,
+    parallelDocsPathLabel,
     rawCode,
     rawMd,
     searcher,
@@ -1151,13 +1158,13 @@ function computeMergedSearchHits(input: MergedSearchHitInput): Hit[] {
   const pathBlob =
     (pathBlobWide && pathBlobWide.trim().length > 0
       ? pathBlobWide.trim()
-      : [filePathLabel, sidetrackPathLabel].filter((s) => s.trim().length > 0).join("\n")) || "";
+      : [filePathLabel, parallelDocsPathLabel].filter((s) => s.trim().length > 0).join("\n")) || "";
   const orderedCode =
-    scope === "sidetrack-and-paths" ? [] : buildOrderedHits(rawCode, "code", tokens);
+    scope === "parallel-docs-and-paths" ? [] : buildOrderedHits(rawCode, "code", tokens);
   const orderedPath =
-    scope === "sidetrack-and-paths" && pathRowsForOrdering && pathRowsForOrdering.length > 0
+    scope === "parallel-docs-and-paths" && pathRowsForOrdering && pathRowsForOrdering.length > 0
       ? buildOrderedPathHitsFromRows(pathRowsForOrdering, tokens)
-      : scope === "sidetrack-and-paths" && pathBlob
+      : scope === "parallel-docs-and-paths" && pathBlob
         ? buildOrderedHits(pathBlob, "path", tokens)
         : [];
   const orderedMd = buildOrderedHits(rawMd, "md", tokens);
@@ -1166,21 +1173,21 @@ function computeMergedSearchHits(input: MergedSearchHitInput): Hit[] {
 }
 
 type SearchHitRenderContext = {
-  currentSideTrackPath: string;
+  currentParallelDocsPath: string;
   currentSourcePath: string;
 };
 
 function searchScopeResultsHintIntro(scope: SearchScope): string {
-  return scope === "sidetrack-and-paths"
-    ? "Paths + indexed sidetrack (this page + browse pages when built). Ordered tokens + fuzzy lines."
+  return scope === "parallel-docs-and-paths"
+    ? "Paths + indexed parallel-docs (this page + browse pages when built). Ordered tokens + fuzzy lines."
     : "Whole source: whitespace tokens in order (may span lines). Per-line fuzzy ranking for typos.";
 }
 
 function searchHitMetaLabel(h: Hit, ctx: SearchHitRenderContext): string {
   if (h.kind === "code") return `Code L${h.line + 1}`;
   if (h.kind === "path") return `Path`;
-  const foreign = h.crPath && h.crPath !== ctx.currentSideTrackPath ? ` · ${h.crPath}` : "";
-  return `SideTrack L${h.line + 1}${foreign}`;
+  const foreign = h.crPath && h.crPath !== ctx.currentParallelDocsPath ? ` · ${h.crPath}` : "";
+  return `ParallelDocs L${h.line + 1}${foreign}`;
 }
 
 function searchHitButtonHtml(h: Hit, tokens: string[], ctx: SearchHitRenderContext): string {
@@ -1188,7 +1195,7 @@ function searchHitButtonHtml(h: Hit, tokens: string[], ctx: SearchHitRenderConte
   const tag = h.source === "ordered" ? "ordered" : "fuzzy";
   const snippetHtml = escapeHtmlHighlightingSearchTokens(snippet(h.text, 320), tokens);
   const crAttr = escapeHtmlText(
-    h.kind === "md" ? (h.crPath ?? ctx.currentSideTrackPath) : (h.crPath ?? ""),
+    h.kind === "md" ? (h.crPath ?? ctx.currentParallelDocsPath) : (h.crPath ?? ""),
   );
   const spAttr = escapeHtmlText(
     h.kind === "md" ? (h.spPath ?? ctx.currentSourcePath) : (h.spPath ?? ""),
@@ -1250,7 +1257,7 @@ function emptySearchBrowsePreviewInnerHtml(
     score: 1000,
     source: "ordered",
     spPath: r.sourcePath,
-    crPath: r.sidetrackPath,
+    crPath: r.parallelDocsPath,
   }));
   for (const h of hits) {
     buf.push(searchHitButtonHtml(h, tokens, ctx));
@@ -1263,7 +1270,7 @@ function scrollDocToMarkdownLine0(
   line0: number,
   mdLineCount: number,
 ): void {
-  const el = docScrollEl.querySelector(`#sidetrack-md-line-${String(line0)}`);
+  const el = docScrollEl.querySelector(`#parallel-docs-md-line-${String(line0)}`);
   if (el instanceof HTMLElement) {
     applyRevealChildInPane(docScrollEl, el, DUAL_PANE_BLOCK_REVEAL_LEAD_CSS_PX);
     return;
@@ -1284,11 +1291,11 @@ function navigateToDocumentedPair(pair: DocumentedPairNav, mdLine0: number | nul
       globalThis.location.origin,
     );
     const u = new URL(href);
-    if (mdLine0 !== null && mdLine0 >= 0) u.hash = `sidetrack-md-line-${String(mdLine0)}`;
+    if (mdLine0 !== null && mdLine0 >= 0) u.hash = `parallel-docs-md-line-${String(mdLine0)}`;
     globalThis.location.assign(u.toString());
     return;
   }
-  const gh = (pair.sidetrackOnGithub ?? "").trim();
+  const gh = (pair.parallelDocsOnGithub ?? "").trim();
   if (gh.length > 0) {
     const url = mdLine0 !== null && mdLine0 >= 0 ? `${gh}#L${String(mdLine0 + 1)}` : gh;
     globalThis.location.assign(url);
@@ -1298,13 +1305,13 @@ function navigateToDocumentedPair(pair: DocumentedPairNav, mdLine0: number | nul
 function readSearchScopeFromShell(shell: HTMLElement): {
   scope: SearchScope;
   filePathLabel: string;
-  sidetrackPathLabel: string;
+  parallelDocsPathLabel: string;
 } {
   const scopeAttr = shell.getAttribute("data-search-scope") || "";
   return {
-    scope: scopeAttr === "sidetrack-and-paths" ? "sidetrack-and-paths" : "full",
+    scope: scopeAttr === "parallel-docs-and-paths" ? "parallel-docs-and-paths" : "full",
     filePathLabel: shell.getAttribute("data-search-file-path") || "",
-    sidetrackPathLabel: shell.getAttribute("data-search-sidetrack-path") || "",
+    parallelDocsPathLabel: shell.getAttribute("data-search-parallel-docs-path") || "",
   };
 }
 
@@ -1313,17 +1320,17 @@ function buildIndexedSearchRows(
   rawCode: string,
   rawMd: string,
   filePathLabel: string,
-  sidetrackPathLabel: string,
+  parallelDocsPathLabel: string,
 ): Row[] {
   const mdLines = rawMd.split("\n");
   const codeLines = rawCode.split("\n");
   const pathRows: Row[] = [];
-  if (scope === "sidetrack-and-paths") {
+  if (scope === "parallel-docs-and-paths") {
     if (filePathLabel.trim()) {
       pathRows.push({ kind: "path", line: pathRows.length, text: filePathLabel });
     }
-    if (sidetrackPathLabel.trim()) {
-      pathRows.push({ kind: "path", line: pathRows.length, text: sidetrackPathLabel });
+    if (parallelDocsPathLabel.trim()) {
+      pathRows.push({ kind: "path", line: pathRows.length, text: parallelDocsPathLabel });
     }
   }
   return [
@@ -1355,7 +1362,7 @@ function indexSearchLineRows(
 type MutableSearchFields = {
   rawMd: string;
   mdLines: string[];
-  sidetrackPathLabel: string;
+  parallelDocsPathLabel: string;
   searcher: ReturnType<typeof SearcherFactory.createDefaultSearcher<Row, string>>;
   pathBlobWide: string;
   pathRowsForOrdering: Row[];
@@ -1413,7 +1420,7 @@ function handlePathSearchHit(button: HTMLElement, deps: SearchHitClickDeps): voi
   const hitCr = (button.getAttribute("data-cr-path") ?? "").trim();
   const hitSp = (button.getAttribute("data-sp-path") ?? "").trim();
   const pair = findDocumentedPair(deps.mutable.documentedPairs, hitCr, hitSp);
-  if (pair && isSameDocumentedPair(pair, deps.filePathLabel, deps.mutable.sidetrackPathLabel)) {
+  if (pair && isSameDocumentedPair(pair, deps.filePathLabel, deps.mutable.parallelDocsPathLabel)) {
     const scrollTarget = paneUsesInternalYScroll(deps.docScrollEl)
       ? deps.docScrollEl
       : rootScrollingElement();
@@ -1424,7 +1431,7 @@ function handlePathSearchHit(button: HTMLElement, deps: SearchHitClickDeps): voi
 }
 
 function handleMdSearchHit(line: number, crHit: string, deps: SearchHitClickDeps): void {
-  const curCr = deps.mutable.sidetrackPathLabel.trim();
+  const curCr = deps.mutable.parallelDocsPathLabel.trim();
   const cr = crHit.trim();
   if (cr.length > 0 && normPosixPath(cr) !== normPosixPath(curCr)) {
     const pair = findDocumentedPair(deps.mutable.documentedPairs, cr, "");
@@ -1459,29 +1466,29 @@ function emptyBrowsePreviewInnerHtml(
   mutable: MutableSearchFields,
 ): string | null {
   const hitCtx: SearchHitRenderContext = {
-    currentSideTrackPath: mutable.sidetrackPathLabel,
+    currentParallelDocsPath: mutable.parallelDocsPathLabel,
     currentSourcePath: filePathLabel,
   };
   if (scope === "full") {
     const sp = filePathLabel.trim();
     if (sp.length === 0) return null;
     const rows: SourceFilePreviewRow[] = [
-      { sourcePath: sp, sidetrackPath: mutable.sidetrackPathLabel.trim() },
+      { sourcePath: sp, parallelDocsPath: mutable.parallelDocsPathLabel.trim() },
     ];
     const hint = emptyBrowsePreviewHint("full", rows.length, rows.length, false);
     return emptySearchBrowsePreviewInnerHtml(hint, rows, hitCtx);
   }
   const { rows, totalUnique } = uniqueSourceFilePreviewRows(mutable.documentedPairs);
   if (rows.length > 0) {
-    const hint = emptyBrowsePreviewHint("sidetrack-and-paths", rows.length, totalUnique, false);
+    const hint = emptyBrowsePreviewHint("parallel-docs-and-paths", rows.length, totalUnique, false);
     return emptySearchBrowsePreviewInnerHtml(hint, rows, hitCtx);
   }
   const sp = filePathLabel.trim();
   if (sp.length === 0) return null;
   const fb: SourceFilePreviewRow[] = [
-    { sourcePath: sp, sidetrackPath: mutable.sidetrackPathLabel.trim() },
+    { sourcePath: sp, parallelDocsPath: mutable.parallelDocsPathLabel.trim() },
   ];
-  const hint = emptyBrowsePreviewHint("sidetrack-and-paths", fb.length, fb.length, true);
+  const hint = emptyBrowsePreviewHint("parallel-docs-and-paths", fb.length, fb.length, true);
   return emptySearchBrowsePreviewInnerHtml(hint, fb, hitCtx);
 }
 
@@ -1608,7 +1615,7 @@ function wireSearchUi(ctx: SearchUiContext): void {
     const combined = computeMergedSearchHits({
       scope,
       filePathLabel,
-      sidetrackPathLabel: mutable.sidetrackPathLabel,
+      parallelDocsPathLabel: mutable.parallelDocsPathLabel,
       rawCode,
       rawMd: mutable.rawMd,
       searcher: mutable.searcher,
@@ -1620,7 +1627,7 @@ function wireSearchUi(ctx: SearchUiContext): void {
     });
     searchResults.hidden = false;
     searchResults.innerHTML = searchResultsInnerHtml(scope, combined, tokens, {
-      currentSideTrackPath: mutable.sidetrackPathLabel,
+      currentParallelDocsPath: mutable.parallelDocsPathLabel,
       currentSourcePath: filePathLabel,
     });
   }
@@ -1663,7 +1670,7 @@ function wireSearchUi(ctx: SearchUiContext): void {
  * so gutter block rays and scroll sync must be nudged explicitly.
  *
  * Pass optional `docWrapRoots` (e.g. `#doc-pane` and `#doc-pane-body` in dual layout): the toggle
- * syncs `wrap` on those nodes so sidetrack fenced blocks and prose honor the control. `#doc-pane-body`
+ * syncs `wrap` on those nodes so parallel-docs fenced blocks and prose honor the control. `#doc-pane-body`
  * is targeted in CSS with an id so rules win over `pre code.hljs` from the highlight.js theme.
  */
 function wireWrapToggle(
@@ -1718,7 +1725,7 @@ function parseScrollBlockLinksFromShell(b64: string): BlockScrollLink[] {
       const o = x as Record<string, unknown>;
       if (
         typeof o.id === "string" &&
-        typeof o.sidetrackLine === "number" &&
+        typeof o.parallelDocsLine === "number" &&
         typeof o.sourceStart === "number" &&
         typeof o.sourceEnd === "number"
       ) {
@@ -1735,7 +1742,7 @@ function parseScrollBlockLinksFromShell(b64: string): BlockScrollLink[] {
             : { lo: o.sourceStart, hiExclusive: o.sourceEnd + 1 };
         out.push({
           id: o.id,
-          sidetrackLine: o.sidetrackLine,
+          parallelDocsLine: o.parallelDocsLine,
           sourceStart: o.sourceStart,
           sourceEnd: o.sourceEnd,
           markerViewportHalfOpen1Based: mv,
@@ -1763,30 +1770,30 @@ function paneScrollNearEnd(
   return maxY > 0 && pane.scrollTop >= maxY - edgePx;
 }
 
-function readSideTrackLine0FromAnchor(el: HTMLElement): number | null {
-  const lineAttr = el.getAttribute("data-sidetrack-line");
+function readParallelDocsLine0FromAnchor(el: HTMLElement): number | null {
+  const lineAttr = el.getAttribute("data-parallel-docs-line");
   if (lineAttr === null || lineAttr === "") return null;
   return Number(lineAttr);
 }
 
-function bestSideTrackAnchorLine0AtOrAboveY(
+function bestParallelDocsAnchorLine0AtOrAboveY(
   anchors: NodeListOf<HTMLElement>,
   y: number,
 ): number | null {
   const readings: { line0: number; top: number }[] = [];
   for (const a of anchors) {
-    const line0 = readSideTrackLine0FromAnchor(a);
+    const line0 = readParallelDocsLine0FromAnchor(a);
     if (line0 === null) continue;
     readings.push({ line0, top: a.getBoundingClientRect().top });
   }
-  return maxSideTrackAnchorLine0AtOrAboveViewportY(readings, y);
+  return maxParallelDocsAnchorLine0AtOrAboveViewportY(readings, y);
 }
 
-function lastSideTrackAnchorLine0(anchors: NodeListOf<HTMLElement>): number | null {
+function lastParallelDocsAnchorLine0(anchors: NodeListOf<HTMLElement>): number | null {
   for (let i = anchors.length - 1; i >= 0; i--) {
     const el = anchors.item(i);
     if (!el) continue;
-    const v = readSideTrackLine0FromAnchor(el);
+    const v = readParallelDocsLine0FromAnchor(el);
     if (v !== null) return v;
   }
   return null;
@@ -1839,13 +1846,13 @@ function probeCodeLine1FromViewport(codePane: HTMLElement, lineIdPrefix = "code-
   return rows.length;
 }
 
-function probeSideTrackLine0FromDoc(docPane: HTMLElement): number | null {
-  const anchors = docPane.querySelectorAll<HTMLElement>(".sidetrack-block-anchor");
+function probeParallelDocsLine0FromDoc(docPane: HTMLElement): number | null {
+  const anchors = docPane.querySelectorAll<HTMLElement>(".parallel-docs-block-anchor");
   if (anchors.length === 0) return null;
 
   if (!paneUsesInternalYScroll(docPane)) {
     if (rootScrollNearDocumentEnd()) {
-      const tail = lastSideTrackAnchorLine0(anchors);
+      const tail = lastParallelDocsAnchorLine0(anchors);
       if (tail !== null) return tail;
     }
     const dr = docPane.getBoundingClientRect();
@@ -1853,18 +1860,18 @@ function probeSideTrackLine0FromDoc(docPane: HTMLElement): number | null {
     const clipT = Math.max(0, dr.top);
     const clipB = Math.min(vh, dr.bottom);
     const y = clipT + readingViewportTopInsetCssPx(clipB - clipT);
-    return bestSideTrackAnchorLine0AtOrAboveY(anchors, y);
+    return bestParallelDocsAnchorLine0AtOrAboveY(anchors, y);
   }
 
   if (paneScrollNearEnd(docPane)) {
-    const tail = lastSideTrackAnchorLine0(anchors);
+    const tail = lastParallelDocsAnchorLine0(anchors);
     if (tail !== null) return tail;
   }
 
   const dr = docPane.getBoundingClientRect();
   /** Same band as the root-scroll branch: inset below the pane top so anchors qualify while body text sits in the comfort zone. */
   const y = dr.top + docPane.clientTop + readingViewportTopInsetCssPx(docPane.clientHeight);
-  return bestSideTrackAnchorLine0AtOrAboveY(anchors, y);
+  return bestParallelDocsAnchorLine0AtOrAboveY(anchors, y);
 }
 
 function pageBreakPullEnabled(): boolean {
@@ -1893,7 +1900,9 @@ function pulledSourceLine0FromPageBreak(docPane: HTMLElement): number | null {
   if (!pageBreakPullEnabled()) return null;
   const topY = docProbeTopY(docPane);
   const breaks = Array.from(
-    docPane.querySelectorAll<HTMLElement>(".sidetrack-page-break[data-next-source-viewport-line]"),
+    docPane.querySelectorAll<HTMLElement>(
+      ".parallel-docs-page-break[data-next-source-viewport-line]",
+    ),
   );
   for (const pageBreak of breaks) {
     const nextViewportLineRaw = pageBreak.getAttribute("data-next-source-viewport-line");
@@ -1902,11 +1911,11 @@ function pulledSourceLine0FromPageBreak(docPane: HTMLElement): number | null {
     if (!Number.isFinite(nextViewportLine1Based) || nextViewportLine1Based <= 0) continue;
 
     const breakTop = pageBreak.getBoundingClientRect().top;
-    const nextLineRaw = pageBreak.getAttribute("data-next-sidetrack-line");
+    const nextLineRaw = pageBreak.getAttribute("data-next-parallel-docs-line");
     const nextLine0 = nextLineRaw ? Number.parseInt(nextLineRaw, 10) : Number.NaN;
     const nextAnchor =
       Number.isFinite(nextLine0) && nextLine0 >= 0
-        ? docPane.querySelector<HTMLElement>(`[data-sidetrack-line="${String(nextLine0)}"]`)
+        ? docPane.querySelector<HTMLElement>(`[data-parallel-docs-line="${String(nextLine0)}"]`)
         : null;
     const nextTop = nextAnchor
       ? nextAnchor.getBoundingClientRect().top
@@ -2117,9 +2126,9 @@ function wireBidirectionalScroll(
 
 /** One-shot runners used when the mobile single-pane flip reveals the partner pane. */
 type DualPaneScrollSyncRunners = {
-  /** Apply code scroll position to the sidetrack scroll element. */
+  /** Apply code scroll position to the parallel-docs scroll element. */
   syncFromCodeToDoc: () => void;
-  /** Apply sidetrack scroll position to the code pane. */
+  /** Apply parallel-docs scroll position to the code pane. */
   syncFromDocToCode: () => void;
   /**
    * Narrow single-pane flip: the outgoing pane must still be visible for viewport probes; the
@@ -2227,7 +2236,7 @@ function wireBlockAwareScrollSync(
   let pendingCodeToDoc: CodeToDocFlipPlan | null = null;
   const sticky: BlockAwareStickyBundle = {
     sourceSticky: { lockedId: null },
-    sidetrackSticky: { lockedId: null },
+    parallelDocsSticky: { lockedId: null },
     linksKey: { current: "" },
   };
   const bundle: BlockAwareScrollPaneBundle = {
@@ -2395,18 +2404,18 @@ function codeLineHighlightCenterYViewport(lineEl: HTMLElement): number {
   return centerYInViewport(lineEl);
 }
 
-function sidetrackBandEndYViewport(
+function parallelDocsBandEndYViewport(
   docScrollEl: HTMLElement,
   next: BlockScrollLink | undefined,
   docTop: HTMLElement,
   clipThroughPageBreakGaps: boolean,
 ): number {
   if (next) {
-    const nextEl = document.getElementById(`sidetrack-block-${next.id}`);
+    const nextEl = document.getElementById(`parallel-docs-block-${next.id}`);
     if (!nextEl) return centerYInViewport(docTop);
     const nextTop = nextEl.getBoundingClientRect().top - 3;
     if (!clipThroughPageBreakGaps) return nextTop;
-    return sidetrackGutterDocBandBottomViewport(docScrollEl, docTop, nextEl);
+    return parallelDocsGutterDocBandBottomViewport(docScrollEl, docTop, nextEl);
   }
   const dr = docScrollEl.getBoundingClientRect();
   let bottom = dr.bottom - 4;
@@ -2414,7 +2423,7 @@ function sidetrackBandEndYViewport(
   if (lastKid) bottom = Math.min(bottom, lastKid.getBoundingClientRect().bottom - 4);
   if (clipThroughPageBreakGaps) {
     const docBandTop = docTop.getBoundingClientRect().top + 4;
-    const contentBottom = maxRenderableSideTrackContentBottomViewport(docScrollEl, docTop, null);
+    const contentBottom = maxRenderableParallelDocsContentBottomViewport(docScrollEl, docTop, null);
     bottom = Math.min(bottom, Math.max(docBandTop, contentBottom));
   }
   return bottom;
@@ -2491,16 +2500,16 @@ function subscribeBlockRayRedraw(
   if (shell) ro.observe(shell);
 }
 
-/** Doc-aligned active block matches visible sidetrack; code-only probe can lag in page gaps. */
+/** Doc-aligned active block matches visible parallel-docs; code-only probe can lag in page gaps. */
 function activeBlockIdForGutterRays(
   links: BlockScrollLink[],
   docScrollEl: HTMLElement,
   probeTopSourceLine1Based: () => number,
 ): string | null {
-  const mdLine0ForRay = probeSideTrackLine0FromDoc(docScrollEl);
-  const haveAnchors = docScrollEl.querySelector(".sidetrack-block-anchor") !== null;
+  const mdLine0ForRay = probeParallelDocsLine0FromDoc(docScrollEl);
+  const haveAnchors = docScrollEl.querySelector(".parallel-docs-block-anchor") !== null;
   if (haveAnchors && mdLine0ForRay !== null) {
-    return activeBlockIdForSideTrackLine0(links, mdLine0ForRay);
+    return activeBlockIdForParallelDocsLine0(links, mdLine0ForRay);
   }
   return activeBlockIdForViewport(links, probeTopSourceLine1Based());
 }
@@ -2539,7 +2548,7 @@ function drawBlockRaysIntoSvg(
   for (let i = 0; i < sorted.length; i++) {
     const link = sorted[i];
     if (!link) continue;
-    const next = nextBlockLinkInSideTrackOrder(links, link);
+    const next = nextBlockLinkInParallelDocsOrder(links, link);
 
     const i0 = codeLineDomIndex0(link.sourceStart);
     const i1 = codeLineDomIndex0(link.sourceEnd);
@@ -2549,10 +2558,10 @@ function drawBlockRaysIntoSvg(
     const codeBot =
       document.getElementById(`${lineIdPrefix}${String(i1)}`) ??
       findAnchorAtOrBefore(sourceAnchors, i1);
-    const docTop = document.getElementById(`sidetrack-block-${link.id}`);
+    const docTop = document.getElementById(`parallel-docs-block-${link.id}`);
     if (!codeTop || !codeBot || !docTop) continue;
 
-    const docEndYViewport = sidetrackBandEndYViewport(
+    const docEndYViewport = parallelDocsBandEndYViewport(
       docScrollEl,
       next,
       docTop,
@@ -2587,7 +2596,7 @@ function drawBlockRaysIntoSvg(
     const botExtra = botPaths.dotted ? `<path class="${trailClass}" d="${botPaths.dotted}" />` : "";
 
     parts.push(
-      `<g class="gutter__rays-block" data-sidetrack-block="${escapeHtmlText(link.id)}">` +
+      `<g class="gutter__rays-block" data-parallel-docs-block="${escapeHtmlText(link.id)}">` +
         `<path class="${strokeClass}" d="${topPaths.solid}" />` +
         topExtra +
         `<path class="${strokeClass}" d="${botPaths.solid}" />` +
@@ -2600,7 +2609,7 @@ function drawBlockRaysIntoSvg(
 }
 
 /**
- * Splines in the gutter between each block’s source range and its sidetrack band (dual pane,
+ * Splines in the gutter between each block’s source range and its parallel-docs band (dual pane,
  * index-backed blocks). Emphasizes the block aligned with the **doc** viewport when block anchors
  * exist; otherwise the source viewport. Clamps off-screen endpoints so readers see which way to scroll.
  *
@@ -2655,9 +2664,9 @@ function wireBlockRayConnectors(args: {
 
 type DocumentedPairNav = {
   sourcePath: string;
-  sidetrackPath: string;
+  parallelDocsPath: string;
   sourceOnGithub?: string;
-  sidetrackOnGithub?: string;
+  parallelDocsOnGithub?: string;
   staticBrowseUrl?: string;
 };
 
@@ -2673,10 +2682,10 @@ type TrieNode = {
 function isDocumentedPairNav(x: unknown): x is DocumentedPairNav {
   if (typeof x !== "object" || x === null) return false;
   const o = x as Record<string, unknown>;
-  if (typeof o.sourcePath !== "string" || typeof o.sidetrackPath !== "string") return false;
+  if (typeof o.sourcePath !== "string" || typeof o.parallelDocsPath !== "string") return false;
   if (o.staticBrowseUrl !== undefined && typeof o.staticBrowseUrl !== "string") return false;
   const sg = o.sourceOnGithub;
-  const cg = o.sidetrackOnGithub;
+  const cg = o.parallelDocsOnGithub;
   const hasSg = typeof sg === "string";
   const hasCg = typeof cg === "string";
   if (hasSg !== hasCg) return false;
@@ -2694,18 +2703,18 @@ function pairsFromJsonArray(raw: unknown): DocumentedPairNav[] {
   return pairs;
 }
 
-function sidetrackLineRowFromNavJson(r: Record<string, unknown>): Row | null {
-  if (r.kind !== "sidetrackLine") return null;
+function parallelDocsLineRowFromNavJson(r: Record<string, unknown>): Row | null {
+  if (r.kind !== "parallelDocsLine") return null;
   if (typeof r.line !== "number" || typeof r.text !== "string") return null;
   const sp = typeof r.sourcePath === "string" ? r.sourcePath : "";
-  const cr = typeof r.sidetrackPath === "string" ? r.sidetrackPath : "";
+  const cr = typeof r.parallelDocsPath === "string" ? r.parallelDocsPath : "";
   return { kind: "md", line: r.line, text: r.text, spPath: sp, crPath: cr };
 }
 
 function pathRowFromNavJson(r: Record<string, unknown>, pathLine: number): Row | null {
-  if (r.kind !== "sourcePath" && r.kind !== "sidetrackPath") return null;
+  if (r.kind !== "sourcePath" && r.kind !== "parallelDocsPath") return null;
   const sp = typeof r.sourcePath === "string" ? r.sourcePath : "";
-  const cr = typeof r.sidetrackPath === "string" ? r.sidetrackPath : "";
+  const cr = typeof r.parallelDocsPath === "string" ? r.parallelDocsPath : "";
   const text = r.kind === "sourcePath" ? sp : cr;
   if (!text) return null;
   return { kind: "path", line: pathLine, text, spPath: sp, crPath: cr };
@@ -2720,7 +2729,7 @@ function rowsFromNavSearchJson(doc: unknown): Row[] {
   for (const raw of rowsRaw) {
     if (!raw || typeof raw !== "object") continue;
     const r = raw as Record<string, unknown>;
-    const mdRow = sidetrackLineRowFromNavJson(r);
+    const mdRow = parallelDocsLineRowFromNavJson(r);
     if (mdRow) {
       out.push(mdRow);
       continue;
@@ -2768,8 +2777,8 @@ function pathBasenamePosixStyle(p: string): string {
 }
 
 /** Companion Markdown filename stem (e.g. `main` from `.../README.md/main.md`). */
-function companionDocStem(sidetrackPath: string): string {
-  const norm = sidetrackPath.replace(/\\/g, "/").replace(/\/+$/, "");
+function companionDocStem(parallelDocsPath: string): string {
+  const norm = parallelDocsPath.replace(/\\/g, "/").replace(/\/+$/, "");
   const lastSeg = norm.split("/").filter(Boolean).at(-1) ?? "";
   return lastSeg.replace(/\.md$/i, "");
 }
@@ -2777,7 +2786,7 @@ function companionDocStem(sidetrackPath: string): string {
 function treeFileLinkLabel(pr: DocumentedPairNav, disambiguate: boolean): string {
   const base = pathBasenamePosixStyle(pr.sourcePath);
   if (!disambiguate) return base;
-  const stem = companionDocStem(pr.sidetrackPath);
+  const stem = companionDocStem(pr.parallelDocsPath);
   return stem !== "" && stem !== base ? `${base} · ${stem}` : base;
 }
 
@@ -2791,7 +2800,7 @@ function treeFileLinkHref(pr: DocumentedPairNav): string {
       globalThis.location.origin,
     );
   }
-  const gh = (pr.sidetrackOnGithub ?? "").trim();
+  const gh = (pr.parallelDocsOnGithub ?? "").trim();
   return gh.length > 0 ? gh : "#";
 }
 
@@ -2800,8 +2809,8 @@ function treeFileLinkTitle(pr: DocumentedPairNav): string {
   if (browse.length > 0) {
     return `${pr.sourcePath} — open this pair in the site viewer`;
   }
-  if ((pr.sidetrackOnGithub ?? "").trim().length > 0) {
-    return `${pr.sourcePath} — open companion sidetrack on the repository host`;
+  if ((pr.parallelDocsOnGithub ?? "").trim().length > 0) {
+    return `${pr.sourcePath} — open companion parallel-docs on the repository host`;
   }
   return pr.sourcePath;
 }
@@ -2822,8 +2831,8 @@ function markFirstDocumentedTreeLinkMatchingPair(
   for (const el of tree.querySelectorAll("a.tree-file-link")) {
     if (!(el instanceof HTMLAnchorElement)) continue;
     const sp = el.getAttribute("data-pair-source-path")?.trim() ?? "";
-    const cp = el.getAttribute("data-pair-sidetrack-path")?.trim() ?? "";
-    if (!isSameDocumentedPair({ sourcePath: sp, sidetrackPath: cp }, curSrc, curCr)) continue;
+    const cp = el.getAttribute("data-pair-parallel-docs-path")?.trim() ?? "";
+    if (!isSameDocumentedPair({ sourcePath: sp, parallelDocsPath: cp }, curSrc, curCr)) continue;
     el.classList.add("tree-file-link--current");
     el.setAttribute("aria-current", "page");
     break;
@@ -2836,8 +2845,8 @@ function applyDocumentedTreeCurrentPairHighlight(): void {
   const tree = document.getElementById("documented-files-tree");
   if (!(shell instanceof HTMLElement) || !(tree instanceof HTMLElement)) return;
   clearDocumentedTreePairHighlights(tree);
-  const curSrc = shell.getAttribute("data-sidetrack-pair-source-path")?.trim() ?? "";
-  const curCr = shell.getAttribute("data-sidetrack-pair-sidetrack-path")?.trim() ?? "";
+  const curSrc = shell.getAttribute("data-parallel-docs-pair-source-path")?.trim() ?? "";
+  const curCr = shell.getAttribute("data-parallel-docs-pair-parallel-docs-path")?.trim() ?? "";
   if (curSrc.length === 0 || curCr.length === 0) return;
   markFirstDocumentedTreeLinkMatchingPair(tree, curSrc, curCr);
 }
@@ -2860,12 +2869,12 @@ function renderDocumentedTreeHtml(node: TrieNode): string {
         const title = escapeHtmlText(treeFileLinkTitle(pr));
         const href = escapeHtmlText(treeFileLinkHref(pr));
         const spAttr = escapeHtmlText(normPosixPath(pr.sourcePath));
-        const crAttr = escapeHtmlText(normPosixPath(pr.sidetrackPath));
+        const crAttr = escapeHtmlText(normPosixPath(pr.parallelDocsPath));
         const useSiteBrowse = (pr.staticBrowseUrl?.trim() ?? "").length > 0;
         const external = useSiteBrowse ? "" : ' target="_blank" rel="noopener noreferrer"';
         lis.push(
           `<li><div class="tree-file">` +
-            `<a class="tree-file-link" href="${href}" data-pair-source-path="${spAttr}" data-pair-sidetrack-path="${crAttr}"${external} title="${title}">${label}</a>` +
+            `<a class="tree-file-link" href="${href}" data-pair-source-path="${spAttr}" data-pair-parallel-docs-path="${crAttr}"${external} title="${title}">${label}</a>` +
             `</div></li>`,
         );
       }
@@ -3142,11 +3151,12 @@ function wireSplitter(
   });
 }
 
-const STORAGE_SPLIT_PCT = "sidetrack.codeSideTrackStatic.splitPct";
-const STORAGE_WRAP_LINES = "sidetrack.codeSideTrackStatic.wrap";
-const STORAGE_DUAL_MOBILE_PANE = "sidetrack.codeSideTrackStatic.dualMobilePane";
-const STORAGE_SOURCE_MARKDOWN_PANE_MODE = "sidetrack.codeSideTrackStatic.sourceMarkdownPaneMode";
-const STORAGE_PAGE_BREAKS_ENABLED = "sidetrack.codeSideTrackStatic.pageBreaksEnabled";
+const STORAGE_SPLIT_PCT = "parallel-docs.codeParallelDocsStatic.splitPct";
+const STORAGE_WRAP_LINES = "parallel-docs.codeParallelDocsStatic.wrap";
+const STORAGE_DUAL_MOBILE_PANE = "parallel-docs.codeParallelDocsStatic.dualMobilePane";
+const STORAGE_SOURCE_MARKDOWN_PANE_MODE =
+  "parallel-docs.codeParallelDocsStatic.sourceMarkdownPaneMode";
+const STORAGE_PAGE_BREAKS_ENABLED = "parallel-docs.codeParallelDocsStatic.pageBreaksEnabled";
 /** Matches `code-browser.ts` `@media (max-width: 767px)` (dual column from 768px up). */
 const DUAL_MOBILE_SINGLE_PANE_MQ = "(max-width: 767px)";
 
@@ -3201,7 +3211,7 @@ function syncSinglePaneShellState(shell: HTMLElement, narrowSinglePane: boolean)
 }
 
 function wireWideModeIntroTrigger(shell: HTMLElement): void {
-  const btn = document.getElementById("sidetrack-help-tour");
+  const btn = document.getElementById("parallel-docs-help-tour");
   if (!(btn instanceof HTMLButtonElement)) return;
   btn.addEventListener("click", () => {
     wireWideModeIntroTour(shell, isNarrowViewport, { force: true });
@@ -3235,7 +3245,7 @@ function wireResponsivePageBreakHeight(shell: HTMLElement): void {
     );
     if (!Number.isFinite(viewportHeight) || viewportHeight <= 0) return;
     const minHeightPx = Math.round(clamp(viewportHeight * 0.72, 260, 820));
-    shell.style.setProperty("--sidetrack-page-break-min-height", `${String(minHeightPx)}px`);
+    shell.style.setProperty("--parallel-docs-page-break-min-height", `${String(minHeightPx)}px`);
   };
   globalThis.addEventListener("resize", setHeight, { passive: true });
   globalThis.addEventListener("orientationchange", setHeight, { passive: true });
@@ -3253,7 +3263,7 @@ function sourceLineIdPrefixForShell(shell: HTMLElement): "code-line-" | "code-md
   return sourcePaneModeForShell(shell) === "rendered-markdown" ? "code-md-line-" : "code-line-";
 }
 
-/** When the sidetrack pane is visible, (re)run Mermaid so diagrams are not laid out under display:none. */
+/** When the parallel-docs pane is visible, (re)run Mermaid so diagrams are not laid out under display:none. */
 function scheduleMermaidWhenDualDocPaneVisible(shell: HTMLElement, mq: MediaQueryList): void {
   const kick = (): void => {
     if (shell.getAttribute("data-layout") !== "dual") return;
@@ -3508,7 +3518,7 @@ function wireDualMobilePaneFlip(
         }
       });
     });
-    // Only here (not on every viewport apply): avoids redundant Mermaid passes on load/resize for the default sidetrack-first shell.
+    // Only here (not on every viewport apply): avoids redundant Mermaid passes on load/resize for the default parallel-docs-first shell.
     if (next === "doc") {
       scheduleMermaidWhenDualDocPaneVisible(shell, mq);
     }
@@ -3601,15 +3611,15 @@ function stretchFlowSynchronizerEnabled(shell: HTMLElement): boolean {
 function stretchBlockRows(table: HTMLElement): HTMLTableRowElement[] {
   return Array.from(
     table.querySelectorAll<HTMLTableRowElement>(
-      "tbody tr.stretch-row--block[data-sidetrack-stretch-sync-id]",
+      "tbody tr.stretch-row--block[data-parallel-docs-stretch-sync-id]",
     ),
-  ).filter((row) => (row.dataset.sidetrackStretchSyncId?.trim() ?? "").length > 0);
+  ).filter((row) => (row.dataset.parallelDocsStretchSyncId?.trim() ?? "").length > 0);
 }
 
 function stretchRowPairRects(
   row: HTMLTableRowElement,
 ): { id: string; codeRect: DOMRect; docRect: DOMRect } | null {
-  const id = row.dataset.sidetrackStretchSyncId?.trim() ?? "";
+  const id = row.dataset.parallelDocsStretchSyncId?.trim() ?? "";
   if (id.length === 0) return null;
   const codeTd = row.querySelector<HTMLTableCellElement>(":scope > td.stretch-code");
   const docTd = row.querySelector<HTMLTableCellElement>(":scope > td.stretch-doc");
@@ -3669,10 +3679,10 @@ function activeStretchSyncId(shell: HTMLElement, rows: HTMLTableRowElement[]): s
   for (const row of rows) {
     const rect = row.getBoundingClientRect();
     if (rect.top <= probeY && rect.bottom >= probeY) {
-      return row.dataset.sidetrackStretchSyncId?.trim() ?? null;
+      return row.dataset.parallelDocsStretchSyncId?.trim() ?? null;
     }
   }
-  return rows[0]?.dataset.sidetrackStretchSyncId?.trim() ?? null;
+  return rows[0]?.dataset.parallelDocsStretchSyncId?.trim() ?? null;
 }
 
 function drawStretchGutterConnectorsIntoSvg(
@@ -3726,7 +3736,7 @@ function drawStretchGutterConnectorsIntoSvg(
       ? `<path class="${trailClass}" d="${bottomPaths.dotted}" />`
       : "";
     parts.push(
-      `<g class="gutter__rays-block" data-sidetrack-block="${escapeHtmlText(pair.id)}">` +
+      `<g class="gutter__rays-block" data-parallel-docs-block="${escapeHtmlText(pair.id)}">` +
         `<path class="${strokeClass}" d="${topPaths.solid}" />` +
         topExtra +
         `<path class="${strokeClass}" d="${bottomPaths.solid}" />` +
@@ -3858,8 +3868,8 @@ type MultiAngleClientPayload = {
     docInnerHtmlB64: string;
     rawMdB64: string;
     scrollBlockLinksB64: string;
-    sidetrackPathForSearch: string;
-    sidetrackOnGithubUrl?: string;
+    parallelDocsPathForSearch: string;
+    parallelDocsOnGithubUrl?: string;
     staticBrowseUrl?: string;
     stretchSwapInnerB64?: string;
   }[];
@@ -3916,13 +3926,14 @@ function applyMultiAngleStretchAngleToShell(
   }
   shell.setAttribute("data-scroll-block-links-b64", angle.scrollBlockLinksB64);
   shell.setAttribute("data-raw-md-b64", angle.rawMdB64);
-  shell.setAttribute("data-search-sidetrack-path", angle.sidetrackPathForSearch);
-  const crIdentity = normPosixPath(angle.sidetrackPathForSearch);
-  if (crIdentity.length > 0) shell.setAttribute("data-sidetrack-pair-sidetrack-path", crIdentity);
-  else shell.removeAttribute("data-sidetrack-pair-sidetrack-path");
+  shell.setAttribute("data-search-parallel-docs-path", angle.parallelDocsPathForSearch);
+  const crIdentity = normPosixPath(angle.parallelDocsPathForSearch);
+  if (crIdentity.length > 0)
+    shell.setAttribute("data-parallel-docs-pair-parallel-docs-path", crIdentity);
+  else shell.removeAttribute("data-parallel-docs-pair-parallel-docs-path");
   const docPathEl = document.getElementById("nav-rail-doc-path");
   if (docPathEl) {
-    const path = angle.sidetrackPathForSearch.trim();
+    const path = angle.parallelDocsPathForSearch.trim();
     docPathEl.textContent = path.length > 0 ? path : "—";
     if (path.length > 0) docPathEl.setAttribute("title", path);
     else docPathEl.removeAttribute("title");
@@ -3934,11 +3945,11 @@ function applyMultiAngleStretchAngleToShell(
       globalThis.location.pathname,
       globalThis.location.origin,
     );
-    shell.setAttribute("data-sidetrack-pair-browse-href", resolved);
+    shell.setAttribute("data-parallel-docs-pair-browse-href", resolved);
   } else {
-    const ghu = angle.sidetrackOnGithubUrl?.trim();
-    if (ghu) shell.setAttribute("data-sidetrack-pair-browse-href", ghu);
-    else shell.removeAttribute("data-sidetrack-pair-browse-href");
+    const ghu = angle.parallelDocsOnGithubUrl?.trim();
+    if (ghu) shell.setAttribute("data-parallel-docs-pair-browse-href", ghu);
+    else shell.removeAttribute("data-parallel-docs-pair-browse-href");
   }
   applyDocumentedTreeCurrentPairHighlight();
   assignLocationToCanonicalBrowsePermalinkIfNeeded(shell);
@@ -3989,13 +4000,13 @@ function wireStretchSearchUi(shell: HTMLElement, codePane: HTMLElement): void {
     searchInput,
   );
 
-  const multiScript = document.getElementById("sidetrack-multi-angle-b64");
+  const multiScript = document.getElementById("parallel-docs-multi-angle-b64");
   const multiPayload = parseMultiAnglePayload(multiScript);
   if (multiPayload?.layoutMode !== "stretch") return;
   wireMultiAngleStretchAngleSelect(shell, multiPayload, (angle) => {
     bundle.mutable.rawMd = decodeBase64Utf8(angle.rawMdB64);
     bundle.mutable.mdLines = bundle.mutable.rawMd.split("\n");
-    bundle.mutable.sidetrackPathLabel = angle.sidetrackPathForSearch;
+    bundle.mutable.parallelDocsPathLabel = angle.parallelDocsPathForSearch;
     bundle.rebuildSearcher();
     searchInput.value = "";
     searchResults.innerHTML = "";
@@ -4045,7 +4056,7 @@ function hubSearcherRowsForDualPane(args: {
   hubNavRows: Row[];
   pathRowsForOrdering: Row[];
   rawMd: string;
-  sidetrackPathLabel: string;
+  parallelDocsPathLabel: string;
 }): Row[] {
   const {
     scope,
@@ -4054,16 +4065,16 @@ function hubSearcherRowsForDualPane(args: {
     hubNavRows,
     pathRowsForOrdering,
     rawMd,
-    sidetrackPathLabel,
+    parallelDocsPathLabel,
   } = args;
-  if (scope !== "sidetrack-and-paths") {
-    return buildIndexedSearchRows(scope, rawCode, rawMd, filePathLabel, sidetrackPathLabel);
+  if (scope !== "parallel-docs-and-paths") {
+    return buildIndexedSearchRows(scope, rawCode, rawMd, filePathLabel, parallelDocsPathLabel);
   }
   if (hubNavRows.length > 0) return hubNavRows;
   const pathPart =
     pathRowsForOrdering.length > 0
       ? pathRowsForOrdering
-      : buildIndexedSearchRows(scope, rawCode, rawMd, filePathLabel, sidetrackPathLabel).filter(
+      : buildIndexedSearchRows(scope, rawCode, rawMd, filePathLabel, parallelDocsPathLabel).filter(
           (r) => r.kind === "path",
         );
   const mdRows = rawMd.split("\n").map((text, line) => ({
@@ -4071,18 +4082,18 @@ function hubSearcherRowsForDualPane(args: {
     line,
     text,
     spPath: filePathLabel,
-    crPath: sidetrackPathLabel,
+    crPath: parallelDocsPathLabel,
   }));
   return [...pathPart, ...mdRows];
 }
 
-function initialSideTrackScopePathState(
+function initialParallelDocsScopePathState(
   shell: HTMLElement,
   scope: SearchScope,
   filePathLabel: string,
-  sidetrackPathLabel: string,
+  parallelDocsPathLabel: string,
 ): { documentedPairs: DocumentedPairNav[]; pathRowsForOrdering: Row[]; pathBlobWide: string } {
-  if (scope !== "sidetrack-and-paths") {
+  if (scope !== "parallel-docs-and-paths") {
     return { documentedPairs: [], pathRowsForOrdering: [], pathBlobWide: "" };
   }
   const documentedPairs = parseDocumentedPairsFromEmbeddedB64(
@@ -4092,33 +4103,36 @@ function initialSideTrackScopePathState(
   const pathBlobWide =
     pathRowsForOrdering.length > 0
       ? pathRowsForOrdering.map((r) => r.text).join("\n")
-      : [filePathLabel, sidetrackPathLabel].filter((s) => s.trim().length > 0).join("\n");
+      : [filePathLabel, parallelDocsPathLabel].filter((s) => s.trim().length > 0).join("\n");
   return { documentedPairs, pathRowsForOrdering, pathBlobWide };
 }
 
-function effectiveSideTrackPathLabelFromDocumentedPairs(
+function effectiveParallelDocsPathLabelFromDocumentedPairs(
   scope: SearchScope,
   filePathLabel: string,
-  sidetrackPathLabel: string,
+  parallelDocsPathLabel: string,
   documentedPairs: DocumentedPairNav[],
 ): string {
-  if (scope !== "sidetrack-and-paths") return sidetrackPathLabel;
+  if (scope !== "parallel-docs-and-paths") return parallelDocsPathLabel;
   const sourcePath = filePathLabel.trim();
-  if (sourcePath.length === 0) return sidetrackPathLabel;
+  if (sourcePath.length === 0) return parallelDocsPathLabel;
   const pair = findDocumentedPair(documentedPairs, "", sourcePath);
-  if (!pair) return sidetrackPathLabel;
+  if (!pair) return parallelDocsPathLabel;
 
-  const fromShell = sidetrackPathLabel.trim();
-  const fromPair = pair.sidetrackPath.trim();
-  if (fromPair.length === 0) return sidetrackPathLabel;
+  const fromShell = parallelDocsPathLabel.trim();
+  const fromPair = pair.parallelDocsPath.trim();
+  if (fromPair.length === 0) return parallelDocsPathLabel;
   if (fromShell.length === 0) return fromPair;
 
-  // Older hub HTML can carry placeholder `sidetrack.md` while documentedPairs already has the real path.
-  if (normPosixPath(fromShell) === "sidetrack.md" && normPosixPath(fromPair) !== "sidetrack.md") {
+  // Older hub HTML can carry placeholder `parallel-docs.md` while documentedPairs already has the real path.
+  if (
+    normPosixPath(fromShell) === "parallel-docs.md" &&
+    normPosixPath(fromPair) !== "parallel-docs.md"
+  ) {
     return fromPair;
   }
 
-  return sidetrackPathLabel;
+  return parallelDocsPathLabel;
 }
 
 type DualPaneSearchIndexState = {
@@ -4128,7 +4142,7 @@ type DualPaneSearchIndexState = {
 };
 
 /**
- * Fetched `sidetrack-nav-search.json` sometimes omits `staticBrowseUrl` on pairs; the hub embed
+ * Fetched `parallel-docs-nav-search.json` sometimes omits `staticBrowseUrl` on pairs; the hub embed
  * carries browse URLs from the same build — merge so search hits open `_site/browse/…`, not GitHub.
  */
 function mergeFetchedDocumentedPairsWithEmbeddedBrowse(
@@ -4141,12 +4155,12 @@ function mergeFetchedDocumentedPairsWithEmbeddedBrowse(
   for (const p of embedded) {
     const b = (p.staticBrowseUrl ?? "").trim();
     if (b.length === 0) continue;
-    browseByCr.set(normPosixPath(p.sidetrackPath), b);
+    browseByCr.set(normPosixPath(p.parallelDocsPath), b);
   }
   return fetched.map((p) => {
     const have = (p.staticBrowseUrl ?? "").trim();
     if (have.length > 0) return p;
-    const fromEmb = browseByCr.get(normPosixPath(p.sidetrackPath));
+    const fromEmb = browseByCr.get(normPosixPath(p.parallelDocsPath));
     if (fromEmb !== undefined && fromEmb.length > 0) {
       return { ...p, staticBrowseUrl: fromEmb };
     }
@@ -4228,18 +4242,19 @@ function applySelectedMultiAngle(args: {
   rewriteHubRelativeBrowseAnchorsIn(docBody);
   mutable.rawMd = decodeBase64Utf8(angle.rawMdB64);
   mutable.mdLines = mutable.rawMd.split("\n");
-  mutable.sidetrackPathLabel = angle.sidetrackPathForSearch;
+  mutable.parallelDocsPathLabel = angle.parallelDocsPathForSearch;
   rebuildSearcher();
   scrollLinksRef.current = parseScrollBlockLinksFromShell(angle.scrollBlockLinksB64);
   shell.setAttribute("data-scroll-block-links-b64", angle.scrollBlockLinksB64);
-  shell.setAttribute("data-search-sidetrack-path", angle.sidetrackPathForSearch);
-  const crIdentity = normPosixPath(angle.sidetrackPathForSearch);
-  if (crIdentity.length > 0) shell.setAttribute("data-sidetrack-pair-sidetrack-path", crIdentity);
-  else shell.removeAttribute("data-sidetrack-pair-sidetrack-path");
+  shell.setAttribute("data-search-parallel-docs-path", angle.parallelDocsPathForSearch);
+  const crIdentity = normPosixPath(angle.parallelDocsPathForSearch);
+  if (crIdentity.length > 0)
+    shell.setAttribute("data-parallel-docs-pair-parallel-docs-path", crIdentity);
+  else shell.removeAttribute("data-parallel-docs-pair-parallel-docs-path");
   applyDocumentedTreeCurrentPairHighlight();
   const docPathEl = document.getElementById("nav-rail-doc-path");
   if (docPathEl) {
-    const path = angle.sidetrackPathForSearch.trim();
+    const path = angle.parallelDocsPathForSearch.trim();
     docPathEl.textContent = path.length > 0 ? path : "—";
     if (path.length > 0) docPathEl.setAttribute("title", path);
     else docPathEl.removeAttribute("title");
@@ -4251,11 +4266,11 @@ function applySelectedMultiAngle(args: {
       globalThis.location.pathname,
       globalThis.location.origin,
     );
-    shell.setAttribute("data-sidetrack-pair-browse-href", resolved);
+    shell.setAttribute("data-parallel-docs-pair-browse-href", resolved);
   } else {
-    const ghu = angle.sidetrackOnGithubUrl?.trim();
-    if (ghu) shell.setAttribute("data-sidetrack-pair-browse-href", ghu);
-    else shell.removeAttribute("data-sidetrack-pair-browse-href");
+    const ghu = angle.parallelDocsOnGithubUrl?.trim();
+    if (ghu) shell.setAttribute("data-parallel-docs-pair-browse-href", ghu);
+    else shell.removeAttribute("data-parallel-docs-pair-browse-href");
   }
   if (searchInput && searchResults) {
     searchInput.value = "";
@@ -4372,11 +4387,11 @@ function wireDualPaneMultiAngleAndScroll(
   return wireDualPaneScrollIndexedOrProportional(args, blockAwareOpts);
 }
 
-function wireDualPaneSideTrackLocationHash(
+function wireDualPaneParallelDocsLocationHash(
   docScrollEl: HTMLElement,
   mdLineCount: () => number,
 ): void {
-  function sidetrackMdLineFromLocationHash(rawHash: string): number | null {
+  function parallelDocsMdLineFromLocationHash(rawHash: string): number | null {
     const hash = rawHash.replace(/^#/, "").trim();
     if (hash.length === 0) return null;
     const tokens = hash
@@ -4384,7 +4399,7 @@ function wireDualPaneSideTrackLocationHash(
       .map((t) => t.trim())
       .filter((t) => t.length > 0);
     for (const token of tokens) {
-      const m = /^sidetrack-md-line-(\d+)$/.exec(token);
+      const m = /^parallel-docs-md-line-(\d+)$/.exec(token);
       if (!m?.[1]) continue;
       const line0 = Number.parseInt(m[1], 10);
       if (Number.isFinite(line0)) return line0;
@@ -4392,14 +4407,14 @@ function wireDualPaneSideTrackLocationHash(
     return null;
   }
 
-  function applySideTrackLocationHash(): void {
-    const line0 = sidetrackMdLineFromLocationHash(globalThis.location.hash);
+  function applyParallelDocsLocationHash(): void {
+    const line0 = parallelDocsMdLineFromLocationHash(globalThis.location.hash);
     if (line0 === null) return;
     scrollDocToMarkdownLine0(docScrollEl, line0, mdLineCount());
   }
-  globalThis.addEventListener("hashchange", applySideTrackLocationHash);
+  globalThis.addEventListener("hashchange", applyParallelDocsLocationHash);
   globalThis.requestAnimationFrame(() => {
-    globalThis.requestAnimationFrame(applySideTrackLocationHash);
+    globalThis.requestAnimationFrame(applyParallelDocsLocationHash);
   });
 }
 
@@ -4409,8 +4424,8 @@ type DualPaneSearcherBundle = {
   scrollLinksRef: { current: BlockScrollLink[] };
   scope: SearchScope;
   filePathLabel: string;
-  sidetrackPathLabel: string;
-  pathInit: ReturnType<typeof initialSideTrackScopePathState>;
+  parallelDocsPathLabel: string;
+  pathInit: ReturnType<typeof initialParallelDocsScopePathState>;
   indexState: DualPaneSearchIndexState;
   mutable: MutableSearchFields;
   rebuildSearcher: () => void;
@@ -4462,21 +4477,26 @@ function buildDualPaneSearcherBundle(
     shell.getAttribute("data-scroll-block-links-b64") || "",
   );
   const scrollLinksRef = { current: scrollLinks };
-  const { scope, filePathLabel, sidetrackPathLabel } = readSearchScopeFromShell(shell);
+  const { scope, filePathLabel, parallelDocsPathLabel } = readSearchScopeFromShell(shell);
 
-  const pathInit = initialSideTrackScopePathState(shell, scope, filePathLabel, sidetrackPathLabel);
-  const effectiveSideTrackPathLabel = effectiveSideTrackPathLabelFromDocumentedPairs(
+  const pathInit = initialParallelDocsScopePathState(
+    shell,
     scope,
     filePathLabel,
-    sidetrackPathLabel,
+    parallelDocsPathLabel,
+  );
+  const effectiveParallelDocsPathLabel = effectiveParallelDocsPathLabelFromDocumentedPairs(
+    scope,
+    filePathLabel,
+    parallelDocsPathLabel,
     pathInit.documentedPairs,
   );
-  if (effectiveSideTrackPathLabel.trim().length > 0) {
-    shell.setAttribute("data-search-sidetrack-path", effectiveSideTrackPathLabel);
+  if (effectiveParallelDocsPathLabel.trim().length > 0) {
+    shell.setAttribute("data-search-parallel-docs-path", effectiveParallelDocsPathLabel);
     const docPathEl = document.getElementById("nav-rail-doc-path");
     if (docPathEl) {
-      docPathEl.textContent = effectiveSideTrackPathLabel;
-      docPathEl.setAttribute("title", effectiveSideTrackPathLabel);
+      docPathEl.textContent = effectiveParallelDocsPathLabel;
+      docPathEl.setAttribute("title", effectiveParallelDocsPathLabel);
     }
   }
   const indexState: DualPaneSearchIndexState = {
@@ -4488,7 +4508,7 @@ function buildDualPaneSearcherBundle(
   const mutable: MutableSearchFields = {
     rawMd,
     mdLines: rawMd.split("\n"),
-    sidetrackPathLabel: effectiveSideTrackPathLabel,
+    parallelDocsPathLabel: effectiveParallelDocsPathLabel,
     searcher: indexSearchLineRows([]),
     pathBlobWide: pathInit.pathBlobWide,
     pathRowsForOrdering: indexState.pathRowsForOrdering,
@@ -4504,7 +4524,7 @@ function buildDualPaneSearcherBundle(
         hubNavRows: indexState.hubNavRows,
         pathRowsForOrdering: indexState.pathRowsForOrdering,
         rawMd: mutable.rawMd,
-        sidetrackPathLabel: mutable.sidetrackPathLabel,
+        parallelDocsPathLabel: mutable.parallelDocsPathLabel,
       }),
     );
   }
@@ -4516,7 +4536,7 @@ function buildDualPaneSearcherBundle(
     scrollLinksRef,
     scope,
     filePathLabel,
-    sidetrackPathLabel: effectiveSideTrackPathLabel,
+    parallelDocsPathLabel: effectiveParallelDocsPathLabel,
     pathInit,
     indexState,
     mutable,
@@ -4582,7 +4602,7 @@ function wireDualPaneCodeBrowser(shell: HTMLElement, codePane: HTMLElement): voi
   );
   wireSplitter(STORAGE_SPLIT_PCT, shell, codePane, gutter, pct);
 
-  const multiScript = document.getElementById("sidetrack-multi-angle-b64");
+  const multiScript = document.getElementById("parallel-docs-multi-angle-b64");
   const multiPayload = parseMultiAnglePayload(multiScript);
   const shouldWireBlockRays = multiPayload !== null || bundle.scrollLinksRef.current.length > 0;
   const requestBlockRayRedraw = shouldWireBlockRays
@@ -4626,20 +4646,20 @@ function wireDualPaneCodeBrowser(shell: HTMLElement, codePane: HTMLElement): voi
   });
   wireWideModeIntroTour(shell, isNarrowViewport);
 
-  wireDualPaneSideTrackLocationHash(docScrollEl, () => bundle.mutable.mdLines.length);
+  wireDualPaneParallelDocsLocationHash(docScrollEl, () => bundle.mutable.mdLines.length);
 }
 
-function sidetrackThemeModeLabel(mode: SideTrackColorThemeMode): string {
+function parallelDocsThemeModeLabel(mode: ParallelDocsColorThemeMode): string {
   if (mode === "light") return "Light";
   if (mode === "dark") return "Dark";
   return "System";
 }
 
-function setSideTrackThemeTriggerHints(
+function setParallelDocsThemeTriggerHints(
   trigger: HTMLButtonElement,
-  mode: SideTrackColorThemeMode,
+  mode: ParallelDocsColorThemeMode,
 ): void {
-  const label = sidetrackThemeModeLabel(mode);
+  const label = parallelDocsThemeModeLabel(mode);
   trigger.setAttribute(
     "aria-label",
     `Color theme: ${label}. Left-click opens the menu. Right-click cycles System, Light, and Dark.`,
@@ -4649,8 +4669,8 @@ function setSideTrackThemeTriggerHints(
 
 function wireColorThemeToolbar(): void {
   const wrapEl = document.querySelector(".toolbar-theme");
-  const triggerEl = document.getElementById("sidetrack-theme-trigger");
-  const menuEl = document.getElementById("sidetrack-theme-menu");
+  const triggerEl = document.getElementById("parallel-docs-theme-trigger");
+  const menuEl = document.getElementById("parallel-docs-theme-menu");
   if (!wrapEl || !(triggerEl instanceof HTMLButtonElement) || !(menuEl instanceof HTMLElement))
     return;
 
@@ -4658,21 +4678,21 @@ function wireColorThemeToolbar(): void {
   const themeButton: HTMLButtonElement = triggerEl;
   const themeMenu: HTMLElement = menuEl;
 
-  let currentMode: SideTrackColorThemeMode = parseSideTrackColorThemeMode(
-    readWebStorageItem(localStorage, SIDETRACK_COLOR_THEME_STORAGE_KEY),
+  let currentMode: ParallelDocsColorThemeMode = parseParallelDocsColorThemeMode(
+    readWebStorageItem(localStorage, PARALLEL_DOCS_COLOR_THEME_STORAGE_KEY),
   );
-  applySideTrackColorTheme(currentMode);
+  applyParallelDocsColorTheme(currentMode);
 
   let menuOpen = false;
 
   function syncUi(): void {
-    themeButton.dataset.sidetrackTriggerMode = currentMode;
+    themeButton.dataset.parallelDocsTriggerMode = currentMode;
     themeButton.setAttribute("aria-expanded", menuOpen ? "true" : "false");
-    setSideTrackThemeTriggerHints(themeButton, currentMode);
+    setParallelDocsThemeTriggerHints(themeButton, currentMode);
     for (const el of themeMenu.querySelectorAll<HTMLButtonElement>(
-      "[data-sidetrack-theme-value]",
+      "[data-parallel-docs-theme-value]",
     )) {
-      const v = parseSideTrackColorThemeMode(el.dataset.sidetrackThemeValue ?? "");
+      const v = parseParallelDocsColorThemeMode(el.dataset.parallelDocsThemeValue ?? "");
       el.setAttribute("aria-checked", v === currentMode ? "true" : "false");
     }
   }
@@ -4693,10 +4713,10 @@ function wireColorThemeToolbar(): void {
     syncUi();
   }
 
-  function persistAndApply(mode: SideTrackColorThemeMode): void {
+  function persistAndApply(mode: ParallelDocsColorThemeMode): void {
     currentMode = mode;
-    writeWebStorageItem(localStorage, SIDETRACK_COLOR_THEME_STORAGE_KEY, mode);
-    applySideTrackColorTheme(mode);
+    writeWebStorageItem(localStorage, PARALLEL_DOCS_COLOR_THEME_STORAGE_KEY, mode);
+    applyParallelDocsColorTheme(mode);
     syncUi();
   }
 
@@ -4713,15 +4733,15 @@ function wireColorThemeToolbar(): void {
   themeButton.addEventListener("contextmenu", (ev) => {
     ev.preventDefault();
     if (menuOpen) closeMenu();
-    persistAndApply(nextSideTrackColorThemeMode(currentMode));
+    persistAndApply(nextParallelDocsColorThemeMode(currentMode));
   });
 
   for (const item of themeMenu.querySelectorAll<HTMLButtonElement>(
-    "[data-sidetrack-theme-value]",
+    "[data-parallel-docs-theme-value]",
   )) {
     item.addEventListener("click", (ev) => {
       ev.stopPropagation();
-      const mode = parseSideTrackColorThemeMode(item.dataset.sidetrackThemeValue ?? "");
+      const mode = parseParallelDocsColorThemeMode(item.dataset.parallelDocsThemeValue ?? "");
       persistAndApply(mode);
       closeMenu();
       themeButton.focus();
@@ -4784,25 +4804,25 @@ function absolutizeNavJsonUrls(shell: HTMLElement, beforeHref: string): void {
 }
 
 function normalizePairBrowseHrefForCurrentPath(shell: HTMLElement, pathname: string): void {
-  const pairBrowseRaw = shell.getAttribute("data-sidetrack-pair-browse-href")?.trim() ?? "";
+  const pairBrowseRaw = shell.getAttribute("data-parallel-docs-pair-browse-href")?.trim() ?? "";
   if (pairBrowseRaw.length > 0 && isHubRelativeStaticBrowseHref(pairBrowseRaw)) {
     shell.setAttribute(
-      "data-sidetrack-pair-browse-href",
+      "data-parallel-docs-pair-browse-href",
       resolveStaticBrowseHref(pairBrowseRaw, pathname, globalThis.location.origin),
     );
   }
 }
 
-function activeSideTrackHashTokenFromViewport(): string | null {
+function activeParallelDocsHashTokenFromViewport(): string | null {
   const docPane = document.getElementById("doc-pane");
   if (!(docPane instanceof HTMLElement)) return null;
   const docBody = document.getElementById("doc-pane-body");
   const docScrollEl = docBody instanceof HTMLElement ? docBody : docPane;
-  const anchors = docScrollEl.querySelectorAll<HTMLElement>(".sidetrack-block-anchor");
+  const anchors = docScrollEl.querySelectorAll<HTMLElement>(".parallel-docs-block-anchor");
   if (anchors.length === 0) return null;
-  const mdLine0 = probeSideTrackLine0FromDoc(docScrollEl);
+  const mdLine0 = probeParallelDocsLine0FromDoc(docScrollEl);
   if (mdLine0 === null || !Number.isFinite(mdLine0) || mdLine0 < 0) return null;
-  return `sidetrack-md-line-${String(mdLine0)}`;
+  return `parallel-docs-md-line-${String(mdLine0)}`;
 }
 
 /**
@@ -4818,11 +4838,11 @@ function resolveEmbeddedStaticNavUrlsForCurrentPage(shell: HTMLElement): void {
 }
 
 /**
- * Absolute base URL for the pair browse / permalink target from `#shell` `data-sidetrack-pair-browse-href`
+ * Absolute base URL for the pair browse / permalink target from `#shell` `data-parallel-docs-pair-browse-href`
  * (hub-relative `./browse/…` resolved via {@link resolveStaticBrowseHref}; same contract as static build).
  */
 function pairBrowsePermalinkBaseHrefFromShell(shell: HTMLElement): string {
-  const raw = shell.getAttribute("data-sidetrack-pair-browse-href") ?? "";
+  const raw = shell.getAttribute("data-parallel-docs-pair-browse-href") ?? "";
   const t = raw.trim();
   const canonical =
     isHubRelativeStaticBrowseHref(t) && t.length > 0
@@ -4850,7 +4870,7 @@ function permalinkHashSuffixFromUi(): string {
     const pane = normalizedDualMobilePane(shell.getAttribute("data-dual-mobile-pane"));
     pushUnique(mobilePaneHashToken(pane));
   }
-  const activeAnchor = activeSideTrackHashTokenFromViewport();
+  const activeAnchor = activeParallelDocsHashTokenFromViewport();
   if (activeAnchor) pushUnique(activeAnchor);
   return tokens.length > 0 ? `#${tokens.join("&")}` : "";
 }
@@ -4905,7 +4925,7 @@ async function writeTextToClipboard(text: string): Promise<boolean> {
 
 function wireSharePermalinkButton(): void {
   const shell = document.getElementById("shell");
-  const btn = document.getElementById("sidetrack-share-link");
+  const btn = document.getElementById("parallel-docs-share-link");
   if (!(shell instanceof HTMLElement) || !(btn instanceof HTMLButtonElement)) return;
   const baseLabel = "Copy shareable permalink";
   let copiedTimer: ReturnType<typeof setTimeout> | undefined;

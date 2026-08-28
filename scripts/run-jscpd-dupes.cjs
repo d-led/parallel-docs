@@ -2,7 +2,7 @@
 "use strict";
 
 /**
- * jscpd duplicate run for SideTrack: same detection as the stock CLI, but the summary table
+ * jscpd duplicate run for ParallelDocs: same detection as the stock CLI, but the summary table
  * uses a green header when there are no duplicated lines, yellow when duplication is
  * under 1% of total lines, and red otherwise (cli-table3 defaults the header to red).
  */
@@ -35,8 +35,8 @@ const TABLE_HEAD = [
 ];
 
 const JSCPD_IGNORE =
-  process.env.SIDETRACK_JSCPD_IGNORE ||
-  "**/node_modules/**,**/dist/**,**/coverage/**,**/.cache/**,**/.git/**,packages/code-sidetrack-static/site/**,*.vsix,.yarn/**";
+  process.env.PARALLEL_DOCS_JSCPD_IGNORE ||
+  "**/node_modules/**,**/dist/**,**/coverage/**,**/.cache/**,**/.git/**,packages/code-parallel-docs-static/site/**,*.vsix,.yarn/**";
 
 function headerColorize(statistic) {
   const dupLines = statistic.total.duplicatedLines;

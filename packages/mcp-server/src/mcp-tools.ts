@@ -4,31 +4,31 @@ import path from "node:path";
 import { execSync } from "node:child_process";
 
 import {
-  applyAnglesFlatMigrationToSideTrackToml,
-  applyPathRenamesToSideTrackIndex,
+  applyAnglesFlatMigrationToParallelDocsToml,
+  applyPathRenamesToParallelDocsIndex,
   collectOrphanCompanionMarkdownTargets,
-  convertSideTrackSourceMarkersToLanguage,
+  convertParallelDocsSourceMarkersToLanguage,
   defaultMetadataIndexPath,
-  discoverSideTrackPairsOnDisk,
+  discoverParallelDocsPairsOnDisk,
   discoverFlatCompanionMarkdownFiles,
   ensureAnglesSentinelFile,
   GitScmProvider,
-  initializeSideTrackProject,
-  loadSideTrackConfig,
+  initializeParallelDocsProject,
+  loadParallelDocsConfig,
   normalizeRepoRelativePath,
   planAnglesMigrationFromCompanions,
   pruneOrphanCompanionMarkdown,
   readIndex,
   refreshIndexMigrationsOnDisk,
-  resolveSideTrackMarkdownPath,
+  resolveParallelDocsMarkdownPath,
   resolveMermaidRuntimePath,
   rewriteIndexKeysForAnglesMigration,
-  upsertAngleDefinitionInSideTrackToml,
+  upsertAngleDefinitionInParallelDocsToml,
   validateProject,
   type ValidateProjectOptions,
   writeIndex,
-} from "@sidetrack/core";
-import { renderSideBySideHtml } from "@sidetrack/render";
+} from "@parallel-docs/core";
+import { renderSideBySideHtml } from "@parallel-docs/render";
 import { z } from "zod";
 
 // ── Tool definition type ────────────────────────────────────────────────
@@ -79,11 +79,11 @@ function resolveSetupPagesPaths(
   nodeVersion: string,
 ): { workflowDir: string; workflowFile: string; workflowYaml: string } {
   const workflowDir = path.join(repoRoot, ".github", "workflows");
-  const workflowFile = path.join(workflowDir, "sidetrack-pages.yml");
+  const workflowFile = path.join(workflowDir, "parallel-docs-pages.yml");
   const workflowYaml = `\
-# SideTrack → GitHub Pages static site deployment.
+# ParallelDocs → GitHub Pages static site deployment.
 # Settings → Pages → Source: GitHub Actions.
-name: sidetrack-pages
+name: parallel-docs-pages
 
 on:
   push:
@@ -114,11 +114,11 @@ jobs:
 
       - run: npm ci
 
-      - name: Install SideTrack CLI
-        run: npm install --no-save sidetrack
+      - name: Install ParallelDocs CLI
+        run: npm install --no-save parallel-docs
 
-      - name: Build SideTrack static site
-        run: npx sidetrack pages build
+      - name: Build ParallelDocs static site
+        run: npx parallel-docs pages build
 
       - uses: actions/upload-pages-artifact@v3
         with:
@@ -197,18 +197,18 @@ function formatWriteResult(
 // ── Tool definitions ─────────────────────────────────────────────────────
 
 export const ALL_TOOLS: McpToolDef[] = [
-  // ── sidetrack_init ──────────────────────────────────────────────────
+  // ── parallel_docs_init ──────────────────────────────────────────────────
   {
-    name: "sidetrack_init",
+    name: "parallel_docs_init",
     description:
-      "Initialize a SideTrack project in the current workspace. " +
-      "Creates the .sidetrack/ storage directory, index.json, and .sidetrack.toml " +
+      "Initialize a ParallelDocs project in the current workspace. " +
+      "Creates the .parallel-docs/ storage directory, index.json, and .parallel-docs.toml " +
       "configuration file. Idempotent — safe to run multiple times.",
     schema: {},
     handler: async (repoRoot) => {
-      const result = await initializeSideTrackProject(repoRoot);
+      const result = await initializeParallelDocsProject(repoRoot);
       const msgs: string[] = [];
-      if (result.createdToml) msgs.push("Created .sidetrack.toml");
+      if (result.createdToml) msgs.push("Created .parallel-docs.toml");
       if (result.createdIndex) msgs.push("Created index.json");
       if (result.migratedIndex) msgs.push("Migrated index to current schema");
       if (result.addedSiteGitignore) msgs.push("Added _site to .gitignore");
@@ -222,11 +222,11 @@ export const ALL_TOOLS: McpToolDef[] = [
     },
   },
 
-  // ── sidetrack_validate ──────────────────────────────────────────────
+  // ── parallel_docs_validate ──────────────────────────────────────────────
   {
-    name: "sidetrack_validate",
+    name: "parallel_docs_validate",
     description:
-      "Validate the SideTrack project metadata and configuration. " +
+      "Validate the ParallelDocs project metadata and configuration. " +
       "Returns errors and warnings. Set staged=true to only validate index entries " +
       "touched by staged Git files.",
     schema: {
@@ -253,49 +253,49 @@ export const ALL_TOOLS: McpToolDef[] = [
     },
   },
 
-  // ── sidetrack_paths ─────────────────────────────────────────────────
+  // ── parallel_docs_paths ─────────────────────────────────────────────────
   {
-    name: "sidetrack_paths",
+    name: "parallel_docs_paths",
     description:
-      "Resolve and return the SideTrack Markdown companion path for a source file. " +
+      "Resolve and return the ParallelDocs Markdown companion path for a source file. " +
       "Given a repo-relative source file path, returns the corresponding .md path.",
     schema: {
       file: z.string().describe("Repo-relative path to the source file"),
     },
     handler: async (repoRoot, args) => {
       const rel = normalizeRepoRelativePath(String(args.file));
-      const cfg = await loadSideTrackConfig(repoRoot);
-      const resolved = resolveSideTrackMarkdownPath(repoRoot, rel, cfg);
-      return textResult(resolved.sidetrackPath);
+      const cfg = await loadParallelDocsConfig(repoRoot);
+      const resolved = resolveParallelDocsMarkdownPath(repoRoot, rel, cfg);
+      return textResult(resolved.parallelDocsPath);
     },
   },
 
-  // ── sidetrack_render ────────────────────────────────────────────────
+  // ── parallel_docs_render ────────────────────────────────────────────────
   {
-    name: "sidetrack_render",
+    name: "parallel_docs_render",
     description:
-      "Render a side-by-side HTML page (source code + SideTrack Markdown). " +
+      "Render a side-by-side HTML page (source code + ParallelDocs Markdown). " +
       "Reads the source and markdown files from disk, writes HTML output.",
     schema: {
       source: z.string().optional().describe("Repo-relative source file path"),
-      markdown: z.string().optional().describe("Path to SideTrack Markdown file"),
+      markdown: z.string().optional().describe("Path to ParallelDocs Markdown file"),
       out: z.string().optional().default("_site/index.html").describe("Output HTML path"),
       mermaid: z.boolean().optional().default(false).describe("Include Mermaid diagram runtime"),
     },
     handler: async (repoRoot, args) => {
-      const cfg = await loadSideTrackConfig(repoRoot);
+      const cfg = await loadParallelDocsConfig(repoRoot);
       const srcRel = args.source ?? cfg.staticSite?.sourceFile;
-      const mdRel = args.markdown ?? cfg.staticSite?.sidetrackMarkdownFile;
+      const mdRel = args.markdown ?? cfg.staticSite?.parallelDocsMarkdownFile;
       const outRel = String(args.out ?? "_site/index.html");
 
       if (!srcRel) {
         return errorResult(
-          "No source file provided. Pass source or set [static_site].source_file in .sidetrack.toml.",
+          "No source file provided. Pass source or set [static_site].source_file in .parallel-docs.toml.",
         );
       }
       if (!mdRel) {
         return errorResult(
-          "No markdown file provided. Pass markdown or set [static_site].sidetrack_markdown in .sidetrack.toml.",
+          "No markdown file provided. Pass markdown or set [static_site].parallel_docs_markdown in .parallel-docs.toml.",
         );
       }
 
@@ -320,7 +320,7 @@ export const ALL_TOOLS: McpToolDef[] = [
       const html = await renderSideBySideHtml({
         code,
         language: ext,
-        sidetrackMarkdown: mdText,
+        parallelDocsMarkdown: mdText,
         hljsTheme: cfg.render.syntaxTheme,
         includeMermaidRuntime: Boolean(args.mermaid),
         mermaidRuntimePath: resolveMermaidRuntimePath(repoRoot, cfg.render.mermaidRuntimePath),
@@ -332,9 +332,9 @@ export const ALL_TOOLS: McpToolDef[] = [
     },
   },
 
-  // ── sidetrack_doctor ────────────────────────────────────────────────
+  // ── parallel_docs_doctor ────────────────────────────────────────────────
   {
-    name: "sidetrack_doctor",
+    name: "parallel_docs_doctor",
     description:
       "Run validation plus environment checks. With allowDeletions=true, also " +
       "removes orphan companion Markdown files (no matching primary source file).",
@@ -348,7 +348,7 @@ export const ALL_TOOLS: McpToolDef[] = [
     handler: async (repoRoot, args) => {
       const lines: string[] = [];
       if (args.allowDeletions) {
-        const cfg = await loadSideTrackConfig(repoRoot);
+        const cfg = await loadParallelDocsConfig(repoRoot);
         const { removedAbsPaths } = await pruneOrphanCompanionMarkdown(repoRoot, cfg.storageDir);
         if (removedAbsPaths.length > 0) {
           lines.push(`Removed ${removedAbsPaths.length} orphan companion path(s):`);
@@ -378,9 +378,9 @@ export const ALL_TOOLS: McpToolDef[] = [
     },
   },
 
-  // ── sidetrack_migrate ───────────────────────────────────────────────
+  // ── parallel_docs_migrate ───────────────────────────────────────────────
   {
-    name: "sidetrack_migrate",
+    name: "parallel_docs_migrate",
     description:
       "Migrate the metadata index.json to the current schema version. " +
       "Safe to run multiple times — only applies pending migrations.",
@@ -394,18 +394,18 @@ export const ALL_TOOLS: McpToolDef[] = [
     },
   },
 
-  // ── sidetrack_migrate_angles ────────────────────────────────────────
+  // ── parallel_docs_migrate_angles ────────────────────────────────────────
   {
-    name: "sidetrack_migrate_angles",
+    name: "parallel_docs_migrate_angles",
     description:
-      "Convert flat .sidetrack/source/ companions to the Angles layout " +
+      "Convert flat .parallel-docs/source/ companions to the Angles layout " +
       "(per-source folders under angle directories). Use dryRun=true to preview.",
     schema: {
       angleId: z.string().optional().default("main").describe("Angle ID for migrated files"),
       dryRun: z.boolean().optional().default(false).describe("Preview moves without writing files"),
     },
     handler: async (repoRoot, args) => {
-      const cfg = await loadSideTrackConfig(repoRoot);
+      const cfg = await loadParallelDocsConfig(repoRoot);
       const storageDir = cfg.storageDir;
       const companions = await discoverFlatCompanionMarkdownFiles(repoRoot, storageDir);
       if (companions.length === 0) {
@@ -431,17 +431,17 @@ export const ALL_TOOLS: McpToolDef[] = [
         await fs.rename(fromAbs, toAbs);
       }
 
-      // Update .sidetrack.toml
+      // Update .parallel-docs.toml
       const firstCompanion = companions[0];
       const firstTarget = plan.moves[0];
       const sourceFile = firstCompanion.sourcePath;
-      const fromSideTrack = path.posix.join(storageDir, "source", `${sourceFile}.md`);
-      const toSideTrack = firstTarget?.toRepoRel;
+      const fromParallelDocs = path.posix.join(storageDir, "source", `${sourceFile}.md`);
+      const toParallelDocs = firstTarget?.toRepoRel;
 
-      await applyAnglesFlatMigrationToSideTrackToml(repoRoot, {
+      await applyAnglesFlatMigrationToParallelDocsToml(repoRoot, {
         angleId,
-        staticSideTrackMarkdownFrom: fromSideTrack,
-        staticSideTrackMarkdownTo: toSideTrack,
+        staticParallelDocsMarkdownFrom: fromParallelDocs,
+        staticParallelDocsMarkdownTo: toParallelDocs,
       });
 
       // Rewrite index keys
@@ -455,11 +455,11 @@ export const ALL_TOOLS: McpToolDef[] = [
     },
   },
 
-  // ── sidetrack_angles_add ────────────────────────────────────────────
+  // ── parallel_docs_angles_add ────────────────────────────────────────────
   {
-    name: "sidetrack_angles_add",
+    name: "parallel_docs_angles_add",
     description:
-      "Register a new angle in .sidetrack.toml and create the Angles sentinel. " +
+      "Register a new angle in .parallel-docs.toml and create the Angles sentinel. " +
       "Use makeDefault=true to set it as the default angle.",
     schema: {
       angleId: z
@@ -471,12 +471,12 @@ export const ALL_TOOLS: McpToolDef[] = [
       makeDefault: z.boolean().optional().default(false).describe("Set as the default angle"),
     },
     handler: async (repoRoot, args) => {
-      await upsertAngleDefinitionInSideTrackToml(repoRoot, {
+      await upsertAngleDefinitionInParallelDocsToml(repoRoot, {
         id: String(args.angleId),
         title: args.title ? String(args.title) : undefined,
         makeDefault: Boolean(args.makeDefault),
       });
-      const cfg = await loadSideTrackConfig(repoRoot);
+      const cfg = await loadParallelDocsConfig(repoRoot);
       await ensureAnglesSentinelFile(repoRoot, cfg.storageDir);
       return textResult(
         `Angle "${args.angleId}" registered${args.makeDefault ? " (default)" : ""}.`,
@@ -484,9 +484,9 @@ export const ALL_TOOLS: McpToolDef[] = [
     },
   },
 
-  // ── sidetrack_sync_moved_paths ──────────────────────────────────────
+  // ── parallel_docs_sync_moved_paths ──────────────────────────────────────
   {
-    name: "sidetrack_sync_moved_paths",
+    name: "parallel_docs_sync_moved_paths",
     description:
       "Rewrite index.json paths using Git rename detection between two tree-ish refs. " +
       "Use dryRun=true to preview without writing.",
@@ -506,12 +506,14 @@ export const ALL_TOOLS: McpToolDef[] = [
       if (renames.length === 0) {
         return textResult("No Git-detected renames in that range.");
       }
-      const cfg = await loadSideTrackConfig(repoRoot);
+      const cfg = await loadParallelDocsConfig(repoRoot);
       const index = await readIndex(repoRoot);
       if (!index) {
-        return errorResult(`No index at ${defaultMetadataIndexPath()}. Run sidetrack_init first.`);
+        return errorResult(
+          `No index at ${defaultMetadataIndexPath()}. Run parallel_docs_init first.`,
+        );
       }
-      const next = applyPathRenamesToSideTrackIndex(index, renames, repoRoot, cfg);
+      const next = applyPathRenamesToParallelDocsIndex(index, renames, repoRoot, cfg);
       if (!next.changed) {
         return textResult("Index paths already match those renames (nothing to update).");
       }
@@ -527,11 +529,11 @@ export const ALL_TOOLS: McpToolDef[] = [
     },
   },
 
-  // ── sidetrack_convert_source_markers ────────────────────────────────
+  // ── parallel_docs_convert_source_markers ────────────────────────────────
   {
-    name: "sidetrack_convert_source_markers",
+    name: "parallel_docs_convert_source_markers",
     description:
-      "Rewrite SideTrack marker pairs in a source file to the delimiter style " +
+      "Rewrite ParallelDocs marker pairs in a source file to the delimiter style " +
       "for a given VS Code language ID. Use dryRun=true to preview.",
     schema: {
       file: z.string().describe("Repo-relative path to the source file"),
@@ -553,7 +555,7 @@ export const ALL_TOOLS: McpToolDef[] = [
         if (code === "ENOENT") return errorResult(`File not found: ${rel}`);
         throw err;
       }
-      const { sourceText, changed, convertedPairs } = convertSideTrackSourceMarkersToLanguage(
+      const { sourceText, changed, convertedPairs } = convertParallelDocsSourceMarkersToLanguage(
         raw,
         String(args.language),
       );
@@ -573,47 +575,47 @@ export const ALL_TOOLS: McpToolDef[] = [
   // ── Read-only discovery tools ────────────────────────────────────────
 
   {
-    name: "sidetrack_list_pairs",
+    name: "parallel_docs_list_pairs",
     description:
-      "List all source→sidetrack pairs in the project. " +
+      "List all source→parallel-docs pairs in the project. " +
       "Returns repo-relative paths for each source file and its companion Markdown. " +
-      "Use this to discover what files already have sidetrack.",
+      "Use this to discover what files already have parallel-docs.",
     schema: {},
     handler: async (repoRoot) => {
-      const cfg = await loadSideTrackConfig(repoRoot);
-      const pairs = await discoverSideTrackPairsOnDisk(repoRoot, cfg.storageDir);
+      const cfg = await loadParallelDocsConfig(repoRoot);
+      const pairs = await discoverParallelDocsPairsOnDisk(repoRoot, cfg.storageDir);
       if (pairs.length === 0) {
         return textResult(
-          "No sidetrack pairs found. Run sidetrack_init first, then add sidetrack.",
+          "No parallel-docs pairs found. Run parallel_docs_init first, then add parallel-docs.",
         );
       }
-      const lines = [`${pairs.length} source→sidetrack pair(s):`];
+      const lines = [`${pairs.length} source→parallel-docs pair(s):`];
       for (const p of pairs) {
-        lines.push(`  ${p.sourcePath}  →  ${p.sidetrackPath}`);
+        lines.push(`  ${p.sourcePath}  →  ${p.parallelDocsPath}`);
       }
       return textResult(lines.join("\n"));
     },
   },
 
   {
-    name: "sidetrack_read_sidetrack",
+    name: "parallel_docs_read_parallel_docs",
     description:
-      "Read the sidetrack Markdown for a given source file. " +
-      "Returns the full Markdown content. Use this before writing or editing sidetrack.",
+      "Read the parallel-docs Markdown for a given source file. " +
+      "Returns the full Markdown content. Use this before writing or editing parallel-docs.",
     schema: {
       file: z.string().describe("Repo-relative path to the source file"),
       angleId: z.string().optional().describe("Angle ID (uses default if omitted)"),
     },
     handler: async (repoRoot, args) => {
       const rel = normalizeRepoRelativePath(String(args.file));
-      const cfg = await loadSideTrackConfig(repoRoot);
-      const resolved = resolveSideTrackMarkdownPath(
+      const cfg = await loadParallelDocsConfig(repoRoot);
+      const resolved = resolveParallelDocsMarkdownPath(
         repoRoot,
         rel,
         cfg,
         args.angleId ? String(args.angleId) : undefined,
       );
-      const absPath = path.join(repoRoot, ...resolved.sidetrackPath.split("/"));
+      const absPath = path.join(repoRoot, ...resolved.parallelDocsPath.split("/"));
       try {
         const content = await fs.readFile(absPath, "utf8");
         return textResult(content);
@@ -621,7 +623,7 @@ export const ALL_TOOLS: McpToolDef[] = [
         const code = (err as NodeJS.ErrnoException).code;
         if (code === "ENOENT") {
           return errorResult(
-            `No sidetrack found for ${rel}. Run sidetrack_init and add sidetrack first.`,
+            `No parallel-docs found for ${rel}. Run parallel_docs_init and add parallel-docs first.`,
           );
         }
         throw err;
@@ -630,10 +632,10 @@ export const ALL_TOOLS: McpToolDef[] = [
   },
 
   {
-    name: "sidetrack_read_source",
+    name: "parallel_docs_read_source",
     description:
       "Read a source file's content. Returns the full file text. " +
-      "Use this to understand the code before writing sidetrack for it.",
+      "Use this to understand the code before writing parallel-docs for it.",
     schema: {
       file: z.string().describe("Repo-relative path to the source file"),
     },
@@ -654,36 +656,36 @@ export const ALL_TOOLS: McpToolDef[] = [
   },
 
   {
-    name: "sidetrack_list_orphans",
+    name: "parallel_docs_list_orphans",
     description:
-      "List orphan companion Markdown files — sidetrack without a matching " +
-      "primary source file. Use sidetrack_doctor with allowDeletions=true to remove them.",
+      "List orphan companion Markdown files — parallel-docs without a matching " +
+      "primary source file. Use parallel_docs_doctor with allowDeletions=true to remove them.",
     schema: {},
     handler: async (repoRoot) => {
-      const cfg = await loadSideTrackConfig(repoRoot);
+      const cfg = await loadParallelDocsConfig(repoRoot);
       const orphans = await collectOrphanCompanionMarkdownTargets(repoRoot, cfg.storageDir);
       if (orphans.length === 0) {
         return textResult(
-          "No orphan companions found. All sidetrack files have matching source files.",
+          "No orphan companions found. All parallel-docs files have matching source files.",
         );
       }
       const lines = [`${orphans.length} orphan companion(s) found:`];
       for (const o of orphans) {
         const kind = o.cleanupIsDirectory ? "dir" : "file";
-        lines.push(`  [${kind}] ${o.sidetrackPath}  (missing source: ${o.sourcePath})`);
+        lines.push(`  [${kind}] ${o.parallelDocsPath}  (missing source: ${o.sourcePath})`);
       }
       lines.push("");
       lines.push(
-        "To remove them: use sidetrack_doctor with allowDeletions=true, or run `sidetrack doctor --allow-deletions` from the CLI.",
+        "To remove them: use parallel_docs_doctor with allowDeletions=true, or run `parallel-docs doctor --allow-deletions` from the CLI.",
       );
       return textResult(lines.join("\n"));
     },
   },
 
   {
-    name: "sidetrack_find_uncommented",
+    name: "parallel_docs_find_uncommented",
     description:
-      "Find source files in the repo that could have sidetrack but don't. " +
+      "Find source files in the repo that could have parallel-docs but don't. " +
       "Scans Git-tracked files, filters by common source extensions, and " +
       "compares against the index. Use this to discover documentation opportunities.",
     schema: {
@@ -750,7 +752,7 @@ export const ALL_TOOLS: McpToolDef[] = [
       const index = await readIndex(repoRoot);
       const indexedPaths = new Set<string>();
       if (index) {
-        for (const entry of Object.values(index.bySideTrackPath)) {
+        for (const entry of Object.values(index.byParallelDocsPath)) {
           indexedPaths.add(entry.sourcePath);
         }
       }
@@ -770,11 +772,11 @@ export const ALL_TOOLS: McpToolDef[] = [
       const commented = totalSource - uncommented.length;
 
       if (uncommented.length === 0) {
-        return textResult(`All ${totalSource} tracked source files have sidetrack. Great job!`);
+        return textResult(`All ${totalSource} tracked source files have parallel-docs. Great job!`);
       }
 
       const lines = [
-        `${uncommented.length} uncommented source file(s) (${commented} already have sidetrack, ${totalSource} total tracked source files):`,
+        `${uncommented.length} uncommented source file(s) (${commented} already have parallel-docs, ${totalSource} total tracked source files):`,
       ];
       for (const f of uncommented) {
         lines.push(`  ${f}`);
@@ -786,11 +788,11 @@ export const ALL_TOOLS: McpToolDef[] = [
     },
   },
 
-  // ── sidetrack_serve ─────────────────────────────────────────────────
+  // ── parallel_docs_serve ─────────────────────────────────────────────────
   {
-    name: "sidetrack_serve",
+    name: "parallel_docs_serve",
     description:
-      "Build the SideTrack static site and serve it over HTTP. " +
+      "Build the ParallelDocs static site and serve it over HTTP. " +
       "Starts a local server on the given port (default 4173). " +
       "Returns the URL. The server keeps running until stop_serve is called " +
       "or the MCP session ends. Call again to rebuild and restart.",
@@ -813,7 +815,7 @@ export const ALL_TOOLS: McpToolDef[] = [
       try {
         // Dynamic import: static-site stack may pull heavy dependencies
         const { buildGithubPagesStaticSite } =
-          await import("@sidetrack/code-sidetrack-static/github-pages-site");
+          await import("@parallel-docs/code-parallel-docs-static/github-pages-site");
         const { default: serveHandler } = await import("serve-handler");
 
         await buildGithubPagesStaticSite({ repoRoot });
@@ -853,11 +855,11 @@ export const ALL_TOOLS: McpToolDef[] = [
     },
   },
 
-  // ── sidetrack_stop_serve ────────────────────────────────────────────
+  // ── parallel_docs_stop_serve ────────────────────────────────────────────
   {
-    name: "sidetrack_stop_serve",
+    name: "parallel_docs_stop_serve",
     description:
-      "Stop the SideTrack HTTP server started by sidetrack_serve. " +
+      "Stop the ParallelDocs HTTP server started by parallel_docs_serve. " +
       "Safe to call when no server is running.",
     schema: {},
     handler: async () => {
@@ -870,15 +872,15 @@ export const ALL_TOOLS: McpToolDef[] = [
     },
   },
 
-  // ── sidetrack_setup_pages ──────────────────────────────────────────
+  // ── parallel_docs_setup_pages ──────────────────────────────────────────
 
   {
-    name: "sidetrack_setup_pages",
+    name: "parallel_docs_setup_pages",
     description:
-      "Create or update `.github/workflows/sidetrack-pages.yml` to deploy " +
-      "the SideTrack static site to GitHub Pages on every push to main. " +
+      "Create or update `.github/workflows/parallel-docs-pages.yml` to deploy " +
+      "the ParallelDocs static site to GitHub Pages on every push to main. " +
       "Requires the repo's Pages source to be set to 'GitHub Actions' in Settings → Pages. " +
-      "The workflow builds `_site/` via `sidetrack pages build` and publishes it.",
+      "The workflow builds `_site/` via `parallel-docs pages build` and publishes it.",
     schema: {
       force: z.boolean().optional().describe("Overwrite an existing workflow file"),
       dryRun: z.boolean().optional().describe("Preview the workflow content without writing"),
@@ -904,12 +906,12 @@ export const ALL_TOOLS: McpToolDef[] = [
       if (existingPagesWorkflows.length > 0 && !dryRun && !force) {
         return textResult(
           `Found existing GitHub Pages workflow(s): ${existingPagesWorkflows.join(", ")}.\n\n` +
-            "Instead of adding a separate workflow, integrate the SideTrack build step into " +
+            "Instead of adding a separate workflow, integrate the ParallelDocs build step into " +
             "one of these existing workflows (before the upload-pages-artifact step). Add:\n" +
-            "\n      - name: Install SideTrack CLI\n" +
-            "        run: npm install --no-save sidetrack\n\n" +
-            "      - name: Build SideTrack static site\n" +
-            "        run: npx sidetrack pages build\n\n" +
+            "\n      - name: Install ParallelDocs CLI\n" +
+            "        run: npm install --no-save parallel-docs\n\n" +
+            "      - name: Build ParallelDocs static site\n" +
+            "        run: npx parallel-docs pages build\n\n" +
             `To create a standalone ${workflowFile} anyway, re-run with --force.`,
         );
       }
@@ -932,23 +934,23 @@ export const ALL_TOOLS: McpToolDef[] = [
   },
 
   {
-    name: "sidetrack_get_index",
+    name: "parallel_docs_get_index",
     description:
-      "Return the full SideTrack index as formatted JSON. " +
+      "Return the full ParallelDocs index as formatted JSON. " +
       "Shows all tracked source files, their companion paths, block IDs, anchors, and marker IDs. " +
-      "Use this to understand the complete state of the project's sidetrack.",
+      "Use this to understand the complete state of the project's parallel-docs.",
     schema: {},
     handler: async (repoRoot) => {
       const index = await readIndex(repoRoot);
       if (!index) {
-        return errorResult(`No index found. Run sidetrack_init first.`);
+        return errorResult(`No index found. Run parallel_docs_init first.`);
       }
       const summary = {
         schemaVersion: index.schemaVersion,
-        pairCount: Object.keys(index.bySideTrackPath).length,
-        pairs: Object.entries(index.bySideTrackPath).map(([cp, entry]) => ({
+        pairCount: Object.keys(index.byParallelDocsPath).length,
+        pairs: Object.entries(index.byParallelDocsPath).map(([cp, entry]) => ({
           sourcePath: entry.sourcePath,
-          sidetrackPath: cp,
+          parallelDocsPath: cp,
           blockCount: entry.blocks.length,
           blocks: entry.blocks.map((b) => ({
             id: b.id,

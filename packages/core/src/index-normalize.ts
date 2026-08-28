@@ -1,5 +1,5 @@
-import { buildSideTrackSnippetV1 } from "./block-snippet.js";
-import type { SideTrackBlock, SideTrackIndex, SourceFileIndexEntry } from "./model.js";
+import { buildParallelDocsSnippetV1 } from "./block-snippet.js";
+import type { ParallelDocsBlock, ParallelDocsIndex, SourceFileIndexEntry } from "./model.js";
 
 type LegacyFingerprint = {
   startLine: string;
@@ -21,13 +21,13 @@ function isLegacyFingerprint(value: unknown): value is LegacyFingerprint {
 
 function snippetFromLegacyFingerprint(fp: LegacyFingerprint): string {
   if (fp.lineCount === 1) {
-    return buildSideTrackSnippetV1([fp.startLine]);
+    return buildParallelDocsSnippetV1([fp.startLine]);
   }
   if (fp.lineCount === 2) {
-    return buildSideTrackSnippetV1([fp.startLine, fp.endLine]);
+    return buildParallelDocsSnippetV1([fp.startLine, fp.endLine]);
   }
   const omitted = fp.lineCount - 2;
-  return buildSideTrackSnippetV1([
+  return buildParallelDocsSnippetV1([
     fp.startLine,
     `… (${omitted} line${omitted === 1 ? "" : "s"} omitted) …`,
     fp.endLine,
@@ -38,13 +38,13 @@ function snippetFromLegacyFingerprint(fp: LegacyFingerprint): string {
  * Drops legacy `fingerprint` objects from index.json into a single `snippet`
  * string (diff-style). Returns a fresh index when anything changed.
  */
-export function normalizeSideTrackIndex(index: SideTrackIndex): {
-  index: SideTrackIndex;
+export function normalizeParallelDocsIndex(index: ParallelDocsIndex): {
+  index: ParallelDocsIndex;
   changed: boolean;
 } {
   let changed = false;
-  const nextByPath: Record<string, SourceFileIndexEntry> = { ...index.bySideTrackPath };
-  for (const [key, entry] of Object.entries(index.bySideTrackPath)) {
+  const nextByPath: Record<string, SourceFileIndexEntry> = { ...index.byParallelDocsPath };
+  for (const [key, entry] of Object.entries(index.byParallelDocsPath)) {
     const blocks = entry.blocks.map((block) => normalizeBlock(block));
     const entryChanged =
       JSON.stringify({ ...entry, blocks }) !== JSON.stringify({ ...entry, blocks: entry.blocks });
@@ -55,19 +55,19 @@ export function normalizeSideTrackIndex(index: SideTrackIndex): {
   }
   if (!changed) return { index, changed: false };
   return {
-    index: { schemaVersion: index.schemaVersion, bySideTrackPath: nextByPath },
+    index: { schemaVersion: index.schemaVersion, byParallelDocsPath: nextByPath },
     changed: true,
   };
 }
 
-function normalizeBlock(block: SideTrackBlock): SideTrackBlock {
+function normalizeBlock(block: ParallelDocsBlock): ParallelDocsBlock {
   const raw = block as Record<string, unknown>;
   if (!isLegacyFingerprint(raw.fingerprint)) return block;
   if (typeof raw.snippet === "string" && raw.snippet.trim() !== "") {
     const { fingerprint: _f, ...rest } = raw;
-    return rest as SideTrackBlock;
+    return rest as ParallelDocsBlock;
   }
   const snippet = snippetFromLegacyFingerprint(raw.fingerprint);
   const { fingerprint: _f, ...rest } = raw;
-  return { ...rest, snippet } as SideTrackBlock;
+  return { ...rest, snippet } as ParallelDocsBlock;
 }

@@ -1,18 +1,18 @@
 import {
   type BlockScrollLink,
-  type SideTrackIndex,
+  type ParallelDocsIndex,
   DEFAULT_STRETCH_BUFFER_SYNC,
   MARKER_ID_BODY,
   buildBlockScrollLinks,
-} from "@sidetrack/core";
+} from "@parallel-docs/core";
 
 import { escapeHtml } from "./html-utils.js";
 import { renderHighlightedCodeLineRows } from "./highlighted-code-lines.js";
 import { injectSourceMarkdownAnchors } from "./inject-md-line-anchors.js";
-import { type SideTrackOutputUrlOptions, renderMarkdownToHtml } from "./markdown-pipeline.js";
+import { type ParallelDocsOutputUrlOptions, renderMarkdownToHtml } from "./markdown-pipeline.js";
 
 const BLOCK_MARKER_LINE = new RegExp(
-  `^<!--\\s*sidetrack:block\\s+id=(${MARKER_ID_BODY})\\s*-->$`,
+  `^<!--\\s*parallelDocs:block\\s+id=(${MARKER_ID_BODY})\\s*-->$`,
   "i",
 );
 
@@ -26,13 +26,13 @@ export type StretchBufferSyncStrategy = "table" | "flow-synchronizer";
 export type BlockStretchTableOptions = {
   code: string;
   language: string;
-  sidetrackMarkdown: string;
-  index: SideTrackIndex;
+  parallelDocsMarkdown: string;
+  index: ParallelDocsIndex;
   sourceRelative: string;
-  sidetrackPathRel: string;
-  sidetrackOutputUrls?: SideTrackOutputUrlOptions;
-  sourceMarkdownOutputUrls?: SideTrackOutputUrlOptions;
-  /** Omitted uses `DEFAULT_STRETCH_BUFFER_SYNC` from `@sidetrack/core` (`flow-synchronizer`). */
+  parallelDocsPathRel: string;
+  parallelDocsOutputUrls?: ParallelDocsOutputUrlOptions;
+  sourceMarkdownOutputUrls?: ParallelDocsOutputUrlOptions;
+  /** Omitted uses `DEFAULT_STRETCH_BUFFER_SYNC` from `@parallel-docs/core` (`flow-synchronizer`). */
   stretchBufferSync?: StretchBufferSyncStrategy;
 };
 
@@ -42,7 +42,7 @@ type StretchRenderContext = {
   mode: StretchBufferSyncStrategy;
   gapSyncSeq: { n: number } | null;
   sourceMarkdownSlicesEnabled: boolean;
-  sourceMarkdownOutputUrls?: SideTrackOutputUrlOptions;
+  sourceMarkdownOutputUrls?: ParallelDocsOutputUrlOptions;
   renderedById: Map<string, string>;
 };
 
@@ -55,12 +55,12 @@ async function renderSourceMarkdownSlice(
   lines: string[],
   startLine0: number,
   endLine0: number,
-  outputUrls: SideTrackOutputUrlOptions | undefined,
+  outputUrls: ParallelDocsOutputUrlOptions | undefined,
 ): Promise<string> {
   const markdown = lines.slice(startLine0, endLine0 + 1).join("\n");
   const anchored = injectSourceMarkdownAnchors(markdown, startLine0);
   const rendered = await renderMarkdownToHtml(anchored.trim().length > 0 ? anchored : " ", {
-    sidetrackOutputUrls: outputUrls,
+    parallelDocsOutputUrls: outputUrls,
   });
   return `<div class="source-pane source-pane--rendered-md stretch-source-markdown-body" data-source-markdown-body="true">${rendered}</div>`;
 }
@@ -75,7 +75,7 @@ function wrapStretchSourceCell(
   return mode === "flow-synchronizer" ? `<div class="stretch-cell-measure">${inner}</div>` : inner;
 }
 
-export function splitSideTrackMarkdownSegments(markdown: string): {
+export function splitParallelDocsMarkdownSegments(markdown: string): {
   preamble: string;
   segments: { id: string; body: string }[];
 } {
@@ -123,11 +123,11 @@ async function renderCodeLineStack(
   return `<div class="stretch-code-stack">${inner}</div>`;
 }
 
-async function renderSideTrackSegmentBodies(
+async function renderParallelDocsSegmentBodies(
   segments: { id: string; body: string }[],
-  outputUrls: SideTrackOutputUrlOptions | undefined,
+  outputUrls: ParallelDocsOutputUrlOptions | undefined,
 ): Promise<Map<string, string>> {
-  const mdOpts = { sidetrackOutputUrls: outputUrls };
+  const mdOpts = { parallelDocsOutputUrls: outputUrls };
   const renderedById = new Map<string, string>();
   for (const s of segments) {
     renderedById.set(
@@ -186,7 +186,7 @@ async function buildStretchGapRowHtml(
   const gapId = ctx.mode === "flow-synchronizer" ? nextGapSyncId(ctx.gapSyncSeq) : null;
   if (gapId !== null) {
     return (
-      `<tr class="stretch-row stretch-row--gap" data-sidetrack-stretch-sync-id="${escapeHtml(gapId)}">` +
+      `<tr class="stretch-row stretch-row--gap" data-parallel-docs-stretch-sync-id="${escapeHtml(gapId)}">` +
       `<td class="stretch-code">${sourceCellInner}</td>` +
       `<td class="stretch-doc stretch-doc--gap"><div class="stretch-cell-measure"></div></td></tr>`
     );
@@ -208,10 +208,10 @@ async function buildStretchBlockRowHtml(
   const sourceCellInner = wrapStretchSourceCell(stackHtml, renderedSourceMarkdownHtml, ctx.mode);
   const docInner =
     ctx.renderedById.get(block.id) ??
-    `<p class="stretch-doc-missing"><em>No sidetrack segment for block <code>${escapeHtml(block.id)}</code>.</em></p>`;
+    `<p class="stretch-doc-missing"><em>No parallel-docs segment for block <code>${escapeHtml(block.id)}</code>.</em></p>`;
   if (ctx.mode === "flow-synchronizer") {
     return (
-      `<tr class="stretch-row stretch-row--block" data-sidetrack-stretch-sync-id="${escapeHtml(block.id)}">` +
+      `<tr class="stretch-row stretch-row--block" data-parallel-docs-stretch-sync-id="${escapeHtml(block.id)}">` +
       `<td class="stretch-code">${sourceCellInner}</td>` +
       `<td class="stretch-doc"><div class="stretch-cell-measure"><div class="stretch-doc-inner">${docInner}</div></div></td></tr>`
     );
@@ -259,16 +259,16 @@ export async function tryBuildBlockStretchTableHtml(
   const links = buildBlockScrollLinks(
     opts.index,
     opts.sourceRelative,
-    opts.sidetrackPathRel,
-    opts.sidetrackMarkdown,
+    opts.parallelDocsPathRel,
+    opts.parallelDocsMarkdown,
     opts.code,
   );
 
-  const { preamble, segments } = splitSideTrackMarkdownSegments(opts.sidetrackMarkdown);
+  const { preamble, segments } = splitParallelDocsMarkdownSegments(opts.parallelDocsMarkdown);
   const lines = opts.code.split("\n");
   const lnMinCh = Math.max(2, String(Math.max(1, lines.length)).length);
-  const mdOpts = { sidetrackOutputUrls: opts.sidetrackOutputUrls };
-  const renderedById = await renderSideTrackSegmentBodies(segments, opts.sidetrackOutputUrls);
+  const mdOpts = { parallelDocsOutputUrls: opts.parallelDocsOutputUrls };
+  const renderedById = await renderParallelDocsSegmentBodies(segments, opts.parallelDocsOutputUrls);
   const ctx: StretchRenderContext = {
     lines,
     language: opts.language,

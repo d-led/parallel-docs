@@ -4,7 +4,7 @@ Trace a flat transparent PNG (e.g. docs/logos/2.png) into an SVG with
 `<path>` geometry per solid color.
 
 Uses Matplotlib contour on each color mask + path simplification. Intended
-for logos with a small palette (navy / grey / yellow from the SideTrack
+for logos with a small palette (navy / grey / yellow from the ParallelDocs
 raster pipeline).
 
 Dependencies: Pillow, NumPy, Matplotlib.
@@ -143,7 +143,7 @@ def main() -> None:
         default=2.0,
         help="Matplotlib path simplification stroke width (pixels).",
     )
-    ap.add_argument("--title", default="SideTrack logo (raster trace)")
+    ap.add_argument("--title", default="ParallelDocs logo (raster trace)")
     args = ap.parse_args()
 
     im = Image.open(args.input).convert("RGBA")

@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it } from "vitest";
 
-import { formatSideTrackBuiltAtLocal } from "./build-stamp.js";
+import { formatParallelDocsBuiltAtLocal } from "./build-stamp.js";
 
-describe("formatSideTrackBuiltAtLocal", () => {
+describe("formatParallelDocsBuiltAtLocal", () => {
   const origTz = process.env.TZ;
 
   afterEach(() => {
@@ -12,7 +12,7 @@ describe("formatSideTrackBuiltAtLocal", () => {
 
   it("given TZ is UTC, includes calendar fields and a zone hint for a fixed instant", () => {
     process.env.TZ = "UTC";
-    const s = formatSideTrackBuiltAtLocal(new Date("2026-06-15T14:30:45.000Z"));
+    const s = formatParallelDocsBuiltAtLocal(new Date("2026-06-15T14:30:45.000Z"));
     expect(s).toMatch(/2026/);
     expect(s).toMatch(/Jun/);
     expect(s).toMatch(/15/);

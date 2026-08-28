@@ -1,8 +1,8 @@
 # Contributing
 
-Thank you for helping build SideTrack.
+Thank you for helping build ParallelDocs.
 
-**Terminology:** **SideTrack** is the tool and packages in this repo. **sidetrack** (lowercase) is also the paired Markdown under `.sidetrack/source/` beside a source file.
+**Terminology:** **ParallelDocs** is the tool and packages in this repo. **parallel-docs** (lowercase) is also the paired Markdown under `.parallel-docs/source/` beside a source file.
 
 ## Principles
 

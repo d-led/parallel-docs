@@ -1,14 +1,14 @@
 {
-  "name": "sidetrack",
+  "name": "@parallel-docs/cli",
   "version": "1.0.0",
   "publishConfig": {
     "access": "public"
   },
-  "description": "SideTrack command-line interface. Run with npx sidetrack; npx sidetrack --help prints Usage: sidetrack [options] [command].",
+  "description": "ParallelDocs command-line interface. Run with npx parallel-docs; npx parallel-docs --help prints Usage: parallel-docs [options] [command].",
   "license": "MPL-2.0",
   "type": "module",
   "bin": {
-    "sidetrack": "./dist/cli.js"
+    "parallel-docs": "./dist/cli.js"
   },
   "files": [
     "dist",
@@ -18,13 +18,13 @@
     "build": "tsc -b tsconfig.build.json",
     "build:bundle": "npm run build && node ./esbuild.cli.mjs",
     "clean": "rm -rf dist",
-    "sidetrack": "node ./dist/cli.js"
+    "parallel-docs": "node ./dist/cli.js"
   },
   "dependencies": {
-    "@sidetrack/code-sidetrack-static": "1.0.0",
-    "@sidetrack/core": "1.0.0",
-    "@sidetrack/mcp-server": "1.0.0",
-    "@sidetrack/render": "1.0.0",
+    "@parallel-docs/code-parallel-docs-static": "1.0.0",
+    "@parallel-docs/core": "1.0.0",
+    "@parallel-docs/mcp-server": "1.0.0",
+    "@parallel-docs/render": "1.0.0",
     "chokidar": "^5.0.0",
     "commander": "^15.0.0",
     "ignore": "^7.0.5",

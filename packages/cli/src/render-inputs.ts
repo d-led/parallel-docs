@@ -1,13 +1,13 @@
 import path from "node:path";
 
 import {
-  sidetrackMarkdownPath,
+  parallelDocsMarkdownPath,
   normalizeRepoRelativePath,
-  resolveSideTrackMarkdownPath,
-  type ResolvedSideTrackConfig,
-} from "@sidetrack/core";
+  resolveParallelDocsMarkdownPath,
+  type ResolvedParallelDocsConfig,
+} from "@parallel-docs/core";
 
-/** Raw `sidetrack render` flags as parsed by Commander; all three may be omitted. */
+/** Raw `parallel-docs render` flags as parsed by Commander; all three may be omitted. */
 export type RenderCliOptions = {
   source?: string;
   markdown?: string;
@@ -25,18 +25,18 @@ export type ResolvedRenderInputs = {
 export const DEFAULT_RENDER_OUT = path.posix.join("_site", "index.html");
 
 /**
- * Fill in `sidetrack render` flags from `.sidetrack.toml`. Omitting every flag should
+ * Fill in `parallel-docs render` flags from `.parallel-docs.toml`. Omitting every flag should
  * "just work" inside a configured tree; passing `--source` on its own derives the companion
- * Markdown via SideTrack's path convention rather than reusing the static-site default,
+ * Markdown via ParallelDocs's path convention rather than reusing the static-site default,
  * which is tied to a specific source file.
  */
 export function resolveRenderInputs(
-  cfg: ResolvedSideTrackConfig,
+  cfg: ResolvedParallelDocsConfig,
   opts: RenderCliOptions,
   repoRoot?: string,
 ): ResolvedRenderInputs {
   const source = opts.source ?? cfg.staticSite.sourceFile;
-  const staticSiteMarkdown = cfg.staticSite.sidetrackMarkdownFile.trim();
+  const staticSiteMarkdown = cfg.staticSite.parallelDocsMarkdownFile.trim();
   const useStaticSiteMarkdown = opts.source === undefined && staticSiteMarkdown.length > 0;
   const normalizedSource = normalizeRepoRelativePath(source);
   const markdown =
@@ -44,8 +44,8 @@ export function resolveRenderInputs(
     (useStaticSiteMarkdown
       ? staticSiteMarkdown
       : repoRoot
-        ? resolveSideTrackMarkdownPath(repoRoot, normalizedSource, cfg).sidetrackPath
-        : sidetrackMarkdownPath(source, cfg.storageDir));
+        ? resolveParallelDocsMarkdownPath(repoRoot, normalizedSource, cfg).parallelDocsPath
+        : parallelDocsMarkdownPath(source, cfg.storageDir));
   const out = opts.out ?? DEFAULT_RENDER_OUT;
   return { source, markdown, out };
 }

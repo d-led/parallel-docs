@@ -1,27 +1,27 @@
 import { describe, expect, it } from "vitest";
-import { CURRENT_SCHEMA_VERSION, type SideTrackIndex } from "./model.js";
+import { CURRENT_SCHEMA_VERSION, type ParallelDocsIndex } from "./model.js";
 import {
   blockStrictlyContainingSourceViewportLine,
   buildBlockScrollLinks,
-  sidetrackProbeInStrictInterMarkerGap,
-  pickBlockScrollLinkForSideTrackScroll,
-  pickBlockScrollLinkForSideTrackViewportWithHysteresis,
+  parallelDocsProbeInStrictInterMarkerGap,
+  pickBlockScrollLinkForParallelDocsScroll,
+  pickBlockScrollLinkForParallelDocsViewportWithHysteresis,
   pickBlockScrollLinkForSourceViewportTop,
   pickBlockScrollLinkForSourceViewportWithHysteresis,
-  pickSideTrackLineForSourceDualPane,
-  pickSideTrackLineForSourceScroll,
-  pickSourceLine0ForSideTrackScroll,
-  parseMarkdownHtmlSideTrackRegions,
+  pickParallelDocsLineForSourceDualPane,
+  pickParallelDocsLineForSourceScroll,
+  pickSourceLine0ForParallelDocsScroll,
+  parseMarkdownHtmlParallelDocsRegions,
   sourceTopLineStrictlyBeforeFirstIndexLine,
 } from "./scroll-sync.js";
 
-const crPath = ".sidetrack/source/src/a.ts.md";
+const crPath = ".parallel-docs/source/src/a.ts.md";
 const index = {
   schemaVersion: CURRENT_SCHEMA_VERSION,
-  bySideTrackPath: {
+  byParallelDocsPath: {
     [crPath]: {
       sourcePath: "src/a.ts",
-      sidetrackPath: crPath,
+      parallelDocsPath: crPath,
       blocks: [
         { id: "b1", anchor: "lines:1-5" },
         { id: "b2", anchor: "lines:20-25" },
@@ -31,9 +31,9 @@ const index = {
 };
 
 const md =
-  "<!-- sidetrack:block id=b1 -->\n## block 1\n\n" +
+  "<!-- parallelDocs:block id=b1 -->\n## block 1\n\n" +
   "text\n\n" +
-  "<!-- sidetrack:block id=b2 -->\n## block 2\n";
+  "<!-- parallelDocs:block id=b2 -->\n## block 2\n";
 
 const linesViewport = (start: number, end: number) => ({
   lo: start,
@@ -42,69 +42,69 @@ const linesViewport = (start: number, end: number) => ({
 
 const idxMarkerB1 = {
   schemaVersion: CURRENT_SCHEMA_VERSION,
-  bySideTrackPath: {
+  byParallelDocsPath: {
     [crPath]: {
       sourcePath: "src/a.ts",
-      sidetrackPath: crPath,
+      parallelDocsPath: crPath,
       blocks: [{ id: "b1", anchor: "marker:b1", markerId: "b1" }],
     },
   },
 };
 
 const sourceMarkerB1Region = [
-  "//#region sidetrack:b1",
+  "//#region parallelDocs:b1",
   "const x = 1;",
-  "//#endregion sidetrack:b1",
+  "//#endregion parallelDocs:b1",
 ].join("\n");
 
-const fallbackAnglePath = ".sidetrack/source/README.md/architecture.md";
+const fallbackAnglePath = ".parallel-docs/source/README.md/architecture.md";
 const fallbackAngleMarkdown =
-  "<!-- sidetrack:block id=readme-lede -->\n\n" +
-  "<!-- sidetrack:block id=readme-why -->\n\n" +
-  "<!-- sidetrack:block id=readme-user-guides -->\n\n" +
-  "<!-- sidetrack:block id=readme-mobile-flip-check -->\n";
+  "<!-- parallelDocs:block id=readme-lede -->\n\n" +
+  "<!-- parallelDocs:block id=readme-why -->\n\n" +
+  "<!-- parallelDocs:block id=readme-user-guides -->\n\n" +
+  "<!-- parallelDocs:block id=readme-mobile-flip-check -->\n";
 const fallbackSourceMarkdown = [
-  "<!-- #region sidetrack:readme-lede -->",
+  "<!-- #region parallelDocs:readme-lede -->",
   "lede",
-  "<!-- #endregion sidetrack:readme-lede -->",
+  "<!-- #endregion parallelDocs:readme-lede -->",
   "",
-  "<!-- #region sidetrack:readme-why -->",
+  "<!-- #region parallelDocs:readme-why -->",
   "why",
-  "<!-- #endregion sidetrack:readme-why -->",
+  "<!-- #endregion parallelDocs:readme-why -->",
   "",
-  "<!-- #region sidetrack:readme-user-guides -->",
+  "<!-- #region parallelDocs:readme-user-guides -->",
   "guides",
-  "<!-- #endregion sidetrack:readme-user-guides -->",
+  "<!-- #endregion parallelDocs:readme-user-guides -->",
   "",
-  "<!-- #region sidetrack:readme-mobile-flip-check -->",
+  "<!-- #region parallelDocs:readme-mobile-flip-check -->",
   "flip",
-  "<!-- #endregion sidetrack:readme-mobile-flip-check -->",
+  "<!-- #endregion parallelDocs:readme-mobile-flip-check -->",
 ].join("\n");
 const fallbackMarkerLinks = [
   {
     id: "readme-lede",
-    sidetrackLine: 0,
+    parallelDocsLine: 0,
     sourceStart: 2,
     sourceEnd: 2,
     markerViewportHalfOpen1Based: { lo: 1, hiExclusive: 3 },
   },
   {
     id: "readme-why",
-    sidetrackLine: 2,
+    parallelDocsLine: 2,
     sourceStart: 6,
     sourceEnd: 6,
     markerViewportHalfOpen1Based: { lo: 4, hiExclusive: 7 },
   },
   {
     id: "readme-user-guides",
-    sidetrackLine: 4,
+    parallelDocsLine: 4,
     sourceStart: 10,
     sourceEnd: 10,
     markerViewportHalfOpen1Based: { lo: 8, hiExclusive: 11 },
   },
   {
     id: "readme-mobile-flip-check",
-    sidetrackLine: 6,
+    parallelDocsLine: 6,
     sourceStart: 14,
     sourceEnd: 14,
     markerViewportHalfOpen1Based: { lo: 12, hiExclusive: 15 },
@@ -115,7 +115,9 @@ describe("Block scroll link derivation from index and markers", () => {
   it("returns an empty list when there is no index entry", () => {
     expect(buildBlockScrollLinks(undefined, "src/a.ts", crPath, md)).toEqual([]);
     expect(buildBlockScrollLinks(index, "missing.ts", crPath, md)).toEqual([]);
-    expect(buildBlockScrollLinks(index, "src/a.ts", ".sidetrack/source/other.md", md)).toEqual([]);
+    expect(buildBlockScrollLinks(index, "src/a.ts", ".parallel-docs/source/other.md", md)).toEqual(
+      [],
+    );
   });
 
   it("falls back to marker-derived links when an angle has matching markers but no index entry", () => {
@@ -134,14 +136,14 @@ describe("Block scroll link derivation from index and markers", () => {
     expect(buildBlockScrollLinks(index, "src/a.ts", crPath, md)).toEqual([
       {
         id: "b1",
-        sidetrackLine: 0,
+        parallelDocsLine: 0,
         sourceStart: 1,
         sourceEnd: 5,
         markerViewportHalfOpen1Based: linesViewport(1, 5),
       },
       {
         id: "b2",
-        sidetrackLine: 5,
+        parallelDocsLine: 5,
         sourceStart: 20,
         sourceEnd: 25,
         markerViewportHalfOpen1Based: linesViewport(20, 25),
@@ -150,18 +152,18 @@ describe("Block scroll link derivation from index and markers", () => {
   });
 
   it("returns no links when the index entry’s stored companion path disagrees with the lookup key", () => {
-    const key = ".sidetrack/source/README.md/main.md";
-    const mismatched: SideTrackIndex = {
+    const key = ".parallel-docs/source/README.md/main.md";
+    const mismatched: ParallelDocsIndex = {
       schemaVersion: CURRENT_SCHEMA_VERSION,
-      bySideTrackPath: {
+      byParallelDocsPath: {
         [key]: {
           sourcePath: "src/a.ts",
-          sidetrackPath: ".sidetrack/source/README.md/architecture.md",
+          parallelDocsPath: ".parallel-docs/source/README.md/architecture.md",
           blocks: [{ id: "b1", anchor: "lines:1-2" }],
         },
       },
     };
-    const mdOne = "<!-- sidetrack:block id=b1 -->\n## x\n";
+    const mdOne = "<!-- parallelDocs:block id=b1 -->\n## x\n";
     expect(buildBlockScrollLinks(mismatched, "src/a.ts", key, mdOne)).toEqual([]);
   });
 
@@ -171,7 +173,7 @@ describe("Block scroll link derivation from index and markers", () => {
     ).toEqual([
       {
         id: "b1",
-        sidetrackLine: 0,
+        parallelDocsLine: 0,
         sourceStart: 2,
         sourceEnd: 2,
         markerViewportHalfOpen1Based: { lo: 1, hiExclusive: 3 },
@@ -180,12 +182,12 @@ describe("Block scroll link derivation from index and markers", () => {
   });
 });
 
-describe("Markdown HTML sidetrack regions (synthetic scroll links)", () => {
+describe("Markdown HTML parallel-docs regions (synthetic scroll links)", () => {
   it("parses paired region / endregion spans in companion Markdown", () => {
     const md =
-      "<!-- #region sidetrack:aa -->\nA\n<!-- #endregion sidetrack:aa -->\n" +
-      "<!-- #region sidetrack:bb -->\nB\n<!-- #endregion sidetrack:bb -->\n";
-    const regions = parseMarkdownHtmlSideTrackRegions(md);
+      "<!-- #region parallelDocs:aa -->\nA\n<!-- #endregion parallelDocs:aa -->\n" +
+      "<!-- #region parallelDocs:bb -->\nB\n<!-- #endregion parallelDocs:bb -->\n";
+    const regions = parseMarkdownHtmlParallelDocsRegions(md);
     expect(regions).toHaveLength(2);
     expect(regions[0]).toMatchObject({ id: "aa", mdStartLine: 0, mdEndExclusive: 3 });
     expect(regions[1]).toMatchObject({ id: "bb", mdStartLine: 3, mdEndExclusive: 6 });
@@ -193,8 +195,8 @@ describe("Markdown HTML sidetrack regions (synthetic scroll links)", () => {
 
   it("when there are no block markers but HTML regions exist, buildBlockScrollLinks yields weighted synthetic spans on the source file", () => {
     const md =
-      "<!-- #region sidetrack:r1 -->\nX\n<!-- #endregion sidetrack:r1 -->\n" +
-      "<!-- #region sidetrack:r2 -->\nY\n<!-- #endregion sidetrack:r2 -->\n";
+      "<!-- #region parallelDocs:r1 -->\nX\n<!-- #endregion parallelDocs:r1 -->\n" +
+      "<!-- #region parallelDocs:r2 -->\nY\n<!-- #endregion parallelDocs:r2 -->\n";
     const src = Array.from({ length: 20 }, (_, i) => `L${i + 1}`).join("\n");
     const links = buildBlockScrollLinks(null, "x.ts", "y.md", md, src);
     expect(links).toHaveLength(2);
@@ -214,20 +216,20 @@ describe("Dual-pane source → companion (gap proportional, intra-block body)", 
   const mdLineCount = md.split("\n").length;
 
   it("uses gapFallback when the source top sits in a true gap between block spans", () => {
-    expect(pickSideTrackLineForSourceDualPane(blocks, 10, mdLineCount, () => 42)).toBe(42);
+    expect(pickParallelDocsLineForSourceDualPane(blocks, 10, mdLineCount, () => 42)).toBe(42);
   });
 
   it("maps strictly inside a block onto companion body lines instead of snapping to the marker head", () => {
-    const line1 = pickSideTrackLineForSourceDualPane(blocks, 1, mdLineCount, () => -1);
-    const line3 = pickSideTrackLineForSourceDualPane(blocks, 3, mdLineCount, () => -1);
-    const line5 = pickSideTrackLineForSourceDualPane(blocks, 5, mdLineCount, () => -1);
+    const line1 = pickParallelDocsLineForSourceDualPane(blocks, 1, mdLineCount, () => -1);
+    const line3 = pickParallelDocsLineForSourceDualPane(blocks, 3, mdLineCount, () => -1);
+    const line5 = pickParallelDocsLineForSourceDualPane(blocks, 5, mdLineCount, () => -1);
     expect(line1).toBe(1);
     expect(line3).toBe(3);
     expect(line5).toBe(4);
   });
 
   it("when there are no blocks, always uses gapFallback", () => {
-    expect(pickSideTrackLineForSourceDualPane([], 5, 20, () => 17)).toBe(17);
+    expect(pickParallelDocsLineForSourceDualPane([], 5, 20, () => 17)).toBe(17);
   });
 });
 
@@ -235,16 +237,16 @@ describe("Choosing a companion scroll position from a source viewport", () => {
   const blocks = buildBlockScrollLinks(index, "src/a.ts", crPath, md);
 
   it("snaps to the block that contains the top source line", () => {
-    expect(pickSideTrackLineForSourceScroll(blocks, 3)).toBe(0);
-    expect(pickSideTrackLineForSourceScroll(blocks, 22)).toBe(5);
+    expect(pickParallelDocsLineForSourceScroll(blocks, 3)).toBe(0);
+    expect(pickParallelDocsLineForSourceScroll(blocks, 22)).toBe(5);
   });
 
   it("uses the nearest preceding block when the top line sits in a gap", () => {
-    expect(pickSideTrackLineForSourceScroll(blocks, 10)).toBe(0);
+    expect(pickParallelDocsLineForSourceScroll(blocks, 10)).toBe(0);
   });
 
   it("uses the first block when the viewport is above every range", () => {
-    expect(pickSideTrackLineForSourceScroll(blocks, 1)).toBe(0);
+    expect(pickParallelDocsLineForSourceScroll(blocks, 1)).toBe(0);
   });
 });
 
@@ -263,10 +265,10 @@ describe("Strict source containment and markdown gap probes", () => {
   });
 
   it("detects inter-marker companion gaps for doc-driven sync", () => {
-    expect(sidetrackProbeInStrictInterMarkerGap(blocks, 0)).toBe(false);
-    expect(sidetrackProbeInStrictInterMarkerGap(blocks, 3)).toBe(true);
-    expect(sidetrackProbeInStrictInterMarkerGap(blocks, 5)).toBe(false);
-    expect(sidetrackProbeInStrictInterMarkerGap(blocks, 99)).toBe(true);
+    expect(parallelDocsProbeInStrictInterMarkerGap(blocks, 0)).toBe(false);
+    expect(parallelDocsProbeInStrictInterMarkerGap(blocks, 3)).toBe(true);
+    expect(parallelDocsProbeInStrictInterMarkerGap(blocks, 5)).toBe(false);
+    expect(parallelDocsProbeInStrictInterMarkerGap(blocks, 99)).toBe(true);
   });
 });
 
@@ -285,16 +287,16 @@ describe("Schmitt sticky block picks (boundary hysteresis)", () => {
 
   it("keeps the prior side-track block until the doc probe has moved far enough down the next block", () => {
     const state = { lockedId: null as string | null };
-    expect(pickBlockScrollLinkForSideTrackViewportWithHysteresis(blocks, 0, state, 4)?.id).toBe(
+    expect(pickBlockScrollLinkForParallelDocsViewportWithHysteresis(blocks, 0, state, 4)?.id).toBe(
       "b1",
     );
-    expect(pickBlockScrollLinkForSideTrackViewportWithHysteresis(blocks, 5, state, 4)?.id).toBe(
+    expect(pickBlockScrollLinkForParallelDocsViewportWithHysteresis(blocks, 5, state, 4)?.id).toBe(
       "b1",
     );
-    expect(pickBlockScrollLinkForSideTrackViewportWithHysteresis(blocks, 8, state, 4)?.id).toBe(
+    expect(pickBlockScrollLinkForParallelDocsViewportWithHysteresis(blocks, 8, state, 4)?.id).toBe(
       "b1",
     );
-    expect(pickBlockScrollLinkForSideTrackViewportWithHysteresis(blocks, 9, state, 4)?.id).toBe(
+    expect(pickBlockScrollLinkForParallelDocsViewportWithHysteresis(blocks, 9, state, 4)?.id).toBe(
       "b2",
     );
   });
@@ -322,13 +324,13 @@ describe("Schmitt sticky block picks (boundary hysteresis)", () => {
 });
 
 describe("Marker viewport: prelude line and start delimiter belong to the next block", () => {
-  const crToml = ".sidetrack/source/x.toml.md";
+  const crToml = ".parallel-docs/source/x.toml.md";
   const idxToml = {
     schemaVersion: CURRENT_SCHEMA_VERSION,
-    bySideTrackPath: {
+    byParallelDocsPath: {
       [crToml]: {
         sourcePath: "x.toml",
-        sidetrackPath: crToml,
+        parallelDocsPath: crToml,
         blocks: [
           { id: "scm", anchor: "marker:toml-scm", markerId: "toml-scm" },
           { id: "render", anchor: "marker:toml-render", markerId: "toml-render" },
@@ -336,34 +338,35 @@ describe("Marker viewport: prelude line and start delimiter belong to the next b
       },
     },
   };
-  const mdToml = "<!-- sidetrack:block id=scm -->\n\n" + "<!-- sidetrack:block id=render -->\n\n";
+  const mdToml =
+    "<!-- parallelDocs:block id=scm -->\n\n" + "<!-- parallelDocs:block id=render -->\n\n";
   const sourceToml = [
-    "# sidetrack:start id=toml-scm",
+    "# parallelDocs:start id=toml-scm",
     "[scm]",
     "x = 1",
-    "# sidetrack:end id=toml-scm",
+    "# parallelDocs:end id=toml-scm",
     "",
-    "# sidetrack:start id=toml-render",
+    "# parallelDocs:start id=toml-render",
     "[render]",
     "y = 2",
-    "# sidetrack:end id=toml-render",
+    "# parallelDocs:end id=toml-render",
   ].join("\n");
 
   it("maps the second block’s prelude line and start delimiter to the second companion", () => {
     const links = buildBlockScrollLinks(idxToml, "x.toml", crToml, mdToml, sourceToml);
     expect(links).toHaveLength(2);
-    expect(pickSideTrackLineForSourceScroll(links, 6)).toBe(2);
-    expect(pickSideTrackLineForSourceScroll(links, 7)).toBe(2);
+    expect(pickParallelDocsLineForSourceScroll(links, 6)).toBe(2);
+    expect(pickParallelDocsLineForSourceScroll(links, 7)).toBe(2);
   });
 });
 
-describe("pickBlockScrollLinkForSideTrackScroll", () => {
+describe("pickBlockScrollLinkForParallelDocsScroll", () => {
   const blocks = buildBlockScrollLinks(index, "src/a.ts", crPath, md);
 
-  it("returns the same winning block implied by pickSourceLine0ForSideTrackScroll", () => {
+  it("returns the same winning block implied by pickSourceLine0ForParallelDocsScroll", () => {
     for (const top of [0, 3, 4, 5, 99]) {
-      const link = pickBlockScrollLinkForSideTrackScroll(blocks, top);
-      const src0 = pickSourceLine0ForSideTrackScroll(blocks, top);
+      const link = pickBlockScrollLinkForParallelDocsScroll(blocks, top);
+      const src0 = pickSourceLine0ForParallelDocsScroll(blocks, top);
       expect(link).not.toBeNull();
       if (link && src0 !== null) {
         expect(link.markerViewportHalfOpen1Based.lo - 1).toBe(src0);
@@ -375,18 +378,18 @@ describe("pickBlockScrollLinkForSideTrackScroll", () => {
 describe("Choosing a source line from a companion scroll position", () => {
   const blocks = buildBlockScrollLinks(index, "src/a.ts", crPath, md);
 
-  it("reveals the start of the block whose marker is at or above the sidetrack top", () => {
-    expect(pickSourceLine0ForSideTrackScroll(blocks, 0)).toBe(0);
-    expect(pickSourceLine0ForSideTrackScroll(blocks, 3)).toBe(0);
-    expect(pickSourceLine0ForSideTrackScroll(blocks, 4)).toBe(0);
-    expect(pickSourceLine0ForSideTrackScroll(blocks, 5)).toBe(19);
-    expect(pickSourceLine0ForSideTrackScroll(blocks, 99)).toBe(19);
+  it("reveals the start of the block whose marker is at or above the parallel-docs top", () => {
+    expect(pickSourceLine0ForParallelDocsScroll(blocks, 0)).toBe(0);
+    expect(pickSourceLine0ForParallelDocsScroll(blocks, 3)).toBe(0);
+    expect(pickSourceLine0ForParallelDocsScroll(blocks, 4)).toBe(0);
+    expect(pickSourceLine0ForParallelDocsScroll(blocks, 5)).toBe(19);
+    expect(pickSourceLine0ForParallelDocsScroll(blocks, 99)).toBe(19);
   });
 });
 
 describe("Choosing source scroll for a marker block includes the delimiter prelude", () => {
   it("reveals the line above the inner body when the companion is at that block", () => {
     const blocks = buildBlockScrollLinks(idxMarkerB1, "src/a.ts", crPath, md, sourceMarkerB1Region);
-    expect(pickSourceLine0ForSideTrackScroll(blocks, 0)).toBe(0);
+    expect(pickSourceLine0ForParallelDocsScroll(blocks, 0)).toBe(0);
   });
 });

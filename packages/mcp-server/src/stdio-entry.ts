@@ -3,11 +3,11 @@
  * MCP server entry point — stdio transport.
  *
  * Connect an MCP client (Claude Desktop, VS Code Copilot, etc.) by configuring
- * it to run this script with the SideTrack project root as the working directory.
+ * it to run this script with the ParallelDocs project root as the working directory.
  *
  * Usage:
- *   node dist/stdio-entry.js          (from within a SideTrack project)
- *   sidetrack mcp serve              (CLI wrapper)
+ *   node dist/stdio-entry.js          (from within a ParallelDocs project)
+ *   parallel-docs mcp serve              (CLI wrapper)
  */
 
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
@@ -22,6 +22,6 @@ async function main(): Promise<void> {
 }
 
 main().catch((err) => {
-  console.error("sidetrack-mcp: fatal error during startup:", err);
+  console.error("parallel-docs-mcp: fatal error during startup:", err);
   process.exit(1);
 });

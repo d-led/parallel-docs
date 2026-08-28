@@ -4,9 +4,9 @@ import { githubRepoBlobFileUrl, parseGithubRepoWebUrl } from "./github-url.js";
 
 describe("Parsing GitHub repository web URLs", () => {
   it("parses canonical https URLs", () => {
-    expect(parseGithubRepoWebUrl("https://github.com/d-led/sidetrack")).toEqual({
+    expect(parseGithubRepoWebUrl("https://github.com/d-led/parallel-docs")).toEqual({
       owner: "d-led",
-      repo: "sidetrack",
+      repo: "parallel-docs",
     });
   });
 
@@ -18,9 +18,9 @@ describe("Parsing GitHub repository web URLs", () => {
   });
 
   it("returns null for blob paths, other hosts, or malformed input", () => {
-    expect(parseGithubRepoWebUrl("https://github.com/d-led/sidetrack/blob/main/README.md")).toBe(
-      null,
-    );
+    expect(
+      parseGithubRepoWebUrl("https://github.com/d-led/parallel-docs/blob/main/README.md"),
+    ).toBe(null);
     expect(parseGithubRepoWebUrl("https://example.com/acme/demo")).toBe(null);
     expect(parseGithubRepoWebUrl("not a url")).toBe(null);
   });

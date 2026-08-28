@@ -46,12 +46,12 @@ jobs:
       - name: Build static site
         run: npm run pages:build
         env:
-          SIDETRACK_PAGES_BUILD_SHA: ${{ github.event.workflow_run.head_sha }}
+          PARALLEL_DOCS_PAGES_BUILD_SHA: ${{ github.event.workflow_run.head_sha }}
 
       - name: Validate Pages GitHub/blob + browse link shapes
         run: node scripts/validate-pages-github-links.mjs
         env:
-          SIDETRACK_VALIDATE_PAGES_LIVE: "1"
+          PARALLEL_DOCS_VALIDATE_PAGES_LIVE: "1"
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0

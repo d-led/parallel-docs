@@ -3,20 +3,20 @@ import path from "node:path";
 import process from "node:process";
 
 import {
-  DEFAULT_SIDETRACK_TOML,
+  DEFAULT_PARALLEL_DOCS_TOML,
   defaultMetadataIndexPath,
-  initializeSideTrackProject,
-  loadSideTrackConfig,
+  initializeParallelDocsProject,
+  loadParallelDocsConfig,
   pathExists,
   type ValidationIssue,
-} from "@sidetrack/core";
+} from "@parallel-docs/core";
 
 import { logCliError, logCliValidationIssue, logCliWarning } from "./cli-output.js";
-import { mergeSideTrackPreCommitHook } from "./git-hooks.js";
-import { installMcpConfigs } from "@sidetrack/mcp-server";
+import { mergeParallelDocsPreCommitHook } from "./git-hooks.js";
+import { installMcpConfigs } from "@parallel-docs/mcp-server";
 
-/** VS Code Marketplace id for the published SideTrack extension. */
-export const SIDETRACK_VSCODE_EXTENSION_ID = "d-led.sidetrack-vscode" as const;
+/** VS Code Marketplace id for the published ParallelDocs extension. */
+export const PARALLEL_DOCS_VSCODE_EXTENSION_ID = "d-led.parallel-docs-vscode" as const;
 
 type VscodeExtensionsMergeResult = "wrote" | "unchanged" | "skipped";
 
@@ -59,14 +59,14 @@ function readExtensionsDocFromJson(
     obj = JSON.parse(raw) as unknown;
   } catch (e) {
     logCliWarning(
-      `${path.relative(repoRoot, extPath)}: invalid JSON (${e instanceof Error ? e.message : String(e)}); left unchanged (SideTrack recommendation not merged).`,
+      `${path.relative(repoRoot, extPath)}: invalid JSON (${e instanceof Error ? e.message : String(e)}); left unchanged (ParallelDocs recommendation not merged).`,
     );
     return "skipped";
   }
   const parsed = parseExtensionsObject(obj);
   if (parsed === null) {
     logCliWarning(
-      `${path.relative(repoRoot, extPath)}: expected a JSON object; left unchanged (SideTrack recommendation not merged).`,
+      `${path.relative(repoRoot, extPath)}: expected a JSON object; left unchanged (ParallelDocs recommendation not merged).`,
     );
     return "skipped";
   }
@@ -74,10 +74,10 @@ function readExtensionsDocFromJson(
 }
 
 /**
- * Ensures `.vscode/extensions.json` recommends the published SideTrack extension.
+ * Ensures `.vscode/extensions.json` recommends the published ParallelDocs extension.
  * Preserves other keys and recommendation ids. Skips with a warning if the file is not mergeable JSON.
  */
-export async function mergeSideTrackVscodeExtensionRecommendation(
+export async function mergeParallelDocsVscodeExtensionRecommendation(
   repoRoot: string,
 ): Promise<VscodeExtensionsMergeResult> {
   const vscodeDir = path.join(repoRoot, ".vscode");
@@ -95,14 +95,14 @@ export async function mergeSideTrackVscodeExtensionRecommendation(
       e && typeof e === "object" && "code" in e ? (e as NodeJS.ErrnoException).code : undefined;
     if (code !== "ENOENT") {
       logCliWarning(
-        `${path.relative(repoRoot, extPath)}: ${e instanceof Error ? e.message : String(e)}; SideTrack recommendation not merged.`,
+        `${path.relative(repoRoot, extPath)}: ${e instanceof Error ? e.message : String(e)}; ParallelDocs recommendation not merged.`,
       );
       return "skipped";
     }
     parsed = emptyExtensionsDoc();
   }
 
-  const extId = SIDETRACK_VSCODE_EXTENSION_ID;
+  const extId = PARALLEL_DOCS_VSCODE_EXTENSION_ID;
   const nextRecs = parsed.recommendations.includes(extId)
     ? parsed.recommendations
     : [...parsed.recommendations, extId];
@@ -125,9 +125,9 @@ export async function mergeSideTrackVscodeExtensionRecommendation(
 
 async function initVscodeExtensionRecommendation(repoRoot: string): Promise<void> {
   try {
-    if ((await mergeSideTrackVscodeExtensionRecommendation(repoRoot)) === "wrote") {
+    if ((await mergeParallelDocsVscodeExtensionRecommendation(repoRoot)) === "wrote") {
       console.log(
-        `Updated .vscode/extensions.json (recommendation: ${SIDETRACK_VSCODE_EXTENSION_ID}).`,
+        `Updated .vscode/extensions.json (recommendation: ${PARALLEL_DOCS_VSCODE_EXTENSION_ID}).`,
       );
     }
   } catch (e) {
@@ -138,14 +138,14 @@ async function initVscodeExtensionRecommendation(repoRoot: string): Promise<void
 }
 
 /**
- * Full idempotent init: storage dirs, `index.json` if missing, `.sidetrack.toml` if missing;
- * merges the published SideTrack VS Code extension into `.vscode/extensions.json` when the file
+ * Full idempotent init: storage dirs, `index.json` if missing, `.parallel-docs.toml` if missing;
+ * merges the published ParallelDocs VS Code extension into `.vscode/extensions.json` when the file
  * is valid JSON; always runs index migrations and `validateProject` (non-zero exit on validation errors).
  */
 export async function runInitFull(repoRoot: string): Promise<number> {
   let init;
   try {
-    init = await initializeSideTrackProject(repoRoot, {
+    init = await initializeParallelDocsProject(repoRoot, {
       ensureSiteGitignore: true,
       runValidation: true,
     });
@@ -165,7 +165,7 @@ export async function runInitFull(repoRoot: string): Promise<number> {
     );
   }
   if (init.createdToml) {
-    console.log("Created .sidetrack.toml with commented defaults.");
+    console.log("Created .parallel-docs.toml with commented defaults.");
   }
   if (init.addedSiteGitignore) {
     console.log("Updated .gitignore (added _site).");
@@ -188,34 +188,36 @@ export async function runInitFull(repoRoot: string): Promise<number> {
   for (const issue of init.validationIssues) {
     logCliValidationIssue(issue);
   }
-  const cfg = await loadSideTrackConfig(repoRoot);
+  const cfg = await loadParallelDocsConfig(repoRoot);
   const hasError = init.validationIssues.some((i: ValidationIssue) => i.level === "error");
 
-  console.log(`Initialized SideTrack storage under ${cfg.storageDir}`);
+  console.log(`Initialized ParallelDocs storage under ${cfg.storageDir}`);
   return hasError ? 1 : 0;
 }
 
 /**
- * Ensure `.sidetrack.toml` exists (or overwrite with `--force`).
+ * Ensure `.parallel-docs.toml` exists (or overwrite with `--force`).
  * @returns exit code (0 or 1)
  */
 export async function runInitConfig(repoRoot: string, opts: { force: boolean }): Promise<number> {
-  const tomlPath = path.join(repoRoot, ".sidetrack.toml");
+  const tomlPath = path.join(repoRoot, ".parallel-docs.toml");
   const exists = await pathExists(tomlPath);
   if (exists && !opts.force) {
-    console.log(".sidetrack.toml already exists (use `sidetrack init config --force` to replace).");
+    console.log(
+      ".parallel-docs.toml already exists (use `parallel-docs init config --force` to replace).",
+    );
     return 0;
   }
   if (exists && opts.force) {
-    logCliWarning("Overwriting .sidetrack.toml (--force).");
+    logCliWarning("Overwriting .parallel-docs.toml (--force).");
   }
-  await fs.writeFile(tomlPath, DEFAULT_SIDETRACK_TOML, "utf8");
+  await fs.writeFile(tomlPath, DEFAULT_PARALLEL_DOCS_TOML, "utf8");
   console.log(`Wrote ${tomlPath}`);
   return 0;
 }
 
 /**
- * Install or refresh the SideTrack-managed `pre-commit` hook block.
+ * Install or refresh the ParallelDocs-managed `pre-commit` hook block.
  * @returns exit code (0 or 1)
  */
 export async function runInitScm(repoRoot: string): Promise<number> {
@@ -231,12 +233,12 @@ export async function runInitScm(repoRoot: string): Promise<number> {
   } catch {
     prior = "";
   }
-  const next = mergeSideTrackPreCommitHook(prior);
+  const next = mergeParallelDocsPreCommitHook(prior);
   await fs.mkdir(path.dirname(hookPath), { recursive: true });
   await fs.writeFile(hookPath, next, "utf8");
   if (process.platform !== "win32") {
     await fs.chmod(hookPath, 0o755);
   }
-  console.log(`Updated ${path.relative(repoRoot, hookPath)} (SideTrack validate block).`);
+  console.log(`Updated ${path.relative(repoRoot, hookPath)} (ParallelDocs validate block).`);
   return 0;
 }

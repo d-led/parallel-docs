@@ -6,21 +6,21 @@
 import { mkdir, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-import { CURRENT_SCHEMA_VERSION } from "@sidetrack/core";
-import { renderCodeBrowserHtml } from "@sidetrack/render";
+import { CURRENT_SCHEMA_VERSION } from "@parallel-docs/core";
+import { renderCodeBrowserHtml } from "@parallel-docs/render";
 
 /**
  * @param {string} repoRoot
  */
 export async function writeE2eDualScrollFixture(repoRoot) {
   const outDir = path.join(repoRoot, "_site");
-  const crPath = ".sidetrack/source/e2e/dual-scroll.ts.md";
+  const crPath = ".parallel-docs/source/e2e/dual-scroll.ts.md";
   const index = {
     schemaVersion: CURRENT_SCHEMA_VERSION,
-    bySideTrackPath: {
+    byParallelDocsPath: {
       [crPath]: {
         sourcePath: "e2e/dual-scroll.ts",
-        sidetrackPath: crPath,
+        parallelDocsPath: crPath,
         blocks: [
           { id: "b1", anchor: "lines:1-12" },
           { id: "b2", anchor: "lines:13-30" },
@@ -34,13 +34,13 @@ export async function writeE2eDualScrollFixture(repoRoot) {
   ).join("\n");
   const secondBlockBody = Array.from(
     { length: 45 },
-    (_, i) => `Second-block sidetrack line ${String(i + 1)}.`,
+    (_, i) => `Second-block parallel-docs line ${String(i + 1)}.`,
   ).join("\n\n");
   const md =
-    "<!-- sidetrack:block id=b1 -->\n\n" +
+    "<!-- parallelDocs:block id=b1 -->\n\n" +
     "## First range\n\n" +
-    "SideTrack aligned to source lines 1–12.\n\n" +
-    "<!-- sidetrack:block id=b2 -->\n\n" +
+    "ParallelDocs aligned to source lines 1–12.\n\n" +
+    "<!-- parallelDocs:block id=b2 -->\n\n" +
     "## Second range\n\n" +
     secondBlockBody +
     "\n";
@@ -50,12 +50,12 @@ export async function writeE2eDualScrollFixture(repoRoot) {
     filePath: "e2e/dual-scroll.ts",
     code,
     language: "ts",
-    sidetrackMarkdown: md,
+    parallelDocsMarkdown: md,
     codeBrowserLayout: "dual",
     blockStretchRows: {
       index,
       sourceRelative: "e2e/dual-scroll.ts",
-      sidetrackPathRel: crPath,
+      parallelDocsPathRel: crPath,
     },
   });
 

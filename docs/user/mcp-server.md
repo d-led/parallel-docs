@@ -1,15 +1,15 @@
-# SideTrack MCP Server
+# ParallelDocs MCP Server
 
-The SideTrack MCP (Model Context Protocol) server lets AI coding assistants (Claude, VS Code Copilot, Antigravity, OpenCode, etc.) work with your SideTrack project — validating, discovering, reading, and writing sidetrack.
+The ParallelDocs MCP (Model Context Protocol) server lets AI coding assistants (Claude, VS Code Copilot, Antigravity, OpenCode, etc.) work with your ParallelDocs project — validating, discovering, reading, and writing parallel-docs.
 
 ## Quick Start
 
-### Option 1: `sidetrack mcp install` (recommended)
+### Option 1: `parallel-docs mcp install` (recommended)
 
 Run this from your repo root. It writes portable, commit-safe MCP config files:
 
 ```bash
-sidetrack mcp install
+parallel-docs mcp install
 ```
 
 This creates/updates:
@@ -21,17 +21,17 @@ This creates/updates:
 | `.antigravity/mcp.json` | Antigravity              |
 | `.opencode/mcp.json`    | OpenCode                 |
 
-All configs use `sidetrack mcp serve` as the command — no absolute paths, safe to commit.
+All configs use `parallel-docs mcp serve` as the command — no absolute paths, safe to commit.
 
 Preview without writing:
 
 ```bash
-sidetrack mcp install --dry-run
+parallel-docs mcp install --dry-run
 ```
 
 ### Option 2: VS Code Extension
 
-Open the Command Palette (`Cmd+Shift+P`) and run **SideTrack: Configure MCP server for AI coding assistants…**. This shows the JSON config for the extension's bundled MCP server.
+Open the Command Palette (`Cmd+Shift+P`) and run **ParallelDocs: Configure MCP server for AI coding assistants…**. This shows the JSON config for the extension's bundled MCP server.
 
 ### Option 3: Manual config
 
@@ -40,8 +40,8 @@ Add this to your MCP client config (Claude Desktop, etc.):
 ```json
 {
   "mcpServers": {
-    "sidetrack": {
-      "command": "sidetrack",
+    "parallel-docs": {
+      "command": "parallel-docs",
       "args": ["mcp", "serve"]
     }
   }
@@ -52,47 +52,47 @@ Add this to your MCP client config (Claude Desktop, etc.):
 
 ### Read & Discover
 
-| Tool                         | Description                                 |
-| ---------------------------- | ------------------------------------------- |
-| `sidetrack_list_pairs`       | List all source→sidetrack pairs             |
-| `sidetrack_read_sidetrack`   | Read sidetrack Markdown for a source file   |
-| `sidetrack_read_source`      | Read source file content                    |
-| `sidetrack_list_orphans`     | List orphan companions (no matching source) |
-| `sidetrack_find_uncommented` | Find tracked source files without sidetrack |
-| `sidetrack_get_index`        | Dump full index as JSON                     |
+| Tool                               | Description                                     |
+| ---------------------------------- | ----------------------------------------------- |
+| `parallel_docs_list_pairs`         | List all source→parallel-docs pairs             |
+| `parallel_docs_read_parallel_docs` | Read parallel-docs Markdown for a source file   |
+| `parallel_docs_read_source`        | Read source file content                        |
+| `parallel_docs_list_orphans`       | List orphan companions (no matching source)     |
+| `parallel_docs_find_uncommented`   | Find tracked source files without parallel-docs |
+| `parallel_docs_get_index`          | Dump full index as JSON                         |
 
 ### Validate & Maintain
 
-| Tool                 | Description                                            |
-| -------------------- | ------------------------------------------------------ |
-| `sidetrack_validate` | Validate project metadata and configuration            |
-| `sidetrack_doctor`   | Validate + environment checks, optional orphan cleanup |
-| `sidetrack_migrate`  | Migrate index.json to current schema                   |
-| `sidetrack_paths`    | Resolve companion path for a source file               |
+| Tool                     | Description                                            |
+| ------------------------ | ------------------------------------------------------ |
+| `parallel_docs_validate` | Validate project metadata and configuration            |
+| `parallel_docs_doctor`   | Validate + environment checks, optional orphan cleanup |
+| `parallel_docs_migrate`  | Migrate index.json to current schema                   |
+| `parallel_docs_paths`    | Resolve companion path for a source file               |
 
 ### Write & Transform
 
-| Tool                               | Description                                 |
-| ---------------------------------- | ------------------------------------------- |
-| `sidetrack_init`                   | Initialize SideTrack in the workspace       |
-| `sidetrack_angles_add`             | Register a new angle                        |
-| `sidetrack_migrate_angles`         | Convert flat companions to Angles layout    |
-| `sidetrack_sync_moved_paths`       | Sync index with Git-renamed files           |
-| `sidetrack_convert_source_markers` | Convert marker delimiters to language style |
-| `sidetrack_render`                 | Render side-by-side HTML page               |
+| Tool                                   | Description                                 |
+| -------------------------------------- | ------------------------------------------- |
+| `parallel_docs_init`                   | Initialize ParallelDocs in the workspace    |
+| `parallel_docs_angles_add`             | Register a new angle                        |
+| `parallel_docs_migrate_angles`         | Convert flat companions to Angles layout    |
+| `parallel_docs_sync_moved_paths`       | Sync index with Git-renamed files           |
+| `parallel_docs_convert_source_markers` | Convert marker delimiters to language style |
+| `parallel_docs_render`                 | Render side-by-side HTML page               |
 
 ## Example AI Workflow
 
-1. **Discover**: "Use sidetrack_list_pairs to see what files have sidetrack"
-2. **Find gaps**: "Use sidetrack_find_uncommented to find files without docs"
-3. **Read**: "Use sidetrack_read_source to read `src/auth.ts`, then write sidetrack for it"
-4. **Read existing**: "Use sidetrack_read_sidetrack to read the architecture sidetrack"
-5. **Clean up**: "Use sidetrack_list_orphans to find stale sidetrack, then sidetrack_doctor with allowDeletions=true"
+1. **Discover**: "Use parallel_docs_list_pairs to see what files have parallel-docs"
+2. **Find gaps**: "Use parallel_docs_find_uncommented to find files without docs"
+3. **Read**: "Use parallel_docs_read_source to read `src/auth.ts`, then write parallel-docs for it"
+4. **Read existing**: "Use parallel_docs_read_parallel_docs to read the architecture parallel-docs"
+5. **Clean up**: "Use parallel_docs_list_orphans to find stale parallel-docs, then parallel_docs_doctor with allowDeletions=true"
 
 ## Troubleshooting
 
-**"No index found"**: Run `sidetrack_init` first (or `sidetrack init` from CLI).
+**"No index found"**: Run `parallel_docs_init` first (or `parallel-docs init` from CLI).
 
-**"sidetrack: command not found"**: Install the CLI: `npm install -g sidetrack`. Or use the VS Code extension's bundled MCP server.
+**"parallelDocs: command not found"**: Install the CLI: `npm install -g parallel-docs`. Or use the VS Code extension's bundled MCP server.
 
-**Config not detected**: Open the MCP panel (`MCP: List Servers` in the palette) and restart the SideTrack server. No full window reload needed.
+**Config not detected**: Open the MCP panel (`MCP: List Servers` in the palette) and restart the ParallelDocs server. No full window reload needed.

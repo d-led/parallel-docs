@@ -1,17 +1,17 @@
-import { CURRENT_SCHEMA_VERSION } from "@sidetrack/core";
+import { CURRENT_SCHEMA_VERSION } from "@parallel-docs/core";
 import { describe, expect, it } from "vitest";
 
 import { tryBuildBlockStretchTableHtml } from "./block-stretch-layout.js";
 
-const crPath = ".sidetrack/source/pkg/x.txt.md";
+const crPath = ".parallel-docs/source/pkg/x.txt.md";
 
 function tinyIndex() {
   return {
     schemaVersion: CURRENT_SCHEMA_VERSION,
-    bySideTrackPath: {
+    byParallelDocsPath: {
       [crPath]: {
         sourcePath: "pkg/x.txt",
-        sidetrackPath: crPath,
+        parallelDocsPath: crPath,
         blocks: [{ id: "b1", anchor: "lines:2-3" }],
       },
     },
@@ -20,31 +20,31 @@ function tinyIndex() {
 
 describe("Block-aligned stretch table HTML", () => {
   it("table strategy omits flow-synchronizer wrappers (legacy)", async () => {
-    const md = "<!-- sidetrack:block id=b1 -->\n\n## Hi\n\nBody.\n";
+    const md = "<!-- parallelDocs:block id=b1 -->\n\n## Hi\n\nBody.\n";
     const out = await tryBuildBlockStretchTableHtml({
       code: "gap\na\nb",
       language: "txt",
-      sidetrackMarkdown: md,
+      parallelDocsMarkdown: md,
       index: tinyIndex(),
       sourceRelative: "pkg/x.txt",
-      sidetrackPathRel: crPath,
+      parallelDocsPathRel: crPath,
       stretchBufferSync: "table",
     });
     expect(out).not.toBeNull();
     if (out === null) throw new Error("expected table");
     expect(out.tableInnerHtml).not.toContain("stretch-cell-measure");
-    expect(out.tableInnerHtml).not.toContain("data-sidetrack-stretch-sync-id");
+    expect(out.tableInnerHtml).not.toContain("data-parallel-docs-stretch-sync-id");
   });
 
   it("default flow-synchronizer: one blame-style row per block (no rowspan), sync ids + measure wrappers", async () => {
-    const md = "<!-- sidetrack:block id=b1 -->\n\n## Hi\n\nBody.\n";
+    const md = "<!-- parallelDocs:block id=b1 -->\n\n## Hi\n\nBody.\n";
     const out = await tryBuildBlockStretchTableHtml({
       code: "gap\na\nb",
       language: "txt",
-      sidetrackMarkdown: md,
+      parallelDocsMarkdown: md,
       index: tinyIndex(),
       sourceRelative: "pkg/x.txt",
-      sidetrackPathRel: crPath,
+      parallelDocsPathRel: crPath,
     });
     expect(out).not.toBeNull();
     if (out === null) throw new Error("expected table");
@@ -55,21 +55,23 @@ describe("Block-aligned stretch table HTML", () => {
     expect((out.tableInnerHtml.match(/<tr /g) ?? []).length).toBe(2);
     expect((out.tableInnerHtml.match(/stretch-row--gap/g) ?? []).length).toBe(1);
     expect((out.tableInnerHtml.match(/stretch-row--block/g) ?? []).length).toBe(1);
-    expect(out.tableInnerHtml).toContain('data-sidetrack-stretch-sync-id="b1"');
-    expect(out.tableInnerHtml).toContain('data-sidetrack-stretch-sync-id="__gap__0"');
+    expect(out.tableInnerHtml).toContain('data-parallel-docs-stretch-sync-id="b1"');
+    expect(out.tableInnerHtml).toContain('data-parallel-docs-stretch-sync-id="__gap__0"');
     expect((out.tableInnerHtml.match(/stretch-cell-measure/g) ?? []).length).toBe(4);
   });
 
   it("emits gap rows for marker viewport lines before the inner source range", async () => {
-    const markerCr = ".sidetrack/source/marker/readme.md.md";
-    const src = ["pad", "# sidetrack:start id=aa", "[inner]", "# sidetrack:end id=aa"].join("\n");
-    const md = "<!-- sidetrack:block id=aa -->\n\n## Doc\n";
+    const markerCr = ".parallel-docs/source/marker/readme.md.md";
+    const src = ["pad", "# parallelDocs:start id=aa", "[inner]", "# parallelDocs:end id=aa"].join(
+      "\n",
+    );
+    const md = "<!-- parallelDocs:block id=aa -->\n\n## Doc\n";
     const index = {
       schemaVersion: CURRENT_SCHEMA_VERSION,
-      bySideTrackPath: {
+      byParallelDocsPath: {
         [markerCr]: {
           sourcePath: "marker/readme.md",
-          sidetrackPath: markerCr,
+          parallelDocsPath: markerCr,
           blocks: [{ id: "aa", anchor: "marker:aa" }],
         },
       },
@@ -77,10 +79,10 @@ describe("Block-aligned stretch table HTML", () => {
     const out = await tryBuildBlockStretchTableHtml({
       code: src,
       language: "txt",
-      sidetrackMarkdown: md,
+      parallelDocsMarkdown: md,
       index,
       sourceRelative: "marker/readme.md",
-      sidetrackPathRel: markerCr,
+      parallelDocsPathRel: markerCr,
     });
     expect(out).not.toBeNull();
     if (out === null) throw new Error("expected table");

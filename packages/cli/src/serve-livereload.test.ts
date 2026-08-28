@@ -7,24 +7,24 @@ import { injectLivereloadIntoSite, injectLivereloadScript } from "./serve-livere
 
 describe("serve livereload HTML injection", () => {
   it("adds the browser reload client before the closing body", () => {
-    const html = "<!doctype html><body><main>SideTrack</main></body>";
+    const html = "<!doctype html><body><main>ParallelDocs</main></body>";
 
     const withReload = injectLivereloadScript(html, 4174);
 
-    expect(withReload).toContain("<script data-sidetrack-livereload>");
+    expect(withReload).toContain("<script data-parallel-docs-livereload>");
     expect(withReload).toContain('new EventSource("http://" + host + ":4174');
     expect(withReload).toContain("location.reload()");
     expect(withReload).toMatch(/<\/script>\n<\/body>$/);
   });
 
   it("keeps generated pages with an existing reload client unchanged", () => {
-    const html = injectLivereloadScript("<body>SideTrack</body>", 4174);
+    const html = injectLivereloadScript("<body>ParallelDocs</body>", 4174);
 
     expect(injectLivereloadScript(html, 9999)).toBe(html);
   });
 
   it("updates every generated HTML page and ignores non-HTML assets", async () => {
-    const site = await mkdtemp(path.join(tmpdir(), "sidetrack-livereload-"));
+    const site = await mkdtemp(path.join(tmpdir(), "parallel-docs-livereload-"));
     try {
       await mkdir(path.join(site, "browse"), { recursive: true });
       await writeFile(path.join(site, "index.html"), "<body>Hub</body>", "utf8");
@@ -34,10 +34,10 @@ describe("serve livereload HTML injection", () => {
       await injectLivereloadIntoSite(site, 4174);
 
       expect(await readFile(path.join(site, "index.html"), "utf8")).toContain(
-        "data-sidetrack-livereload",
+        "data-parallel-docs-livereload",
       );
       expect(await readFile(path.join(site, "browse", "readme.html"), "utf8")).toContain(
-        "data-sidetrack-livereload",
+        "data-parallel-docs-livereload",
       );
       expect(await readFile(path.join(site, "style.css"), "utf8")).toBe("body { color: black; }\n");
     } finally {

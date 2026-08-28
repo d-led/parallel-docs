@@ -34,19 +34,19 @@ const HARNESSES: HarnessConfig[] = [
 
 // ── MCP server entry (portable — no absolute paths) ───────────────────────
 
-const SIDETRACK_DESCRIPTION =
-  "SideTrack: out-of-file sidetrack anchored to code. " +
+const PARALLEL_DOCS_DESCRIPTION =
+  "ParallelDocs: out-of-file parallel-docs anchored to code. " +
   'Explains design decisions, trade-offs, and rationale — the "why" that doesn\'t belong in comments or docs. ' +
-  "Strict separation: code comments (inline), documentation (standalone), SideTrack (anchored, cross-linked).";
+  "Strict separation: code comments (inline), documentation (standalone), ParallelDocs (anchored, cross-linked).";
 
 function makeMcpEntry(): Record<string, unknown> {
   return {
-    sidetrack: {
+    "parallel-docs": {
       type: "stdio",
-      command: "sidetrack",
+      command: "parallel-docs",
       args: ["mcp", "serve"],
       cwd: "${workspaceFolder}",
-      description: SIDETRACK_DESCRIPTION,
+      description: PARALLEL_DOCS_DESCRIPTION,
     },
   };
 }
@@ -71,11 +71,11 @@ async function readOrEmpty(absPath: string): Promise<McpConfig> {
 /**
  * Install (or update) repo-local MCP config files for all supported harnesses.
  *
- * Each config file references `sidetrack mcp serve` as the command — fully
+ * Each config file references `parallel-docs mcp serve` as the command — fully
  * portable, no absolute paths. Safe to commit to a multi-contributor repo.
  *
  * @param repoRoot Absolute path to the repo root
- * @param options dryRun (preview only), force (overwrite existing sidetrack entry)
+ * @param options dryRun (preview only), force (overwrite existing parallel-docs entry)
  * @returns Array of results describing what happened for each harness
  */
 export async function installMcpConfigs(
@@ -97,9 +97,9 @@ export async function installMcpConfigs(
     }
 
     const existing = await readOrEmpty(configAbs);
-    const hasSideTrack = existing.servers && "sidetrack" in existing.servers;
+    const hasParallelDocs = existing.servers && "parallel-docs" in existing.servers;
 
-    if (hasSideTrack && !options.force) {
+    if (hasParallelDocs && !options.force) {
       results.push({
         harness: harness.name,
         configFile: harness.configFileRel,
@@ -108,8 +108,8 @@ export async function installMcpConfigs(
       continue;
     }
 
-    const action = hasSideTrack ? "updated" : "created";
-    const dryAction = hasSideTrack ? "would_update" : "would_create";
+    const action = hasParallelDocs ? "updated" : "created";
+    const dryAction = hasParallelDocs ? "would_update" : "would_create";
 
     if (options.dryRun) {
       results.push({
@@ -120,7 +120,7 @@ export async function installMcpConfigs(
       continue;
     }
 
-    // Merge the SideTrack entry into the existing config
+    // Merge the ParallelDocs entry into the existing config
     const merged: McpConfig = {
       ...existing,
       servers: {

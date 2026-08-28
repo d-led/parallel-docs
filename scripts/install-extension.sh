@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Build, package, and install the SideTrack extension into your regular
+# Build, package, and install the ParallelDocs extension into your regular
 # Cursor / VS Code (not the Extension Development Host). Workspace packages
-# the extension depends on (@sidetrack/core, @sidetrack/render) are cleaned
+# the extension depends on (@parallel-docs/core, @parallel-docs/render) are cleaned
 # then rebuilt so local runs never reuse stale dist or .tsbuildinfo output.
-# Before install, any existing `d-led.sidetrack-vscode` copy is uninstalled
+# Before install, any existing `d-led.parallel-docs-vscode` copy is uninstalled
 # so Marketplace / old .vsix builds cannot linger beside the new package.
 #
 # Usage:
@@ -14,7 +14,7 @@ set -euo pipefail
 #   bash scripts/install-extension.sh --publish       # build, package, vsce publish (Marketplace)
 #   bash scripts/install-extension.sh --uninstall      # remove from all detected editors
 #
-# Honors $SIDETRACK_EDITOR (path or command) to target one editor only.
+# Honors $PARALLEL_DOCS_EDITOR (path or command) to target one editor only.
 # Otherwise installs/uninstalls in all detected CLIs among: `cursor`, `code`.
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -22,15 +22,15 @@ cd "$REPO_ROOT"
 
 # shellcheck source=lib/pick-editor-cli.sh
 source "$REPO_ROOT/scripts/lib/pick-editor-cli.sh"
-# shellcheck source=lib/sidetrack-vscode-ext.sh
-source "$REPO_ROOT/scripts/lib/sidetrack-vscode-ext.sh"
+# shellcheck source=lib/parallel-docs-vscode-ext.sh
+source "$REPO_ROOT/scripts/lib/parallel-docs-vscode-ext.sh"
 
 EXT_DIR="$REPO_ROOT/packages/vscode"
-EXT_ID="$SIDETRACK_VSCODE_EXTENSION_ID"
+EXT_ID="$PARALLEL_DOCS_VSCODE_EXTENSION_ID"
 
 collect_editor_clis() {
-  if [[ -n "${SIDETRACK_EDITOR:-}" ]]; then
-    printf '%s\n' "$SIDETRACK_EDITOR"
+  if [[ -n "${PARALLEL_DOCS_EDITOR:-}" ]]; then
+    printf '%s\n' "$PARALLEL_DOCS_EDITOR"
     return 0
   fi
 
@@ -55,7 +55,7 @@ collect_editor_clis() {
     found=1
   fi
   if [[ "$found" -eq 0 ]]; then
-    echo "Could not find 'antigravity-ide', 'cursor' or 'code' on PATH. Install the editor shell command, or set SIDETRACK_EDITOR." >&2
+    echo "Could not find 'antigravity-ide', 'cursor' or 'code' on PATH. Install the editor shell command, or set PARALLEL_DOCS_EDITOR." >&2
     return 1
   fi
 }
@@ -90,23 +90,23 @@ echo "Rendering Marketplace icon from canonical SVG..."
 bash "$REPO_ROOT/scripts/build-vscode-icon.sh"
 
 echo "Cleaning extension dependency workspaces (fresh dist + TS incremental state)..."
-npm run clean -w @sidetrack/core -w @sidetrack/render -w sidetrack-vscode
+npm run clean -w @parallel-docs/core -w @parallel-docs/render -w parallel-docs-vscode
 rm -f \
   "$REPO_ROOT/packages/core"/tsconfig*.tsbuildinfo \
   "$REPO_ROOT/packages/render"/tsconfig*.tsbuildinfo \
   "$REPO_ROOT/packages/vscode"/tsconfig*.tsbuildinfo
 
 echo "Building workspace packages the extension depends on, then bundling..."
-npm run build -w @sidetrack/core
-npm run build -w @sidetrack/render
-npm run build -w sidetrack-vscode
+npm run build -w @parallel-docs/core
+npm run build -w @parallel-docs/render
+npm run build -w parallel-docs-vscode
 
 # `--no-dependencies` skips vsce's node_modules traversal: the bundle has
 # no runtime deps, so the symlinked workspace package shouldn't be inspected.
 version="$(ext_version)"
-vsix_path="$EXT_DIR/dist/sidetrack-vscode-${version}.vsix"
+vsix_path="$EXT_DIR/dist/parallel-docs-vscode-${version}.vsix"
 echo "Packaging .vsix at $vsix_path..."
-(cd "$EXT_DIR" && npx --yes @vscode/vsce@^3 package --no-dependencies --out "dist/sidetrack-vscode-${version}.vsix")
+(cd "$EXT_DIR" && npx --yes @vscode/vsce@^3 package --no-dependencies --out "dist/parallel-docs-vscode-${version}.vsix")
 
 if [[ "$mode" == "package" ]]; then
   echo "Built $vsix_path (not installed)."
@@ -124,7 +124,7 @@ while IFS= read -r line; do
   [[ -n "$line" ]] && editor_clis+=("$line")
 done < <(collect_editor_clis)
 for editor_cli in "${editor_clis[@]}"; do
-  sidetrack_uninstall_packaged_sidetrack_if_present "$editor_cli"
+  parallel_docs_uninstall_packaged_parallel_docs_if_present "$editor_cli"
   echo "Installing into $editor_cli..."
   "$editor_cli" --install-extension "$vsix_path" --force
 done

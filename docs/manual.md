@@ -1,20 +1,20 @@
-# SideTrack Manual
+# ParallelDocs Manual
 
-This manual is the operator-focused reference for running SideTrack day to day:
+This manual is the operator-focused reference for running ParallelDocs day to day:
 authoring, validating, rendering, sharing, and maintaining companion docs.
 
 For conceptual background and trade-offs, open this file side-by-side with its
-sidetrack companion:
-[`/.sidetrack/source/docs/manual.md/main.md`](../.sidetrack/source/docs/manual.md/main.md)
+parallel-docs companion:
+[`/.parallel-docs/source/docs/manual.md/main.md`](../.parallel-docs/source/docs/manual.md/main.md)
 
-## 1) What SideTrack Is
+## 1) What ParallelDocs Is
 
-SideTrack keeps narrative documentation in repository-tracked Markdown files
-paired to source paths under `.sidetrack/source/`, plus machine metadata in
-`.sidetrack/metadata/index.json`.
+ParallelDocs keeps narrative documentation in repository-tracked Markdown files
+paired to source paths under `.parallel-docs/source/`, plus machine metadata in
+`.parallel-docs/metadata/index.json`.
 
 - **Primary source**: your code / README / docs file.
-- **Companion sidetrack**: the paired Markdown file.
+- **Companion parallel-docs**: the paired Markdown file.
 - **Index metadata**: structured block anchors, snippets, and validation inputs.
 
 Canonical storage semantics:
@@ -24,7 +24,7 @@ Canonical storage semantics:
 
 Install and setup paths:
 
-- User install guide: [`docs/user/install.md`](./user/install.md) (includes **`npx sidetrack`**; **`npx sidetrack --help`** prints `Usage: sidetrack [options] [command]`.)
+- User install guide: [`docs/user/install.md`](./user/install.md) (includes **`npx parallel-docs`**; **`npx parallel-docs --help`** prints `Usage: parallel-docs [options] [command]`.)
 - Clone + maintainer setup: [`docs/development.md`](./development.md)
 
 Typical bootstrap from repo root:
@@ -41,10 +41,10 @@ CLI command reference:
 
 Common lifecycle:
 
-1. `sidetrack init` to create storage/config baseline.
-2. Author companions in `.sidetrack/source/`.
-3. Run `sidetrack validate` (or `validate --staged`) before commit.
-4. Render static view (`sidetrack render` or `npm run pages:build`).
+1. `parallel-docs init` to create storage/config baseline.
+2. Author companions in `.parallel-docs/source/`.
+3. Run `parallel-docs validate` (or `validate --staged`) before commit.
+4. Render static view (`parallel-docs render` or `npm run pages:build`).
 
 ## 4) Authoring In VS Code / Cursor
 
@@ -79,7 +79,7 @@ Operational semantics:
 
 - Storage/paths: [`docs/spec/storage.md#angles-named-perspectives-on-the-same-source`](./spec/storage.md#angles-named-perspectives-on-the-same-source)
 - Config keys: [`docs/user/config.md`](./user/config.md)
-- Migration command: `sidetrack migrate-angles`
+- Migration command: `parallel-docs migrate-angles`
 
 ## 7) Static Site, Permalinks, And Sharing
 
@@ -92,7 +92,7 @@ Static browser behavior:
 
 - **Stable** pair browse URLs under `/browse/` **as long as** you do not rename
   or move the primary file or its companion Markdown: the opaque slug is fixed
-  for that `(sourcePath, sidetrackPath)` pair across rebuilds and machines.
+  for that `(sourcePath, parallelDocsPath)` pair across rebuilds and machines.
   **Rename or move** either side → those strings change → **a new slug** (old
   links are not redirected automatically).
 - Humane alias paths (source-shaped browse routes) where the host can serve them

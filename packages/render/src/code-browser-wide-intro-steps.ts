@@ -24,7 +24,7 @@ export function wideIntroStepsForShell(
         ? [shellOrIntroTargetSelector]
         : ["#code-pane", "#doc-pane"],
       title: "Welcome",
-      body: "Welcome to sidetrack, a system to create and view commentaries next to the source tree. Angles are different aspects of these commentaries, so switch between them and keep scrolling while both panes stay aligned.",
+      body: "Welcome to parallel-docs, a system to create and view commentaries next to the source tree. Angles are different aspects of these commentaries, so switch between them and keep scrolling while both panes stay aligned.",
     },
     {
       targetSelectors: isNarrowViewport
@@ -32,8 +32,8 @@ export function wideIntroStepsForShell(
         : ["#code-pane", "#doc-pane"],
       title: "Two views",
       body: isNarrowViewport
-        ? "You are in narrow view now. Use the pane flip to switch code and sidetrack. Wide view shows both panes side by side."
-        : "You are in wide view now. It shows code and sidetrack side by side. Narrow view uses one pane and a flip control.",
+        ? "You are in narrow view now. Use the pane flip to switch code and parallel-docs. Wide view shows both panes side by side."
+        : "You are in wide view now. It shows code and parallel-docs side by side. Narrow view uses one pane and a flip control.",
     },
     {
       targetSelectors: isNarrowViewport
@@ -41,8 +41,8 @@ export function wideIntroStepsForShell(
         : ["#code-pane", "#doc-pane"],
       title: isNarrowViewport ? "Scroll and toggle" : "Scroll both panes",
       body: isNarrowViewport
-        ? "Try scrolling sidetrack, then use the pane flip to switch to source and keep exploring."
-        : "Try scrolling in either pane. Source and sidetrack stay aligned while you read side by side.",
+        ? "Try scrolling parallel-docs, then use the pane flip to switch to source and keep exploring."
+        : "Try scrolling in either pane. Source and parallel-docs stay aligned while you read side by side.",
     },
     {
       targetSelector: "#search-q",
@@ -52,7 +52,7 @@ export function wideIntroStepsForShell(
     {
       targetSelector: "#angle-select",
       title: "Angle switch",
-      body: "Change the SideTrack angle to view a different narrative for this same source file.",
+      body: "Change the ParallelDocs angle to view a different narrative for this same source file.",
     },
     {
       targetSelector: "#source-markdown-pane-flip",
@@ -62,7 +62,7 @@ export function wideIntroStepsForShell(
     {
       targetSelector: "#wrap-lines",
       title: "Readability controls",
-      body: "Wrap lines to reduce horizontal scrolling in both source and sidetrack panes.",
+      body: "Wrap lines to reduce horizontal scrolling in both source and parallel-docs panes.",
       fallbackActionLabel: "Switch to markdown source",
       fallbackAction: () => {
         const sourceModeFlip = document.getElementById("source-markdown-pane-flip");
@@ -70,17 +70,17 @@ export function wideIntroStepsForShell(
       },
     },
     {
-      targetSelector: "#sidetrack-theme-trigger",
+      targetSelector: "#parallel-docs-theme-trigger",
       title: "Appearance",
       body: "Change theme mode from this trigger (menu on left-click, quick cycle on right-click).",
     },
     {
-      targetSelector: "#sidetrack-share-link",
+      targetSelector: "#parallel-docs-share-link",
       title: "Share this view",
       body: "Use this link button to copy a shareable permalink to the exact page and state you are viewing.",
     },
     {
-      targetSelector: "#sidetrack-help-tour",
+      targetSelector: "#parallel-docs-help-tour",
       title: "Need a refresher?",
       body: "You can always go back to this tutorial via the help button.",
     },

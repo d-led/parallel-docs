@@ -1,24 +1,24 @@
 import {
-  findSideTrackBlockMarkerHits,
+  findParallelDocsBlockMarkerHits,
   recoverSourceMarkersFromSnippet,
   snippetFromRange,
 } from "./blocks.js";
-import { parseSideTrackRegionBoundary } from "./source-markers.js";
-import type { SideTrackIndex } from "./model.js";
+import { parseParallelDocsRegionBoundary } from "./source-markers.js";
+import type { ParallelDocsIndex } from "./model.js";
 
 export function healSourceFile(args: {
   sourceText: string;
   languageId: string;
   companionMarkdown: string;
-  index: SideTrackIndex;
-  sidetrackPath: string;
+  index: ParallelDocsIndex;
+  parallelDocsPath: string;
 }): {
   sourceText: string;
-  index: SideTrackIndex;
+  index: ParallelDocsIndex;
   healedCount: number;
 } {
-  const markdownHits = findSideTrackBlockMarkerHits(args.companionMarkdown);
-  const entry = args.index.bySideTrackPath[args.sidetrackPath];
+  const markdownHits = findParallelDocsBlockMarkerHits(args.companionMarkdown);
+  const entry = args.index.byParallelDocsPath[args.parallelDocsPath];
   if (!entry) {
     return { sourceText: args.sourceText, index: args.index, healedCount: 0 };
   }
@@ -58,9 +58,9 @@ export function healSourceFile(args: {
     return { sourceText: args.sourceText, index: args.index, healedCount: 0 };
   }
 
-  const nextBySideTrackPath = {
-    ...args.index.bySideTrackPath,
-    [args.sidetrackPath]: {
+  const nextByParallelDocsPath = {
+    ...args.index.byParallelDocsPath,
+    [args.parallelDocsPath]: {
       ...entry,
       blocks: updatedBlocks,
     },
@@ -70,7 +70,7 @@ export function healSourceFile(args: {
     sourceText: currentSourceText,
     index: {
       ...args.index,
-      bySideTrackPath: nextBySideTrackPath,
+      byParallelDocsPath: nextByParallelDocsPath,
     },
     healedCount,
   };
@@ -80,7 +80,7 @@ function hasRegionInSource(sourceText: string, markerId: string): boolean {
   const normalized = markerId.toLowerCase();
   const lines = sourceText.split("\n");
   for (const line of lines) {
-    const hit = parseSideTrackRegionBoundary(line);
+    const hit = parseParallelDocsRegionBoundary(line);
     if (hit && hit.id.toLowerCase() === normalized) {
       return true;
     }

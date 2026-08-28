@@ -3,16 +3,16 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { sidetrackAnglesSentinelPath } from "./paths.js";
+import { parallelDocsAnglesSentinelPath } from "./paths.js";
 import { validateProject } from "./validate-project.js";
 
 describe("validateProject — orphan companion Markdown", () => {
   it("reports an error when Angles companion storage exists without a primary source file", async () => {
     const dir = await mkdtemp(path.join(tmpdir(), "cr-val-orph-"));
-    const storage = ".sidetrack";
+    const storage = ".parallel-docs";
     await mkdir(path.join(dir, storage, "metadata"), { recursive: true });
     await writeFile(
-      path.join(dir, ".sidetrack.toml"),
+      path.join(dir, ".parallel-docs.toml"),
       [
         "[storage]",
         `dir = "${storage}"`,
@@ -24,7 +24,7 @@ describe("validateProject — orphan companion Markdown", () => {
       ].join("\n"),
       "utf8",
     );
-    const sentinel = sidetrackAnglesSentinelPath(storage);
+    const sentinel = parallelDocsAnglesSentinelPath(storage);
     await mkdir(path.join(dir, path.dirname(sentinel)), { recursive: true });
     await writeFile(path.join(dir, ...sentinel.split("/")), "", "utf8");
     await mkdir(path.join(dir, storage, "source", "docs", "ghost", "ghost.md"), {

@@ -3,7 +3,7 @@ import { mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-// Bundle the extension and its workspace dependency (`@sidetrack/core`) into a
+// Bundle the extension and its workspace dependency (`@parallel-docs/core`) into a
 // single CommonJS file so the resulting .vsix is self-contained. VS Code loads
 // `main` from the packaged extension via CJS `require`, so we overwrite the
 // tsc-emitted `dist/extension.js` with the bundled version at package time.

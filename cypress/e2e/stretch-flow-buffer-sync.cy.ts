@@ -7,7 +7,7 @@ describe("Stretch layout — flow-synchronizer buffer (static browse page)", () 
   it("exposes the shell flag and avoids terminal tail slack on the last gap row", () => {
     cy.visit(STRETCH_FLOW_BUFFER_BROWSE, {
       onBeforeLoad(win) {
-        win.localStorage.setItem("sidetrack.codeSideTrackStatic.wideModeIntro.v1", "1");
+        win.localStorage.setItem("parallel-docs.codeParallelDocsStatic.wideModeIntro.v1", "1");
       },
     });
 

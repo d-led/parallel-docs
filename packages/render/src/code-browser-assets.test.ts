@@ -9,7 +9,7 @@ const renderSrcDir = dirname(fileURLToPath(import.meta.url));
 describe("Code browser static assets", () => {
   it("keeps a single intro splice marker in shell CSS", () => {
     const css = readFileSync(join(renderSrcDir, "code-browser-shell.css"), "utf8");
-    const marker = "/* __SIDETRACK_INTRO_CSS__ */";
+    const marker = "/* __PARALLEL_DOCS_INTRO_CSS__ */";
     expect(css.split(marker).length - 1).toBe(1);
   });
 

@@ -1,70 +1,70 @@
 import {
   type BlockRange,
   type BlockScrollLink,
-  type SideTrackIndex,
+  type ParallelDocsIndex,
   addBlockToIndex,
   alignAndCleanRegions,
-  applyPathRenamesToSideTrackIndex,
+  applyPathRenamesToParallelDocsIndex,
   assertValidAngleId,
   assertValidMarkerId,
   buildBlockScrollLinks,
-  sidetrackActiveEditorUiFlags,
-  sidetrackAnglesLayoutEnabled,
-  sidetrackAnglesSentinelPath,
-  sidetrackMarkdownPath,
-  sidetrackMarkdownPathForAngle,
-  sidetrackStorageSourcePrefix,
+  parallelDocsActiveEditorUiFlags,
+  parallelDocsAnglesLayoutEnabled,
+  parallelDocsAnglesSentinelPath,
+  parallelDocsMarkdownPath,
+  parallelDocsMarkdownPathForAngle,
+  parallelDocsStorageSourcePrefix,
   createBlockForRange,
   defaultMetadataIndexPath,
   defaultRegionMarkerNamingStrategy,
   emptyIndex,
   ensureAnglesSentinelFile,
-  extractSideTrackBlockIdsFromMarkdown,
-  findSideTrackMarkerPairs,
+  extractParallelDocsBlockIdsFromMarkdown,
+  findParallelDocsMarkerPairs,
   healSourceFile,
-  inferAngleIdFromSideTrackPath,
-  initializeSideTrackProject,
+  inferAngleIdFromParallelDocsPath,
+  initializeParallelDocsProject,
   insertBlockBySourceMarkerOrder,
-  isSideTrackProjectInitialized,
-  loadSideTrackConfig,
+  isParallelDocsProjectInitialized,
+  loadParallelDocsConfig,
   normalizeRepoRelativePath,
-  parseSideTrackRegionBoundary,
-  pickSideTrackLineForSourceDualPane,
-  pickSourceLine0ForSideTrackScroll,
-  pairFromSideTrackSourceRel,
+  parseParallelDocsRegionBoundary,
+  pickParallelDocsLineForSourceDualPane,
+  pickSourceLine0ForParallelDocsScroll,
+  pairFromParallelDocsSourceRel,
   readIndex,
-  removeBlockFromSideTrack,
+  removeBlockFromParallelDocs,
   removeBlockFromIndex,
   removeSourceMarkersFromText,
-  resolveSideTrackMarkdownPath,
+  resolveParallelDocsMarkdownPath,
   sourceLineRangeForMarkerId,
-  upsertAngleDefinitionInSideTrackToml,
+  upsertAngleDefinitionInParallelDocsToml,
   validateProject,
-  wrapSourceLineRangeWithSideTrackMarkers,
+  wrapSourceLineRangeWithParallelDocsMarkers,
   writeIndex,
   type SourceFileIndexEntry,
-} from "@sidetrack/core";
+} from "@parallel-docs/core";
 import * as path from "node:path";
 import * as vscode from "vscode";
 
-import { SideTrackRenderedPreviewPanel } from "./sidetrack-rendered-preview.js";
+import { ParallelDocsRenderedPreviewPanel } from "./parallel-docs-rendered-preview.js";
 
 type ScrollPair = {
   code: vscode.TextEditor;
-  sidetrack: vscode.TextEditor;
+  parallelDocs: vscode.TextEditor;
   /** Block anchors sorted ascending by `sourceStart`; empty when no blocks exist yet. */
   blocks: BlockScrollLink[];
   repoRoot: string;
   sourceRelative: string;
-  /** Repo-relative path to the open sidetrack `.md` (flat or per-angle). */
-  sidetrackPathRel: string;
+  /** Repo-relative path to the open parallel-docs `.md` (flat or per-angle). */
+  parallelDocsPathRel: string;
 };
 
 type PairedPaths = {
   repoRoot: string;
   sourceRelative: string;
-  sidetrackUri: vscode.Uri;
-  sidetrackPathRel: string;
+  parallelDocsUri: vscode.Uri;
+  parallelDocsPathRel: string;
   angleId: string | null;
 };
 
@@ -74,16 +74,16 @@ let lastBoundScrollPair: ScrollPair | undefined;
 let scrollSyncDisposable: vscode.Disposable | undefined;
 let ignoreScrollPairEvents = false;
 let blockRefreshTimer: ReturnType<typeof setTimeout> | undefined;
-let sidetrackOutput: vscode.OutputChannel | undefined;
+let parallelDocsOutput: vscode.OutputChannel | undefined;
 
-function logSideTrack(line: string): void {
-  sidetrackOutput?.appendLine(line);
+function logParallelDocs(line: string): void {
+  parallelDocsOutput?.appendLine(line);
 }
 
 function scrollPairEditorsReachable(pair: ScrollPair): boolean {
   return (
     vscode.window.visibleTextEditors.some((e) => e.document === pair.code.document) &&
-    vscode.window.visibleTextEditors.some((e) => e.document === pair.sidetrack.document)
+    vscode.window.visibleTextEditors.some((e) => e.document === pair.parallelDocs.document)
   );
 }
 
@@ -98,15 +98,15 @@ function applyScrollSyncSettingFromConfig(): void {
 }
 
 const CTX_ACTIVE_EDITOR_UNDER_COMPANION_SOURCE_TREE =
-  "sidetrack.activeEditorUnderCompanionSourceTree";
+  "parallel-docs.activeEditorUnderCompanionSourceTree";
 const CTX_ACTIVE_EDITOR_IS_RESOLVABLE_COMPANION_MD =
-  "sidetrack.activeEditorIsResolvableCompanionMarkdown";
-const CTX_WORKSPACE_INITIALIZED = "sidetrack.workspaceInitialized";
+  "parallel-docs.activeEditorIsResolvableCompanionMarkdown";
+const CTX_WORKSPACE_INITIALIZED = "parallel-docs.workspaceInitialized";
 
 /**
  * Drives `when` / `enablement` clauses so editor-only commands match companion vs primary files.
  */
-async function applySideTrackActiveEditorUiContexts(uri: vscode.Uri | undefined): Promise<void> {
+async function applyParallelDocsActiveEditorUiContexts(uri: vscode.Uri | undefined): Promise<void> {
   const folderFromUri = uri ? vscode.workspace.getWorkspaceFolder(uri) : undefined;
   const fallbackFolder = vscode.workspace.workspaceFolders?.[0];
   const contextFolder = folderFromUri ?? fallbackFolder;
@@ -114,7 +114,7 @@ async function applySideTrackActiveEditorUiContexts(uri: vscode.Uri | undefined)
   let workspaceInitialized = false;
   if (contextFolder) {
     try {
-      workspaceInitialized = await isSideTrackProjectInitialized(contextFolder.uri.fsPath);
+      workspaceInitialized = await isParallelDocsProjectInitialized(contextFolder.uri.fsPath);
     } catch {
       workspaceInitialized = false;
     }
@@ -158,12 +158,12 @@ async function applySideTrackActiveEditorUiContexts(uri: vscode.Uri | undefined)
       return;
     }
     const normalized = normalizeRepoRelativePath(relative.replaceAll("\\", "/"));
-    const cfg = await loadSideTrackConfig(folder.uri.fsPath);
-    const flags = sidetrackActiveEditorUiFlags({
+    const cfg = await loadParallelDocsConfig(folder.uri.fsPath);
+    const flags = parallelDocsActiveEditorUiFlags({
       normalizedRepoRelativePath: normalized,
       storageDir: cfg.storageDir,
       repoRoot: folder.uri.fsPath,
-      staticSiteSideTrackMarkdownFile: cfg.staticSite.sidetrackMarkdownFile,
+      staticSiteParallelDocsMarkdownFile: cfg.staticSite.parallelDocsMarkdownFile,
     });
     await setContexts(flags.underCompanionSourceTree, flags.isResolvableCompanionMarkdown);
   } catch {
@@ -194,18 +194,18 @@ function withIgnoredScrollPairEvents(fn: () => void): void {
 
 async function refreshActivePairBlocks(): Promise<void> {
   if (!activePair) return;
-  let index: SideTrackIndex | null = null;
+  let index: ParallelDocsIndex | null = null;
   try {
     index = await readIndex(activePair.repoRoot);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    logSideTrack(`[sidetrack] readIndex (refresh blocks): ${msg}`);
+    logParallelDocs(`[parallel-docs] readIndex (refresh blocks): ${msg}`);
   }
   activePair.blocks = buildBlockScrollLinks(
     index,
     activePair.sourceRelative,
-    activePair.sidetrackPathRel,
-    activePair.sidetrack.document.getText(),
+    activePair.parallelDocsPathRel,
+    activePair.parallelDocs.document.getText(),
     activePair.code.document.getText(),
   );
 }
@@ -219,43 +219,46 @@ function scheduleRefreshActivePairBlocks(): void {
   }, 120);
 }
 
-function syncSideTrackForVisibleSourceRange(pair: ScrollPair, range: vscode.Range): void {
+function syncParallelDocsForVisibleSourceRange(pair: ScrollPair, range: vscode.Range): void {
   const topSourceLine = range.start.line + 1;
-  const targetLine = pickSideTrackLineForSourceDualPane(
+  const targetLine = pickParallelDocsLineForSourceDualPane(
     pair.blocks,
     topSourceLine,
-    pair.sidetrack.document.lineCount,
-    () => ratioSideTrackLineFromSourceScroll(pair, range),
+    pair.parallelDocs.document.lineCount,
+    () => ratioParallelDocsLineFromSourceScroll(pair, range),
   );
   const reveal = new vscode.Range(targetLine, 0, targetLine, 0);
   withIgnoredScrollPairEvents(() =>
-    pair.sidetrack.revealRange(reveal, vscode.TextEditorRevealType.InCenterIfOutsideViewport),
+    pair.parallelDocs.revealRange(reveal, vscode.TextEditorRevealType.InCenterIfOutsideViewport),
   );
 }
 
-function syncCodeForVisibleSideTrackRange(pair: ScrollPair, range: vscode.Range): void {
-  const topSideTrackLine = range.start.line;
-  const sourceLine0 = pickSourceLine0ForSideTrackScroll(pair.blocks, topSideTrackLine);
-  const targetLine = sourceLine0 ?? ratioSourceLine0FromSideTrackScroll(pair, range);
+function syncCodeForVisibleParallelDocsRange(pair: ScrollPair, range: vscode.Range): void {
+  const topParallelDocsLine = range.start.line;
+  const sourceLine0 = pickSourceLine0ForParallelDocsScroll(pair.blocks, topParallelDocsLine);
+  const targetLine = sourceLine0 ?? ratioSourceLine0FromParallelDocsScroll(pair, range);
   const reveal = new vscode.Range(targetLine, 0, targetLine, 0);
   withIgnoredScrollPairEvents(() =>
     pair.code.revealRange(reveal, vscode.TextEditorRevealType.InCenterIfOutsideViewport),
   );
 }
 
-function ratioSideTrackLineFromSourceScroll(pair: ScrollPair, range: vscode.Range): number {
+function ratioParallelDocsLineFromSourceScroll(pair: ScrollPair, range: vscode.Range): number {
   const codeLines = Math.max(1, pair.code.document.lineCount);
-  const sidetrackLines = Math.max(1, pair.sidetrack.document.lineCount);
+  const parallelDocsLines = Math.max(1, pair.parallelDocs.document.lineCount);
   const center = (range.start.line + range.end.line) / 2;
   const fraction = center / Math.max(1, codeLines - 1);
-  return Math.min(sidetrackLines - 1, Math.max(0, Math.round(fraction * (sidetrackLines - 1))));
+  return Math.min(
+    parallelDocsLines - 1,
+    Math.max(0, Math.round(fraction * (parallelDocsLines - 1))),
+  );
 }
 
-function ratioSourceLine0FromSideTrackScroll(pair: ScrollPair, range: vscode.Range): number {
-  const sidetrackLines = Math.max(1, pair.sidetrack.document.lineCount);
+function ratioSourceLine0FromParallelDocsScroll(pair: ScrollPair, range: vscode.Range): number {
+  const parallelDocsLines = Math.max(1, pair.parallelDocs.document.lineCount);
   const codeLines = Math.max(1, pair.code.document.lineCount);
   const center = (range.start.line + range.end.line) / 2;
-  const fraction = center / Math.max(1, sidetrackLines - 1);
+  const fraction = center / Math.max(1, parallelDocsLines - 1);
   return Math.min(codeLines - 1, Math.max(0, Math.round(fraction * (codeLines - 1))));
 }
 
@@ -273,15 +276,18 @@ function bindScrollSync(pair: ScrollPair): void {
     const range = event.visibleRanges.at(0);
     if (!range) return;
     if (event.textEditor === activePair.code) {
-      syncSideTrackForVisibleSourceRange(activePair, range);
-    } else if (event.textEditor === activePair.sidetrack) {
-      syncCodeForVisibleSideTrackRange(activePair, range);
+      syncParallelDocsForVisibleSourceRange(activePair, range);
+    } else if (event.textEditor === activePair.parallelDocs) {
+      syncCodeForVisibleParallelDocsRange(activePair, range);
     }
   };
 
   const onDocChange = (e: vscode.TextDocumentChangeEvent) => {
     if (!activePair) return;
-    if (e.document !== activePair.code.document && e.document !== activePair.sidetrack.document) {
+    if (
+      e.document !== activePair.code.document &&
+      e.document !== activePair.parallelDocs.document
+    ) {
       return;
     }
     scheduleRefreshActivePairBlocks();
@@ -300,16 +306,16 @@ function bindScrollSync(pair: ScrollPair): void {
   );
 
   const initial = pair.code.visibleRanges.at(0);
-  if (initial) syncSideTrackForVisibleSourceRange(pair, initial);
+  if (initial) syncParallelDocsForVisibleSourceRange(pair, initial);
 }
 
-async function ensureSideTrackFile(uri: vscode.Uri): Promise<vscode.Uri> {
+async function ensureParallelDocsFile(uri: vscode.Uri): Promise<vscode.Uri> {
   try {
     await vscode.workspace.fs.stat(uri);
     return uri;
   } catch {
     const enc = new TextEncoder();
-    await vscode.workspace.fs.writeFile(uri, enc.encode("# SideTrack\n\n"));
+    await vscode.workspace.fs.writeFile(uri, enc.encode("# ParallelDocs\n\n"));
     return uri;
   }
 }
@@ -331,21 +337,28 @@ async function resolvePairedPaths(
     return null;
   }
   const repoRoot = folder.uri.fsPath;
-  const cfg = await loadSideTrackConfig(repoRoot);
-  const sourcePrefix = sidetrackStorageSourcePrefix(cfg.storageDir);
+  const cfg = await loadParallelDocsConfig(repoRoot);
+  const sourcePrefix = parallelDocsStorageSourcePrefix(cfg.storageDir);
   if (normalized.startsWith(sourcePrefix)) {
     await vscode.window.showWarningMessage(
-      "Run this command from the primary source file — not from a file under .sidetrack/source/…",
+      "Run this command from the primary source file — not from a file under .parallel-docs/source/…",
     );
     return null;
   }
-  const resolution = resolveSideTrackMarkdownPath(repoRoot, normalized, cfg, angleId ?? undefined);
-  const sidetrackUri = vscode.Uri.file(path.join(repoRoot, ...resolution.sidetrackPath.split("/")));
+  const resolution = resolveParallelDocsMarkdownPath(
+    repoRoot,
+    normalized,
+    cfg,
+    angleId ?? undefined,
+  );
+  const parallelDocsUri = vscode.Uri.file(
+    path.join(repoRoot, ...resolution.parallelDocsPath.split("/")),
+  );
   return {
     repoRoot,
     sourceRelative: normalized,
-    sidetrackUri,
-    sidetrackPathRel: resolution.sidetrackPath,
+    parallelDocsUri,
+    parallelDocsPathRel: resolution.parallelDocsPath,
     angleId: resolution.angleId,
   };
 }
@@ -363,7 +376,7 @@ function selectedRangeTouchesMarkerBoundary(sourceText: string, range: BlockRang
   const start0 = Math.max(0, range.startLine - 1);
   const end0 = Math.min(lines.length - 1, range.endLine - 1);
   for (let i = start0; i <= end0; i++) {
-    const hit = parseSideTrackRegionBoundary(lines[i] ?? "");
+    const hit = parseParallelDocsRegionBoundary(lines[i] ?? "");
     if (hit) return hit.id;
   }
   return null;
@@ -374,7 +387,7 @@ function selectedRangeInsideMarkerRegion(sourceText: string, range: BlockRange):
   const start0 = Math.max(0, range.startLine - 1);
   const end0 = Math.min(lines.length - 1, range.endLine - 1);
 
-  for (const pair of findSideTrackMarkerPairs(sourceText)) {
+  for (const pair of findParallelDocsMarkerPairs(sourceText)) {
     const innerStart = pair.startLine0 + 2;
     const innerEnd = pair.endLine0;
     if (innerEnd < innerStart) continue;
@@ -385,7 +398,7 @@ function selectedRangeInsideMarkerRegion(sourceText: string, range: BlockRange):
   // inside any open marker region, treat them as enclosed and refuse insertion.
   const openIds = new Set<string>();
   for (let i = 0; i < lines.length; i++) {
-    const hit = parseSideTrackRegionBoundary(lines[i] ?? "");
+    const hit = parseParallelDocsRegionBoundary(lines[i] ?? "");
     if (hit?.kind === "start") {
       openIds.add(hit.id);
       continue;
@@ -441,23 +454,23 @@ function markerIdFromAnchor(anchor: string): string | null {
 
 function collectUsedMarkerIds(input: {
   sourceText: string;
-  existingSideTrack: string;
-  index: SideTrackIndex | null;
-  sidetrackPathRel: string;
+  existingParallelDocs: string;
+  index: ParallelDocsIndex | null;
+  parallelDocsPathRel: string;
 }): Set<string> {
   const used = new Set<string>();
-  for (const pair of findSideTrackMarkerPairs(input.sourceText)) {
+  for (const pair of findParallelDocsMarkerPairs(input.sourceText)) {
     used.add(pair.id);
   }
   const lines = input.sourceText.replaceAll("\r\n", "\n").split("\n");
   for (const line of lines) {
-    const hit = parseSideTrackRegionBoundary(line);
+    const hit = parseParallelDocsRegionBoundary(line);
     if (hit) used.add(hit.id);
   }
-  for (const id of extractSideTrackBlockIdsFromMarkdown(input.existingSideTrack)) {
+  for (const id of extractParallelDocsBlockIdsFromMarkdown(input.existingParallelDocs)) {
     used.add(id);
   }
-  const indexed = input.index?.bySideTrackPath[input.sidetrackPathRel];
+  const indexed = input.index?.byParallelDocsPath[input.parallelDocsPathRel];
   for (const b of indexed?.blocks ?? []) {
     if (typeof b.markerId === "string" && b.markerId.trim().length > 0) {
       used.add(b.markerId.trim().toLowerCase());
@@ -495,57 +508,59 @@ function chooseUniqueMarkerId(preferred: string, used: Set<string>): string {
       continue;
     }
   }
-  throw new Error("Could not generate a unique SideTrack marker id for this selection.");
+  throw new Error("Could not generate a unique ParallelDocs marker id for this selection.");
 }
 
 function scrollSyncEnabled(): boolean {
-  const v = vscode.workspace.getConfiguration("sidetrack").get("scrollSync.enabled");
+  const v = vscode.workspace.getConfiguration("parallel-docs").get("scrollSync.enabled");
   return v !== false;
 }
 
 function pairedPathsFromDiskPair(
   repoRoot: string,
-  diskPair: { sourcePath: string; sidetrackPath: string },
+  diskPair: { sourcePath: string; parallelDocsPath: string },
 ): PairedPaths {
-  const sidetrackUri = vscode.Uri.file(path.join(repoRoot, ...diskPair.sidetrackPath.split("/")));
+  const parallelDocsUri = vscode.Uri.file(
+    path.join(repoRoot, ...diskPair.parallelDocsPath.split("/")),
+  );
   return {
     repoRoot,
     sourceRelative: diskPair.sourcePath,
-    sidetrackUri,
-    sidetrackPathRel: diskPair.sidetrackPath,
+    parallelDocsUri,
+    parallelDocsPathRel: diskPair.parallelDocsPath,
     angleId: null,
   };
 }
 
 async function bindPairScrollSync(
   codeEditor: vscode.TextEditor,
-  sidetrackEditor: vscode.TextEditor,
+  parallelDocsEditor: vscode.TextEditor,
   paths: PairedPaths,
 ): Promise<void> {
-  let index: SideTrackIndex | null = null;
+  let index: ParallelDocsIndex | null = null;
   try {
     index = await readIndex(paths.repoRoot);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    logSideTrack(`[sidetrack] readIndex (open pair): ${msg}`);
+    logParallelDocs(`[parallel-docs] readIndex (open pair): ${msg}`);
     void vscode.window.showWarningMessage(
-      `SideTrack could not read metadata index.json; block-aware scroll sync is limited until the file is valid. (${msg})`,
+      `ParallelDocs could not read metadata index.json; block-aware scroll sync is limited until the file is valid. (${msg})`,
     );
   }
   const blocks = buildBlockScrollLinks(
     index,
     paths.sourceRelative,
-    paths.sidetrackPathRel,
-    sidetrackEditor.document.getText(),
+    paths.parallelDocsPathRel,
+    parallelDocsEditor.document.getText(),
     codeEditor.document.getText(),
   );
   const pair: ScrollPair = {
     code: codeEditor,
-    sidetrack: sidetrackEditor,
+    parallelDocs: parallelDocsEditor,
     blocks,
     repoRoot: paths.repoRoot,
     sourceRelative: paths.sourceRelative,
-    sidetrackPathRel: paths.sidetrackPathRel,
+    parallelDocsPathRel: paths.parallelDocsPathRel,
   };
   if (scrollSyncEnabled()) {
     bindScrollSync(pair);
@@ -559,7 +574,7 @@ async function bindPairScrollSync(
 async function revealSourceLeftOfCompanionAndReturnEditors(
   companionEditor: vscode.TextEditor,
   sourceDoc: vscode.TextDocument,
-): Promise<{ code: vscode.TextEditor; sidetrack: vscode.TextEditor }> {
+): Promise<{ code: vscode.TextEditor; parallelDocs: vscode.TextEditor }> {
   const companionUri = companionEditor.document.uri;
   const findCompanion = (): vscode.TextEditor =>
     vscode.window.visibleTextEditors.find(
@@ -575,7 +590,7 @@ async function revealSourceLeftOfCompanionAndReturnEditors(
       viewColumn: vscode.ViewColumn.One,
       preview: false,
     });
-    return { code: codeEditor, sidetrack: findCompanion() };
+    return { code: codeEditor, parallelDocs: findCompanion() };
   }
 
   const codeEditor = await vscode.window.showTextDocument(sourceDoc, { preview: false });
@@ -586,24 +601,24 @@ async function revealSourceLeftOfCompanionAndReturnEditors(
     preserveFocus: true,
   });
   const code = findSource(sourceDoc) ?? codeEditor;
-  return { code, sidetrack: findCompanion() };
+  return { code, parallelDocs: findCompanion() };
 }
 
 async function openBesideAndSync(
   sourceEditor: vscode.TextEditor,
   paths: PairedPaths,
 ): Promise<vscode.TextEditor> {
-  const ensured = await ensureSideTrackFile(paths.sidetrackUri);
-  const sidetrackDoc = await vscode.workspace.openTextDocument(ensured);
-  const sidetrackEditor = await vscode.window.showTextDocument(sidetrackDoc, {
+  const ensured = await ensureParallelDocsFile(paths.parallelDocsUri);
+  const parallelDocsDoc = await vscode.workspace.openTextDocument(ensured);
+  const parallelDocsEditor = await vscode.window.showTextDocument(parallelDocsDoc, {
     viewColumn: vscode.ViewColumn.Beside,
     preview: false,
   });
   const codeEditor =
     vscode.window.visibleTextEditors.find((te) => te.document === sourceEditor.document) ??
     sourceEditor;
-  await bindPairScrollSync(codeEditor, sidetrackEditor, paths);
-  return sidetrackEditor;
+  await bindPairScrollSync(codeEditor, parallelDocsEditor, paths);
+  return parallelDocsEditor;
 }
 
 function workspaceFolderContaining(uri: vscode.Uri): vscode.WorkspaceFolder | undefined {
@@ -654,8 +669,8 @@ function findPlaceholderSelection(
   doc: vscode.TextDocument,
   blockId: string,
 ): vscode.Selection | null {
-  const PLACEHOLDER_TEXT = "_(write sidetrack here)_";
-  const marker = `<!-- sidetrack:block id=${blockId} -->`;
+  const PLACEHOLDER_TEXT = "_(write parallel-docs here)_";
+  const marker = `<!-- parallelDocs:block id=${blockId} -->`;
   const text = doc.getText();
   const markerIndex = text.indexOf(marker);
   if (markerIndex < 0) return null;
@@ -670,7 +685,7 @@ function findBlockMarkerSelection(
   doc: vscode.TextDocument,
   blockId: string,
 ): vscode.Selection | null {
-  const marker = `<!-- sidetrack:block id=${blockId} -->`;
+  const marker = `<!-- parallelDocs:block id=${blockId} -->`;
   const text = doc.getText();
   const markerIndex = text.indexOf(marker);
   if (markerIndex < 0) return null;
@@ -690,8 +705,8 @@ async function ensureMarkerBlockPresent(args: {
   sourceText: string;
   repoRoot: string;
   sourceRelative: string;
-  sidetrackPathRel: string;
-  sidetrackDoc: vscode.TextDocument;
+  parallelDocsPathRel: string;
+  parallelDocsDoc: vscode.TextDocument;
 }): Promise<void> {
   const sourceRange = sourceLineRangeForMarkerId(args.sourceText, args.markerId);
   if (sourceRange === null) {
@@ -700,8 +715,8 @@ async function ensureMarkerBlockPresent(args: {
     );
   }
 
-  const existingSideTrack = args.sidetrackDoc.getText();
-  const markdownHasBlock = extractSideTrackBlockIdsFromMarkdown(existingSideTrack).has(
+  const existingParallelDocs = args.parallelDocsDoc.getText();
+  const markdownHasBlock = extractParallelDocsBlockIdsFromMarkdown(existingParallelDocs).has(
     args.markerId,
   );
   const created = createBlockForRange({
@@ -713,25 +728,25 @@ async function ensureMarkerBlockPresent(args: {
 
   if (!markdownHasBlock) {
     const nextContent = insertBlockBySourceMarkerOrder({
-      existingSideTrack,
+      existingParallelDocs,
       blockMarkdown: created.markdown,
       sourceText: args.sourceText,
       markerId: created.block.id,
     });
-    const existingMarkers = [...extractSideTrackBlockIdsFromMarkdown(existingSideTrack)];
-    const nextMarkers = extractSideTrackBlockIdsFromMarkdown(nextContent);
+    const existingMarkers = [...extractParallelDocsBlockIdsFromMarkdown(existingParallelDocs)];
+    const nextMarkers = extractParallelDocsBlockIdsFromMarkdown(nextContent);
     const lostMarker = existingMarkers.find((id) => !nextMarkers.has(id));
     if (lostMarker) {
       throw new Error(
         `Refusing to recover block "${args.markerId}" because existing block marker "${lostMarker}" would be removed unexpectedly.`,
       );
     }
-    await replaceDocumentContents(args.sidetrackDoc, nextContent);
-    await args.sidetrackDoc.save();
+    await replaceDocumentContents(args.parallelDocsDoc, nextContent);
+    await args.parallelDocsDoc.save();
   }
 
   const index = await readIndex(args.repoRoot);
-  const indexed = index?.bySideTrackPath[args.sidetrackPathRel];
+  const indexed = index?.byParallelDocsPath[args.parallelDocsPathRel];
   const indexHasBlock =
     indexed?.blocks.some(
       (block) =>
@@ -743,7 +758,7 @@ async function ensureMarkerBlockPresent(args: {
     await upsertBlockMetadata(
       args.repoRoot,
       args.sourceRelative,
-      args.sidetrackPathRel,
+      args.parallelDocsPathRel,
       created.block,
     );
   }
@@ -755,24 +770,27 @@ async function revealExistingMarkerBlock(args: {
   paths: PairedPaths;
   sourceText: string;
 }): Promise<void> {
-  const ensured = await ensureSideTrackFile(args.paths.sidetrackUri);
-  const sidetrackDoc = await vscode.workspace.openTextDocument(ensured);
+  const ensured = await ensureParallelDocsFile(args.paths.parallelDocsUri);
+  const parallelDocsDoc = await vscode.workspace.openTextDocument(ensured);
   await ensureMarkerBlockPresent({
     markerId: args.markerId,
     sourceText: args.sourceText,
     repoRoot: args.paths.repoRoot,
     sourceRelative: args.paths.sourceRelative,
-    sidetrackPathRel: args.paths.sidetrackPathRel,
-    sidetrackDoc,
+    parallelDocsPathRel: args.paths.parallelDocsPathRel,
+    parallelDocsDoc,
   });
 
-  const sidetrackEditor = await openBesideAndSync(args.activeEditor, args.paths);
+  const parallelDocsEditor = await openBesideAndSync(args.activeEditor, args.paths);
   const selection =
-    findPlaceholderSelection(sidetrackEditor.document, args.markerId) ??
-    findBlockMarkerSelection(sidetrackEditor.document, args.markerId);
+    findPlaceholderSelection(parallelDocsEditor.document, args.markerId) ??
+    findBlockMarkerSelection(parallelDocsEditor.document, args.markerId);
   if (selection) {
-    sidetrackEditor.selection = selection;
-    sidetrackEditor.revealRange(selection, vscode.TextEditorRevealType.InCenterIfOutsideViewport);
+    parallelDocsEditor.selection = selection;
+    parallelDocsEditor.revealRange(
+      selection,
+      vscode.TextEditorRevealType.InCenterIfOutsideViewport,
+    );
   }
 }
 
@@ -782,9 +800,9 @@ async function createNewBlockFromSelection(args: {
   lineRange: BlockRange;
   sourceTextBeforeWrap: string;
 }): Promise<void> {
-  const ensured = await ensureSideTrackFile(args.paths.sidetrackUri);
-  const sidetrackDoc = await vscode.workspace.openTextDocument(ensured);
-  const existingSideTrack = sidetrackDoc.getText();
+  const ensured = await ensureParallelDocsFile(args.paths.parallelDocsUri);
+  const parallelDocsDoc = await vscode.workspace.openTextDocument(ensured);
+  const existingParallelDocs = parallelDocsDoc.getText();
   const index = await readIndex(args.paths.repoRoot);
   const suggestedId = defaultRegionMarkerNamingStrategy.suggestMarkerId({
     languageId: args.activeEditor.document.languageId,
@@ -793,13 +811,13 @@ async function createNewBlockFromSelection(args: {
   });
   const usedIds = collectUsedMarkerIds({
     sourceText: args.sourceTextBeforeWrap,
-    existingSideTrack,
+    existingParallelDocs,
     index,
-    sidetrackPathRel: args.paths.sidetrackPathRel,
+    parallelDocsPathRel: args.paths.parallelDocsPathRel,
   });
   const blockId = chooseUniqueMarkerId(suggestedId, usedIds);
 
-  const wrapped = wrapSourceLineRangeWithSideTrackMarkers({
+  const wrapped = wrapSourceLineRangeWithParallelDocsMarkers({
     sourceText: args.sourceTextBeforeWrap,
     range: args.lineRange,
     languageId: args.activeEditor.document.languageId,
@@ -816,14 +834,14 @@ async function createNewBlockFromSelection(args: {
   });
 
   const nextContent = insertBlockBySourceMarkerOrder({
-    existingSideTrack,
+    existingParallelDocs,
     blockMarkdown: created.markdown,
     sourceText,
     markerId: created.block.id,
   });
 
-  const existingMarkers = [...extractSideTrackBlockIdsFromMarkdown(existingSideTrack)];
-  const nextMarkers = extractSideTrackBlockIdsFromMarkdown(nextContent);
+  const existingMarkers = [...extractParallelDocsBlockIdsFromMarkdown(existingParallelDocs)];
+  const nextMarkers = extractParallelDocsBlockIdsFromMarkdown(nextContent);
   const lostMarker = existingMarkers.find((id) => !nextMarkers.has(id));
   if (lostMarker) {
     throw new Error(
@@ -831,41 +849,44 @@ async function createNewBlockFromSelection(args: {
     );
   }
 
-  await replaceDocumentContents(sidetrackDoc, nextContent);
-  await sidetrackDoc.save();
+  await replaceDocumentContents(parallelDocsDoc, nextContent);
+  await parallelDocsDoc.save();
 
   await upsertBlockMetadata(
     args.paths.repoRoot,
     args.paths.sourceRelative,
-    args.paths.sidetrackPathRel,
+    args.paths.parallelDocsPathRel,
     created.block,
   );
 
-  const sidetrackEditor = await openBesideAndSync(args.activeEditor, args.paths);
-  const selection = findPlaceholderSelection(sidetrackEditor.document, created.block.id);
+  const parallelDocsEditor = await openBesideAndSync(args.activeEditor, args.paths);
+  const selection = findPlaceholderSelection(parallelDocsEditor.document, created.block.id);
   if (selection) {
-    sidetrackEditor.selection = selection;
-    sidetrackEditor.revealRange(selection, vscode.TextEditorRevealType.InCenterIfOutsideViewport);
+    parallelDocsEditor.selection = selection;
+    parallelDocsEditor.revealRange(
+      selection,
+      vscode.TextEditorRevealType.InCenterIfOutsideViewport,
+    );
   }
 }
 
 async function upsertBlockMetadata(
   repoRoot: string,
   sourceRelative: string,
-  sidetrackPathRel: string,
+  parallelDocsPathRel: string,
   block: Parameters<typeof addBlockToIndex>[1]["block"],
 ): Promise<void> {
-  let current: SideTrackIndex;
+  let current: ParallelDocsIndex;
   try {
     current = (await readIndex(repoRoot)) ?? emptyIndex();
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    logSideTrack(`[sidetrack] readIndex (block metadata): ${msg}`);
+    logParallelDocs(`[parallel-docs] readIndex (block metadata): ${msg}`);
     current = emptyIndex();
   }
   const next = addBlockToIndex(current, {
     sourcePath: sourceRelative,
-    sidetrackPath: sidetrackPathRel,
+    parallelDocsPath: parallelDocsPathRel,
     block,
   });
   await writeIndex(repoRoot, next);
@@ -877,7 +898,7 @@ function uriFromOpenSideBySideArgs(arg: unknown): vscode.Uri | undefined {
   return undefined;
 }
 
-/** `executeCommand("sidetrack.openSideTrackAngle", { angleId: "…" })` skips the picker (tests, keybindings). */
+/** `executeCommand("parallel-docs.openParallelDocsAngle", { angleId: "…" })` skips the picker (tests, keybindings). */
 type OpenAngleCommandArg = "absent" | "invalid" | { angleId: string };
 
 function presetAngleFromOpenAngleCommandArg(arg: unknown): OpenAngleCommandArg {
@@ -908,17 +929,17 @@ function validateAngleIdInput(value: string): string | undefined {
  * Angles layout must be on. Returns an angle id, or `null` when the user cancels, angles are off,
  * or the programmatic `arg` is invalid (after showing a warning).
  */
-async function pickSideTrackAngleIdInteractively(
+async function pickParallelDocsAngleIdInteractively(
   folder: vscode.WorkspaceFolder,
   arg: unknown | undefined,
   quickPickTitle: string,
   placeHolder: string,
 ): Promise<string | null> {
-  const cfg = await loadSideTrackConfig(folder.uri.fsPath);
-  if (!sidetrackAnglesLayoutEnabled(folder.uri.fsPath, cfg.storageDir)) {
-    const sentinel = sidetrackAnglesSentinelPath(cfg.storageDir);
+  const cfg = await loadParallelDocsConfig(folder.uri.fsPath);
+  if (!parallelDocsAnglesLayoutEnabled(folder.uri.fsPath, cfg.storageDir)) {
+    const sentinel = parallelDocsAnglesSentinelPath(cfg.storageDir);
     await vscode.window.showInformationMessage(
-      `Angles layout is off (missing ${sentinel}). Use “SideTrack: Add angle to project…” to enable it and register angles in .sidetrack.toml.`,
+      `Angles layout is off (missing ${sentinel}). Use “ParallelDocs: Add angle to project…” to enable it and register angles in .parallel-docs.toml.`,
     );
     return null;
   }
@@ -956,7 +977,7 @@ async function pickSideTrackAngleIdInteractively(
   return assertValidAngleId(chosen.description);
 }
 
-/** `executeCommand("sidetrack.addAngleDefinition", { id: "architecture", title: "Architecture", makeDefault: true })` skips prompts (tests, automation). */
+/** `executeCommand("parallel-docs.addAngleDefinition", { id: "architecture", title: "Architecture", makeDefault: true })` skips prompts (tests, automation). */
 type AddAngleDefinitionCommandArg =
   "absent" | "invalid" | { id: string; title?: string; makeDefault?: boolean };
 
@@ -1015,13 +1036,13 @@ async function openSideBySideCommand(arg?: unknown): Promise<void> {
   await openBesideAndSync(active.editor, paths);
 }
 
-async function openSideTrackAngleCommand(arg?: unknown): Promise<void> {
+async function openParallelDocsAngleCommand(arg?: unknown): Promise<void> {
   const active = await requireActiveEditorInWorkspace();
   if (!active) return;
-  const angleId = await pickSideTrackAngleIdInteractively(
+  const angleId = await pickParallelDocsAngleIdInteractively(
     active.folder,
     arg,
-    "Open SideTrack angle",
+    "Open ParallelDocs angle",
     "Pick an angle for the current source file",
   );
   if (!angleId) return;
@@ -1049,7 +1070,7 @@ async function addAngleDefinitionCommand(arg?: unknown): Promise<void> {
     return;
   }
   const repoRoot = folder.uri.fsPath;
-  const cfg = await loadSideTrackConfig(repoRoot);
+  const cfg = await loadParallelDocsConfig(repoRoot);
   const preset = presetFromAddAngleDefinitionCommandArg(arg);
   if (preset === "invalid") {
     await vscode.window.showWarningMessage(
@@ -1063,8 +1084,8 @@ async function addAngleDefinitionCommand(arg?: unknown): Promise<void> {
   let makeDefault: boolean;
   if (preset === "absent") {
     const idRaw = await vscode.window.showInputBox({
-      title: "New SideTrack angle",
-      prompt: "Short id (used in paths and .sidetrack.toml), e.g. architecture",
+      title: "New ParallelDocs angle",
+      prompt: "Short id (used in paths and .parallel-docs.toml), e.g. architecture",
       validateInput: validateAngleIdInput,
     });
     if (!idRaw) return;
@@ -1079,7 +1100,7 @@ async function addAngleDefinitionCommand(arg?: unknown): Promise<void> {
     if (!makeDefault) {
       const pick = await vscode.window.showQuickPick(
         [
-          { label: "Yes", description: "Set as default_angle in .sidetrack.toml" },
+          { label: "Yes", description: "Set as default_angle in .parallel-docs.toml" },
           { label: "No", description: "Keep the current default" },
         ],
         { placeHolder: `Set “${id}” as the default angle?` },
@@ -1094,18 +1115,18 @@ async function addAngleDefinitionCommand(arg?: unknown): Promise<void> {
 
   try {
     await ensureAnglesSentinelFile(repoRoot, cfg.storageDir);
-    await upsertAngleDefinitionInSideTrackToml(repoRoot, {
+    await upsertAngleDefinitionInParallelDocsToml(repoRoot, {
       id,
       title,
       makeDefault,
     });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    await vscode.window.showErrorMessage(`Could not update .sidetrack.toml: ${msg}`);
+    await vscode.window.showErrorMessage(`Could not update .parallel-docs.toml: ${msg}`);
     return;
   }
   void vscode.window.showInformationMessage(
-    `Angle “${id}” was added to .sidetrack.toml and Angles layout is enabled (${sidetrackAnglesSentinelPath(cfg.storageDir)}).`,
+    `Angle “${id}” was added to .parallel-docs.toml and Angles layout is enabled (${parallelDocsAnglesSentinelPath(cfg.storageDir)}).`,
   );
 }
 
@@ -1124,7 +1145,7 @@ async function startBlockFromSelectionCommand(): Promise<void> {
       selectionIntersectsMarkdownFence(sourceTextBeforeWrap, lineRange)
     ) {
       void vscode.window.showWarningMessage(
-        "Selection intersects a fenced Markdown code block. Add-block stays strict here because inserting SideTrack markers would change rendered code content.",
+        "Selection intersects a fenced Markdown code block. Add-block stays strict here because inserting ParallelDocs markers would change rendered code content.",
       );
       return;
     }
@@ -1158,8 +1179,8 @@ async function startBlockFromSelectionCommand(): Promise<void> {
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    logSideTrack(`[sidetrack] startBlockFromSelection failed: ${msg}`);
-    await vscode.window.showErrorMessage(`Could not add SideTrack block: ${msg}`);
+    logParallelDocs(`[parallel-docs] startBlockFromSelection failed: ${msg}`);
+    await vscode.window.showErrorMessage(`Could not add ParallelDocs block: ${msg}`);
   }
 }
 
@@ -1179,16 +1200,18 @@ async function resolvePathsForActiveEditor(active: {
     return null;
   }
   const repoRoot = active.folder.uri.fsPath;
-  const cfg = await loadSideTrackConfig(repoRoot);
+  const cfg = await loadParallelDocsConfig(repoRoot);
 
   const diskPair = resolveCompanionPathToSourcePair(normalized, repoRoot, cfg);
   if (diskPair) {
-    const sidetrackUri = vscode.Uri.file(path.join(repoRoot, ...diskPair.sidetrackPath.split("/")));
+    const parallelDocsUri = vscode.Uri.file(
+      path.join(repoRoot, ...diskPair.parallelDocsPath.split("/")),
+    );
     return {
       repoRoot,
       sourceRelative: diskPair.sourcePath,
-      sidetrackUri,
-      sidetrackPathRel: diskPair.sidetrackPath,
+      parallelDocsUri,
+      parallelDocsPathRel: diskPair.parallelDocsPath,
       angleId: null,
     };
   }
@@ -1210,7 +1233,8 @@ async function detectOrPromptBlockId(active: {
   if (isMarkdown) {
     const offset = active.editor.document.offsetAt(active.editor.selection.active);
     const hits: { id: string; start: number }[] = [];
-    const markerRe = /<!--\s*sidetrack:block\s+id=([a-z0-9](?:[a-z0-9_-]{0,62}[a-z0-9])?)\s*-->/gi;
+    const markerRe =
+      /<!--\s*parallelDocs:block\s+id=([a-z0-9](?:[a-z0-9_-]{0,62}[a-z0-9])?)\s*-->/gi;
     for (const m of sourceText.matchAll(markerRe)) {
       const idRaw = m[1];
       if (idRaw === undefined) continue;
@@ -1279,39 +1303,39 @@ async function removeMarkersFromSource(paths: PairedPaths, blockId: string): Pro
 }
 
 async function removeBlockFromCompanion(paths: PairedPaths, blockId: string): Promise<void> {
-  let sidetrackDoc: vscode.TextDocument | null = null;
+  let parallelDocsDoc: vscode.TextDocument | null = null;
   try {
-    sidetrackDoc = await vscode.workspace.openTextDocument(paths.sidetrackUri);
+    parallelDocsDoc = await vscode.workspace.openTextDocument(paths.parallelDocsUri);
   } catch {
     // Ignore
   }
 
-  if (sidetrackDoc) {
-    const sidetrackContent = sidetrackDoc.getText();
-    const updatedSideTrack = removeBlockFromSideTrack(sidetrackContent, blockId);
-    if (updatedSideTrack !== sidetrackContent) {
-      const sidetrackEditor = vscode.window.visibleTextEditors.find(
-        (te) => te.document.uri.toString() === sidetrackDoc.uri.toString(),
+  if (parallelDocsDoc) {
+    const parallelDocsContent = parallelDocsDoc.getText();
+    const updatedParallelDocs = removeBlockFromParallelDocs(parallelDocsContent, blockId);
+    if (updatedParallelDocs !== parallelDocsContent) {
+      const parallelDocsEditor = vscode.window.visibleTextEditors.find(
+        (te) => te.document.uri.toString() === parallelDocsDoc.uri.toString(),
       );
-      if (sidetrackEditor) {
-        await replaceDocumentContents(sidetrackEditor.document, updatedSideTrack);
-        await sidetrackEditor.document.save();
+      if (parallelDocsEditor) {
+        await replaceDocumentContents(parallelDocsEditor.document, updatedParallelDocs);
+        await parallelDocsEditor.document.save();
       } else {
-        await replaceDocumentContents(sidetrackDoc, updatedSideTrack);
-        await sidetrackDoc.save();
+        await replaceDocumentContents(parallelDocsDoc, updatedParallelDocs);
+        await parallelDocsDoc.save();
       }
     }
   }
 }
 
 async function removeBlockFromIdx(paths: PairedPaths, blockId: string): Promise<void> {
-  let currentIdx: SideTrackIndex;
+  let currentIdx: ParallelDocsIndex;
   try {
     currentIdx = (await readIndex(paths.repoRoot)) ?? emptyIndex();
   } catch {
     currentIdx = emptyIndex();
   }
-  const updatedIdx = removeBlockFromIndex(currentIdx, paths.sidetrackPathRel, blockId);
+  const updatedIdx = removeBlockFromIndex(currentIdx, paths.parallelDocsPathRel, blockId);
   await writeIndex(paths.repoRoot, updatedIdx);
 }
 
@@ -1330,10 +1354,12 @@ async function removeBlockCommand(): Promise<void> {
     await removeBlockFromCompanion(paths, blockId);
     await removeBlockFromIdx(paths, blockId);
 
-    void vscode.window.showInformationMessage(`SideTrack block "${blockId}" removed successfully.`);
+    void vscode.window.showInformationMessage(
+      `ParallelDocs block "${blockId}" removed successfully.`,
+    );
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    logSideTrack(`[sidetrack] removeBlock failed: ${msg}`);
+    logParallelDocs(`[parallel-docs] removeBlock failed: ${msg}`);
     await vscode.window.showErrorMessage(`Could not remove block: ${msg}`);
   }
 }
@@ -1352,16 +1378,16 @@ async function cleanRegionsCommand(): Promise<void> {
     const sourceDoc = await vscode.workspace.openTextDocument(sourceUri);
     const sourceText = sourceDoc.getText();
 
-    let sidetrackDoc: vscode.TextDocument;
+    let parallelDocsDoc: vscode.TextDocument;
     try {
-      sidetrackDoc = await vscode.workspace.openTextDocument(paths.sidetrackUri);
+      parallelDocsDoc = await vscode.workspace.openTextDocument(paths.parallelDocsUri);
     } catch {
       await vscode.window.showWarningMessage("Paired companion markdown file does not exist.");
       return;
     }
-    const sidetrackMarkdown = sidetrackDoc.getText();
+    const parallelDocsMarkdown = parallelDocsDoc.getText();
 
-    let index: SideTrackIndex;
+    let index: ParallelDocsIndex;
     try {
       index = (await readIndex(paths.repoRoot)) ?? emptyIndex();
     } catch {
@@ -1370,31 +1396,31 @@ async function cleanRegionsCommand(): Promise<void> {
 
     const result = alignAndCleanRegions({
       sourceText,
-      sidetrackMarkdown,
+      parallelDocsMarkdown,
       index,
-      sidetrackPath: paths.sidetrackPathRel,
+      parallelDocsPath: paths.parallelDocsPathRel,
       sourcePath: paths.sourceRelative,
     });
 
     await writeIndex(paths.repoRoot, result.index);
 
-    if (result.sidetrackMarkdown !== sidetrackMarkdown) {
-      const sidetrackEditor = vscode.window.visibleTextEditors.find(
-        (te) => te.document.uri.toString() === sidetrackDoc.uri.toString(),
+    if (result.parallelDocsMarkdown !== parallelDocsMarkdown) {
+      const parallelDocsEditor = vscode.window.visibleTextEditors.find(
+        (te) => te.document.uri.toString() === parallelDocsDoc.uri.toString(),
       );
-      if (sidetrackEditor) {
-        await replaceDocumentContents(sidetrackEditor.document, result.sidetrackMarkdown);
-        await sidetrackEditor.document.save();
+      if (parallelDocsEditor) {
+        await replaceDocumentContents(parallelDocsEditor.document, result.parallelDocsMarkdown);
+        await parallelDocsEditor.document.save();
       } else {
-        await replaceDocumentContents(sidetrackDoc, result.sidetrackMarkdown);
-        await sidetrackDoc.save();
+        await replaceDocumentContents(parallelDocsDoc, result.parallelDocsMarkdown);
+        await parallelDocsDoc.save();
       }
     }
 
-    void vscode.window.showInformationMessage("SideTrack regions aligned and cleaned up.");
+    void vscode.window.showInformationMessage("ParallelDocs regions aligned and cleaned up.");
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    logSideTrack(`[sidetrack] cleanRegions failed: ${msg}`);
+    logParallelDocs(`[parallel-docs] cleanRegions failed: ${msg}`);
     await vscode.window.showErrorMessage(`Could not clean regions: ${msg}`);
   }
 }
@@ -1413,16 +1439,16 @@ async function repairFileCommand(): Promise<void> {
     const sourceDoc = await vscode.workspace.openTextDocument(sourceUri);
     const sourceText = sourceDoc.getText();
 
-    let sidetrackDoc: vscode.TextDocument;
+    let parallelDocsDoc: vscode.TextDocument;
     try {
-      sidetrackDoc = await vscode.workspace.openTextDocument(paths.sidetrackUri);
+      parallelDocsDoc = await vscode.workspace.openTextDocument(paths.parallelDocsUri);
     } catch {
       await vscode.window.showWarningMessage("Paired companion markdown file does not exist.");
       return;
     }
-    const companionMarkdown = sidetrackDoc.getText();
+    const companionMarkdown = parallelDocsDoc.getText();
 
-    let index: SideTrackIndex;
+    let index: ParallelDocsIndex;
     try {
       index = (await readIndex(paths.repoRoot)) ?? emptyIndex();
     } catch {
@@ -1434,12 +1460,12 @@ async function repairFileCommand(): Promise<void> {
       languageId: active.editor.document.languageId,
       companionMarkdown,
       index,
-      sidetrackPath: paths.sidetrackPathRel,
+      parallelDocsPath: paths.parallelDocsPathRel,
     });
 
     if (result.healedCount === 0) {
       void vscode.window.showInformationMessage(
-        "No missing sidetrack region markers detected or healed.",
+        "No missing parallel-docs region markers detected or healed.",
       );
       return;
     }
@@ -1463,7 +1489,7 @@ async function repairFileCommand(): Promise<void> {
     );
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    logSideTrack(`[sidetrack] repairFile failed: ${msg}`);
+    logParallelDocs(`[parallel-docs] repairFile failed: ${msg}`);
     await vscode.window.showErrorMessage(`Could not repair file: ${msg}`);
   }
 }
@@ -1473,25 +1499,29 @@ async function renameCompanionFile(
   entry: SourceFileIndexEntry,
   newNorm: string,
   repoRoot: string,
-  cfg: Awaited<ReturnType<typeof loadSideTrackConfig>>,
+  cfg: Awaited<ReturnType<typeof loadParallelDocsConfig>>,
   anglesLayout: boolean,
 ): Promise<void> {
   let newCp = oldCp;
   if (anglesLayout) {
-    const angleId = inferAngleIdFromSideTrackPath(
-      entry.sidetrackPath,
+    const angleId = inferAngleIdFromParallelDocsPath(
+      entry.parallelDocsPath,
       entry.sourcePath,
       cfg.storageDir,
     );
     if (angleId) {
       try {
-        newCp = sidetrackMarkdownPathForAngle(newNorm, assertValidAngleId(angleId), cfg.storageDir);
+        newCp = parallelDocsMarkdownPathForAngle(
+          newNorm,
+          assertValidAngleId(angleId),
+          cfg.storageDir,
+        );
       } catch (err) {
-        logSideTrack(`[sidetrack] rename watcher failed to resolve angle path: ${err}`);
+        logParallelDocs(`[parallel-docs] rename watcher failed to resolve angle path: ${err}`);
       }
     }
   } else {
-    newCp = sidetrackMarkdownPath(newNorm, cfg.storageDir);
+    newCp = parallelDocsMarkdownPath(newNorm, cfg.storageDir);
   }
 
   if (newCp !== oldCp) {
@@ -1501,11 +1531,11 @@ async function renameCompanionFile(
       const parent = path.dirname(newUri.fsPath);
       await vscode.workspace.fs.createDirectory(vscode.Uri.file(parent));
       await vscode.workspace.fs.rename(oldUri, newUri, { overwrite: true });
-      logSideTrack(
-        `[sidetrack] Automatically renamed companion Markdown file on disk: ${oldCp} -> ${newCp}`,
+      logParallelDocs(
+        `[parallel-docs] Automatically renamed companion Markdown file on disk: ${oldCp} -> ${newCp}`,
       );
     } catch (renameErr) {
-      logSideTrack(`[sidetrack] Failed to rename companion file on disk: ${renameErr}`);
+      logParallelDocs(`[parallel-docs] Failed to rename companion file on disk: ${renameErr}`);
     }
   }
 }
@@ -1521,29 +1551,29 @@ async function handleFileRename(file: { oldUri: vscode.Uri; newUri: vscode.Uri }
     if (!folder) return;
     const repoRoot = folder.uri.fsPath;
 
-    const cfg = await loadSideTrackConfig(repoRoot);
+    const cfg = await loadParallelDocsConfig(repoRoot);
     const index = await readIndex(repoRoot);
     if (!index) return;
 
-    const anglesLayout = sidetrackAnglesLayoutEnabled(repoRoot, cfg.storageDir);
+    const anglesLayout = parallelDocsAnglesLayoutEnabled(repoRoot, cfg.storageDir);
     const renames = [{ from: oldNorm, to: newNorm }];
 
-    for (const [oldCp, entry] of Object.entries(index.bySideTrackPath)) {
+    for (const [oldCp, entry] of Object.entries(index.byParallelDocsPath)) {
       if (normalizeRepoRelativePath(entry.sourcePath) === oldNorm) {
         await renameCompanionFile(oldCp, entry, newNorm, repoRoot, cfg, anglesLayout);
       }
     }
 
-    const result = applyPathRenamesToSideTrackIndex(index, renames, repoRoot, cfg);
+    const result = applyPathRenamesToParallelDocsIndex(index, renames, repoRoot, cfg);
     if (result.changed) {
       await writeIndex(repoRoot, result.index);
-      logSideTrack(
-        `[sidetrack] Automatically updated index for renamed file: ${oldNorm} -> ${newNorm}`,
+      logParallelDocs(
+        `[parallel-docs] Automatically updated index for renamed file: ${oldNorm} -> ${newNorm}`,
       );
     }
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    logSideTrack(`[sidetrack] rename watcher failed: ${msg}`);
+    logParallelDocs(`[parallel-docs] rename watcher failed: ${msg}`);
   }
 }
 
@@ -1566,21 +1596,21 @@ async function initWorkspaceCommand(output: vscode.OutputChannel): Promise<void>
   const repoRoot = folder.uri.fsPath;
   let init;
   try {
-    init = await initializeSideTrackProject(repoRoot, {
+    init = await initializeParallelDocsProject(repoRoot, {
       ensureSiteGitignore: true,
       runValidation: true,
     });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    await vscode.window.showErrorMessage(`SideTrack init failed: ${msg}`);
+    await vscode.window.showErrorMessage(`ParallelDocs init failed: ${msg}`);
     return;
   }
 
   output.clear();
-  output.appendLine("SideTrack init summary:");
+  output.appendLine("ParallelDocs init summary:");
   output.appendLine(`- created index: ${init.createdIndex ? "yes" : "no"}`);
   output.appendLine(`- migrated index: ${init.migratedIndex ? "yes" : "no"}`);
-  output.appendLine(`- created .sidetrack.toml: ${init.createdToml ? "yes" : "no"}`);
+  output.appendLine(`- created .parallel-docs.toml: ${init.createdToml ? "yes" : "no"}`);
   output.appendLine(`- added _site to .gitignore: ${init.addedSiteGitignore ? "yes" : "no"}`);
   for (const issue of init.validationIssues) {
     output.appendLine(`[${issue.level}] ${issue.message}`);
@@ -1590,13 +1620,13 @@ async function initWorkspaceCommand(output: vscode.OutputChannel): Promise<void>
   if (hasErrors) {
     output.show(true);
     void vscode.window.showErrorMessage(
-      "SideTrack initialized, but validation reported errors. See the SideTrack output panel.",
+      "ParallelDocs initialized, but validation reported errors. See the ParallelDocs output panel.",
     );
   } else {
-    void vscode.window.showInformationMessage("SideTrack initialized for this workspace.");
+    void vscode.window.showInformationMessage("ParallelDocs initialized for this workspace.");
   }
 
-  void applySideTrackActiveEditorUiContexts(vscode.window.activeTextEditor?.document.uri);
+  void applyParallelDocsActiveEditorUiContexts(vscode.window.activeTextEditor?.document.uri);
 }
 
 async function validateWorkspaceCommand(output: vscode.OutputChannel): Promise<void> {
@@ -1616,7 +1646,7 @@ async function validateWorkspaceCommand(output: vscode.OutputChannel): Promise<v
   output.show(true);
 }
 
-async function openSideTrackPreviewCommand(): Promise<void> {
+async function openParallelDocsPreviewCommand(): Promise<void> {
   const active = await requireActiveEditorInWorkspace();
   if (!active) return;
 
@@ -1624,8 +1654,8 @@ async function openSideTrackPreviewCommand(): Promise<void> {
   try {
     const relative = vscode.workspace.asRelativePath(active.editor.document.uri, false);
     const normalized = normalizeRepoRelativePath(relative.replaceAll("\\", "/"));
-    const cfg = await loadSideTrackConfig(active.folder.uri.fsPath);
-    const sourcePrefix = sidetrackStorageSourcePrefix(cfg.storageDir);
+    const cfg = await loadParallelDocsConfig(active.folder.uri.fsPath);
+    const sourcePrefix = parallelDocsStorageSourcePrefix(cfg.storageDir);
     if (normalized.startsWith(sourcePrefix) && active.editor.document.fileName.endsWith(".md")) {
       await vscode.commands.executeCommand("markdown.showPreview", active.editor.document.uri);
       return;
@@ -1636,14 +1666,14 @@ async function openSideTrackPreviewCommand(): Promise<void> {
 
   const paths = await resolvePairedPaths(active.editor, active.folder);
   if (!paths) return;
-  const ensured = await ensureSideTrackFile(paths.sidetrackUri);
+  const ensured = await ensureParallelDocsFile(paths.parallelDocsUri);
   await vscode.commands.executeCommand("markdown.showPreview", ensured);
 }
 
 async function openCorrespondingSourceCommand(): Promise<void> {
   const editor = vscode.window.activeTextEditor;
   if (!editor) {
-    await vscode.window.showWarningMessage("Open a SideTrack companion markdown file first.");
+    await vscode.window.showWarningMessage("Open a ParallelDocs companion markdown file first.");
     return;
   }
   if (!vscode.workspace.workspaceFolders?.length) {
@@ -1666,12 +1696,12 @@ async function openCorrespondingSourceCommand(): Promise<void> {
   }
 
   const repoRoot = active.folder.uri.fsPath;
-  const cfg = await loadSideTrackConfig(repoRoot);
+  const cfg = await loadParallelDocsConfig(repoRoot);
   const diskPair = resolveCompanionPathToSourcePair(normalized, repoRoot, cfg);
 
   if (!diskPair) {
     await vscode.window.showInformationMessage(
-      "Open a SideTrack companion `.md` (under storage/source or the configured static_site.sidetrack_markdown path) to jump to its primary source file.",
+      "Open a ParallelDocs companion `.md` (under storage/source or the configured static_site.parallel_docs_markdown path) to jump to its primary source file.",
     );
     return;
   }
@@ -1689,8 +1719,11 @@ async function openCorrespondingSourceCommand(): Promise<void> {
 
   const paths = pairedPathsFromDiskPair(repoRoot, diskPair);
   const sourceDoc = await vscode.workspace.openTextDocument(sourceUri);
-  const { code, sidetrack } = await revealSourceLeftOfCompanionAndReturnEditors(editor, sourceDoc);
-  await bindPairScrollSync(code, sidetrack, paths);
+  const { code, parallelDocs } = await revealSourceLeftOfCompanionAndReturnEditors(
+    editor,
+    sourceDoc,
+  );
+  await bindPairScrollSync(code, parallelDocs, paths);
   await vscode.window.showTextDocument(code.document, {
     viewColumn: code.viewColumn,
     preview: false,
@@ -1701,18 +1734,18 @@ async function openCorrespondingSourceCommand(): Promise<void> {
 function resolveCompanionPathToSourcePair(
   normalizedRepoPath: string,
   repoRoot: string,
-  cfg: Awaited<ReturnType<typeof loadSideTrackConfig>>,
-): { sourcePath: string; sidetrackPath: string } | null {
-  const sourcePrefix = sidetrackStorageSourcePrefix(cfg.storageDir);
+  cfg: Awaited<ReturnType<typeof loadParallelDocsConfig>>,
+): { sourcePath: string; parallelDocsPath: string } | null {
+  const sourcePrefix = parallelDocsStorageSourcePrefix(cfg.storageDir);
   if (normalizedRepoPath.startsWith(sourcePrefix) && normalizedRepoPath.endsWith(".md")) {
     const relFromSourceDir = normalizedRepoPath.slice(sourcePrefix.length);
     const storageNorm = normalizeRepoRelativePath(cfg.storageDir.replaceAll("\\", "/"));
-    const anglesOn = sidetrackAnglesLayoutEnabled(repoRoot, cfg.storageDir);
-    return pairFromSideTrackSourceRel(storageNorm, relFromSourceDir, anglesOn);
+    const anglesOn = parallelDocsAnglesLayoutEnabled(repoRoot, cfg.storageDir);
+    return pairFromParallelDocsSourceRel(storageNorm, relFromSourceDir, anglesOn);
   }
 
-  const configured = cfg.staticSite.sidetrackMarkdownFile
-    ? normalizeRepoRelativePath(cfg.staticSite.sidetrackMarkdownFile.replaceAll("\\", "/"))
+  const configured = cfg.staticSite.parallelDocsMarkdownFile
+    ? normalizeRepoRelativePath(cfg.staticSite.parallelDocsMarkdownFile.replaceAll("\\", "/"))
     : "";
   if (
     configured.length > 0 &&
@@ -1721,7 +1754,7 @@ function resolveCompanionPathToSourcePair(
   ) {
     return {
       sourcePath: normalizeRepoRelativePath(cfg.staticSite.sourceFile.replaceAll("\\", "/")),
-      sidetrackPath: configured,
+      parallelDocsPath: configured,
     };
   }
 
@@ -1735,16 +1768,16 @@ async function openRenderedPreviewCore(
 ): Promise<void> {
   const paths = await resolvePairedPaths(editor, folder, angleId);
   if (!paths) return;
-  const ensured = await ensureSideTrackFile(paths.sidetrackUri);
-  const cfg = await loadSideTrackConfig(folder.uri.fsPath);
+  const ensured = await ensureParallelDocsFile(paths.parallelDocsUri);
+  const cfg = await loadParallelDocsConfig(folder.uri.fsPath);
   const editorNow =
     vscode.window.visibleTextEditors.find((e) => e.document === editor.document) ?? editor;
-  await SideTrackRenderedPreviewPanel.openOrReveal({
+  await ParallelDocsRenderedPreviewPanel.openOrReveal({
     repoRoot: paths.repoRoot,
     storageDir: cfg.storageDir,
     sourceRelative: paths.sourceRelative,
-    sidetrackPathRel: paths.sidetrackPathRel,
-    sidetrackUri: ensured,
+    parallelDocsPathRel: paths.parallelDocsPathRel,
+    parallelDocsUri: ensured,
     sourceEditor: editorNow,
     pauseEditorScrollSync: () => disposeScrollSync(),
     restoreEditorScrollSync: () => applyScrollSyncSettingFromConfig(),
@@ -1760,10 +1793,10 @@ async function openRenderedPreviewFromSourceCommand(): Promise<void> {
 async function openRenderedPreviewChooseAngleCommand(arg?: unknown): Promise<void> {
   const active = await requireActiveEditorInWorkspace();
   if (!active) return;
-  const angleId = await pickSideTrackAngleIdInteractively(
+  const angleId = await pickParallelDocsAngleIdInteractively(
     active.folder,
     arg,
-    "Rendered SideTrack preview — angle",
+    "Rendered ParallelDocs preview — angle",
     "Pick an angle for the current source file",
   );
   if (!angleId) return;
@@ -1772,53 +1805,59 @@ async function openRenderedPreviewChooseAngleCommand(arg?: unknown): Promise<voi
 }
 
 export function activate(context: vscode.ExtensionContext) {
-  const output = vscode.window.createOutputChannel("SideTrack");
-  sidetrackOutput = output;
+  const output = vscode.window.createOutputChannel("ParallelDocs");
+  parallelDocsOutput = output;
   const refreshUiContexts = () =>
-    void applySideTrackActiveEditorUiContexts(vscode.window.activeTextEditor?.document.uri);
+    void applyParallelDocsActiveEditorUiContexts(vscode.window.activeTextEditor?.document.uri);
 
   // Register commands before any listener that might throw — otherwise the host can show
   // "command … not found" when activation aborts mid-way.
   context.subscriptions.push(
     output,
-    vscode.commands.registerCommand("sidetrack.init", () => initWorkspaceCommand(output)),
-    vscode.commands.registerCommand("sidetrack.openSideBySide", openSideBySideCommand),
-    vscode.commands.registerCommand("sidetrack.openSideTrackAngle", openSideTrackAngleCommand),
-    vscode.commands.registerCommand("sidetrack.addAngleDefinition", addAngleDefinitionCommand),
+    vscode.commands.registerCommand("parallel-docs.init", () => initWorkspaceCommand(output)),
+    vscode.commands.registerCommand("parallel-docs.openSideBySide", openSideBySideCommand),
     vscode.commands.registerCommand(
-      "sidetrack.startBlockFromSelection",
+      "parallel-docs.openParallelDocsAngle",
+      openParallelDocsAngleCommand,
+    ),
+    vscode.commands.registerCommand("parallel-docs.addAngleDefinition", addAngleDefinitionCommand),
+    vscode.commands.registerCommand(
+      "parallel-docs.startBlockFromSelection",
       startBlockFromSelectionCommand,
     ),
-    vscode.commands.registerCommand("sidetrack.openSideTrackPreview", openSideTrackPreviewCommand),
     vscode.commands.registerCommand(
-      "sidetrack.openCorrespondingSource",
+      "parallel-docs.openParallelDocsPreview",
+      openParallelDocsPreviewCommand,
+    ),
+    vscode.commands.registerCommand(
+      "parallel-docs.openCorrespondingSource",
       openCorrespondingSourceCommand,
     ),
     vscode.commands.registerCommand(
-      "sidetrack.openRenderedPreview",
+      "parallel-docs.openRenderedPreview",
       openRenderedPreviewFromSourceCommand,
     ),
     vscode.commands.registerCommand(
-      "sidetrack.openRenderedPreviewChooseAngle",
+      "parallel-docs.openRenderedPreviewChooseAngle",
       openRenderedPreviewChooseAngleCommand,
     ),
-    vscode.commands.registerCommand("sidetrack.validateWorkspace", () =>
+    vscode.commands.registerCommand("parallel-docs.validateWorkspace", () =>
       validateWorkspaceCommand(output),
     ),
-    vscode.commands.registerCommand("sidetrack.removeBlock", removeBlockCommand),
-    vscode.commands.registerCommand("sidetrack.cleanRegions", cleanRegionsCommand),
-    vscode.commands.registerCommand("sidetrack.repairFile", repairFileCommand),
+    vscode.commands.registerCommand("parallel-docs.removeBlock", removeBlockCommand),
+    vscode.commands.registerCommand("parallel-docs.cleanRegions", cleanRegionsCommand),
+    vscode.commands.registerCommand("parallel-docs.repairFile", repairFileCommand),
     vscode.workspace.onDidChangeConfiguration((e) => {
       try {
-        if (!e.affectsConfiguration("sidetrack.scrollSync")) return;
+        if (!e.affectsConfiguration("parallel-docs.scrollSync")) return;
         applyScrollSyncSettingFromConfig();
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        logSideTrack(`[sidetrack] scroll sync setting handler: ${msg}`);
+        logParallelDocs(`[parallel-docs] scroll sync setting handler: ${msg}`);
       }
     }),
     vscode.window.onDidChangeActiveTextEditor((ed) => {
-      void applySideTrackActiveEditorUiContexts(ed?.document.uri);
+      void applyParallelDocsActiveEditorUiContexts(ed?.document.uri);
     }),
     vscode.window.onDidChangeWindowState((state) => {
       if (!state.focused) return;
@@ -1828,12 +1867,12 @@ export function activate(context: vscode.ExtensionContext) {
       refreshUiContexts();
     }),
     vscode.workspace.onDidSaveTextDocument((doc) => {
-      if (path.basename(doc.uri.fsPath) !== ".sidetrack.toml") return;
+      if (path.basename(doc.uri.fsPath) !== ".parallel-docs.toml") return;
       refreshUiContexts();
     }),
-    // Watch for external init (e.g. `sidetrack serve` creating files without a save event).
+    // Watch for external init (e.g. `parallel-docs serve` creating files without a save event).
     (() => {
-      const watcher = vscode.workspace.createFileSystemWatcher("**/.sidetrack.toml");
+      const watcher = vscode.workspace.createFileSystemWatcher("**/.parallel-docs.toml");
       const refresh = () => refreshUiContexts();
       watcher.onDidCreate(refresh);
       watcher.onDidChange(refresh);
@@ -1841,7 +1880,9 @@ export function activate(context: vscode.ExtensionContext) {
       return watcher;
     })(),
     (() => {
-      const watcher = vscode.workspace.createFileSystemWatcher("**/.sidetrack/metadata/index.json");
+      const watcher = vscode.workspace.createFileSystemWatcher(
+        "**/.parallel-docs/metadata/index.json",
+      );
       const refresh = () => refreshUiContexts();
       watcher.onDidCreate(refresh);
       watcher.onDidChange(refresh);
@@ -1849,7 +1890,7 @@ export function activate(context: vscode.ExtensionContext) {
       return watcher;
     })(),
     (() => {
-      const watcher = vscode.workspace.createFileSystemWatcher("**/.sidetrack/source/**");
+      const watcher = vscode.workspace.createFileSystemWatcher("**/.parallel-docs/source/**");
       const refresh = () => refreshUiContexts();
       watcher.onDidCreate(refresh);
       watcher.onDidDelete(refresh);
@@ -1863,9 +1904,9 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 export function deactivate() {
-  SideTrackRenderedPreviewPanel.disposeIfOpen();
+  ParallelDocsRenderedPreviewPanel.disposeIfOpen();
   disposeScrollSync();
   lastBoundScrollPair = undefined;
-  sidetrackOutput = undefined;
-  void applySideTrackActiveEditorUiContexts(undefined);
+  parallelDocsOutput = undefined;
+  void applyParallelDocsActiveEditorUiContexts(undefined);
 }

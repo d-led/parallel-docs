@@ -1,15 +1,19 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { type ResolvedSideTrackConfig, loadSideTrackConfig } from "./config.js";
+import { type ResolvedParallelDocsConfig, loadParallelDocsConfig } from "./config.js";
 import { parseGithubRepoWebUrl } from "./github-url.js";
-import { normalizeSideTrackIndex } from "./index-normalize.js";
+import { normalizeParallelDocsIndex } from "./index-normalize.js";
 import { assertValidIndex } from "./metadata.js";
 import { migrateIndex } from "./migrate.js";
-import { coerceIndexSchemaVersion, CURRENT_SCHEMA_VERSION, type SideTrackIndex } from "./model.js";
+import {
+  coerceIndexSchemaVersion,
+  CURRENT_SCHEMA_VERSION,
+  type ParallelDocsIndex,
+} from "./model.js";
 import { defaultMetadataIndexPath, normalizeRepoRelativePath } from "./paths.js";
 import {
-  extractSideTrackBlockIdsInMarkdownOrder,
-  extractSideTrackBlockIdsFromMarkdown,
+  extractParallelDocsBlockIdsInMarkdownOrder,
+  extractParallelDocsBlockIdsFromMarkdown,
   validateIndexMarkerSemantics,
   validateMarkerBoundariesInSource,
   validateMarkerRegionsAgainstIndexedSources,
@@ -29,7 +33,7 @@ export type ValidateProjectOptions = {
   /**
    * When non-empty, only validate `index.json` entries whose primary or companion path matches one
    * of these repo-relative paths (after {@link normalizeRepoRelativePath}), unless the staged set
-   * includes `.sidetrack/metadata/index.json` or `.sidetrack.toml` (then the full index is used).
+   * includes `.parallel-docs/metadata/index.json` or `.parallel-docs.toml` (then the full index is used).
    */
   stagedRepoRelativePaths?: readonly string[];
 };
@@ -39,21 +43,21 @@ function stagedPathsSet(paths: readonly string[]): Set<string> {
 }
 
 function stagedScopeNeedsFullIndexValidation(staged: ReadonlySet<string>): boolean {
-  const indexJson = normalizeRepoRelativePath(".sidetrack/metadata/index.json");
-  const toml = normalizeRepoRelativePath(".sidetrack.toml");
+  const indexJson = normalizeRepoRelativePath(".parallel-docs/metadata/index.json");
+  const toml = normalizeRepoRelativePath(".parallel-docs.toml");
   return staged.has(indexJson) || staged.has(toml);
 }
 
 async function loadMarkdownBlockIdsByIndexedSource(
   repoRoot: string,
-  index: SideTrackIndex,
+  index: ParallelDocsIndex,
 ): Promise<{
   idsBySourceNorm: Map<string, Set<string>>;
-  orderBySideTrackPath: Map<string, string[]>;
+  orderByParallelDocsPath: Map<string, string[]>;
 }> {
   const bySource = new Map<string, Set<string>>();
-  const orderBySideTrackPath = new Map<string, string[]>();
-  for (const [crPath, entry] of Object.entries(index.bySideTrackPath)) {
+  const orderByParallelDocsPath = new Map<string, string[]>();
+  for (const [crPath, entry] of Object.entries(index.byParallelDocsPath)) {
     const norm = normalizeRepoRelativePath(entry.sourcePath);
     let set = bySource.get(norm);
     if (!set) {
@@ -63,35 +67,35 @@ async function loadMarkdownBlockIdsByIndexedSource(
     const abs = path.join(repoRoot, crPath);
     try {
       const md = await fs.readFile(abs, "utf8");
-      orderBySideTrackPath.set(crPath, extractSideTrackBlockIdsInMarkdownOrder(md));
-      for (const id of extractSideTrackBlockIdsFromMarkdown(md)) {
+      orderByParallelDocsPath.set(crPath, extractParallelDocsBlockIdsInMarkdownOrder(md));
+      for (const id of extractParallelDocsBlockIdsFromMarkdown(md)) {
         set.add(id);
       }
     } catch {
       /* missing or unreadable companion — other validation may warn */
     }
   }
-  return { idsBySourceNorm: bySource, orderBySideTrackPath };
+  return { idsBySourceNorm: bySource, orderByParallelDocsPath };
 }
 
 function indexFilteredForStaged(
-  index: SideTrackIndex,
+  index: ParallelDocsIndex,
   staged: ReadonlySet<string>,
-): SideTrackIndex {
-  const next: SideTrackIndex["bySideTrackPath"] = {};
-  for (const [crPath, entry] of Object.entries(index.bySideTrackPath)) {
+): ParallelDocsIndex {
+  const next: ParallelDocsIndex["byParallelDocsPath"] = {};
+  for (const [crPath, entry] of Object.entries(index.byParallelDocsPath)) {
     const sp = normalizeRepoRelativePath(entry.sourcePath);
     const cp = normalizeRepoRelativePath(crPath);
     if (staged.has(sp) || staged.has(cp)) {
       next[crPath] = entry;
     }
   }
-  return { ...index, bySideTrackPath: next };
+  return { ...index, byParallelDocsPath: next };
 }
 
 async function collectIssuesForLoadedIndex(
   repoRoot: string,
-  index: SideTrackIndex,
+  index: ParallelDocsIndex,
 ): Promise<ValidationIssue[]> {
   const issues: ValidationIssue[] = [];
   for (const issue of validateIndexMarkerSemantics(index)) {
@@ -99,7 +103,7 @@ async function collectIssuesForLoadedIndex(
   }
   const uniqueSourcesNorm = [
     ...new Set(
-      Object.values(index.bySideTrackPath).map((e) => normalizeRepoRelativePath(e.sourcePath)),
+      Object.values(index.byParallelDocsPath).map((e) => normalizeRepoRelativePath(e.sourcePath)),
     ),
   ];
   const indexedSourceTexts = new Map<string, string>();
@@ -112,16 +116,16 @@ async function collectIssuesForLoadedIndex(
       indexedSourceTexts.set(norm, text);
     } catch {
       missingSourcesNorm.add(norm);
-      const affected = Object.values(index.bySideTrackPath)
+      const affected = Object.values(index.byParallelDocsPath)
         .filter((e) => normalizeRepoRelativePath(e.sourcePath) === norm)
-        .map((e) => e.sidetrackPath);
+        .map((e) => e.parallelDocsPath);
       const uniqAffected = [...new Set(affected)].sort((a, b) => a.localeCompare(b));
       issues.push({
         level: "warn",
         message:
           `Primary source "${norm}" is not readable (deleted, moved, or not checked out). ` +
-          `SideTrack: ${uniqAffected.join(", ")}. ` +
-          `If Git renamed it, try: sidetrack sync-moved-paths --from HEAD~1 --to HEAD`,
+          `ParallelDocs: ${uniqAffected.join(", ")}. ` +
+          `If Git renamed it, try: parallel-docs sync-moved-paths --from HEAD~1 --to HEAD`,
       });
     }
   }
@@ -137,7 +141,7 @@ async function collectIssuesForLoadedIndex(
     index,
     indexedSourceTexts,
     markdownIndexSignals.idsBySourceNorm,
-    markdownIndexSignals.orderBySideTrackPath,
+    markdownIndexSignals.orderByParallelDocsPath,
   )) {
     issues.push({ level: issue.level, message: issue.message });
   }
@@ -210,8 +214,8 @@ async function pushOrphanCompanionMarkdownIssues(
         level: "error",
         message:
           `Orphan companion Markdown: primary source "${o.sourcePath}" is not a readable file, but ` +
-          `companion storage exists (${o.sidetrackPath}). Static browse and search would advertise a broken pair. ` +
-          `Delete this orphan with: sidetrack doctor --allow-deletions (removes ${relCleanup})`,
+          `companion storage exists (${o.parallelDocsPath}). Static browse and search would advertise a broken pair. ` +
+          `Delete this orphan with: parallel-docs doctor --allow-deletions (removes ${relCleanup})`,
       });
     }
   } catch (err) {
@@ -227,13 +231,13 @@ export async function validateProject(
   options?: ValidateProjectOptions,
 ): Promise<ValidationResult> {
   const issues: ValidationIssue[] = [];
-  let config: ResolvedSideTrackConfig;
+  let config: ResolvedParallelDocsConfig;
   try {
-    config = await loadSideTrackConfig(repoRoot);
+    config = await loadParallelDocsConfig(repoRoot);
   } catch (err) {
     issues.push({
       level: "error",
-      message: `Failed to load .sidetrack.toml: ${err instanceof Error ? err.message : String(err)}`,
+      message: `Failed to load .parallel-docs.toml: ${err instanceof Error ? err.message : String(err)}`,
     });
     return { issues };
   }
@@ -241,7 +245,7 @@ export async function validateProject(
   await pushMissingStorageSubdirWarnings(repoRoot, config.storageDir, issues);
   await pushOrphanCompanionMarkdownIssues(repoRoot, config.storageDir, issues);
 
-  let index: SideTrackIndex | null = null;
+  let index: ParallelDocsIndex | null = null;
   try {
     index = await readIndex(repoRoot);
     if (index === null) {
@@ -254,17 +258,17 @@ export async function validateProject(
     });
   }
 
-  let indexForMarkers: SideTrackIndex | null = index;
+  let indexForMarkers: ParallelDocsIndex | null = index;
   const staged = options?.stagedRepoRelativePaths;
   if (index && staged && staged.length > 0) {
     const stagedSet = stagedPathsSet(staged);
     if (!stagedScopeNeedsFullIndexValidation(stagedSet)) {
       const narrowed = indexFilteredForStaged(index, stagedSet);
-      if (Object.keys(narrowed.bySideTrackPath).length === 0) {
+      if (Object.keys(narrowed.byParallelDocsPath).length === 0) {
         issues.push({
           level: "warn",
           message:
-            "validate --staged: staged files do not match any indexed SideTrack pairs; skipping marker checks for index entries.",
+            "validate --staged: staged files do not match any indexed ParallelDocs pairs; skipping marker checks for index entries.",
         });
         indexForMarkers = null;
       } else {
@@ -283,7 +287,7 @@ export async function validateProject(
 }
 
 function pushRelativeGithubLinkConfigWarnings(
-  config: ResolvedSideTrackConfig,
+  config: ResolvedParallelDocsConfig,
   issues: ValidationIssue[],
 ): void {
   if (!config.render.relativeGithubBlobLinks) return;
@@ -303,7 +307,7 @@ function pushRelativeGithubLinkConfigWarnings(
  */
 export async function refreshIndexMigrationsOnDisk(
   repoRoot: string,
-): Promise<{ index: SideTrackIndex; changed: boolean }> {
+): Promise<{ index: ParallelDocsIndex; changed: boolean }> {
   const indexPath = path.join(repoRoot, defaultMetadataIndexPath());
   const raw = await fs.readFile(indexPath, "utf8");
   const parsed = JSON.parse(raw) as unknown;
@@ -317,7 +321,7 @@ export async function refreshIndexMigrationsOnDisk(
     await fs.writeFile(path.join(metaDir, backupName), raw, "utf8");
   }
   const { index: migrated, changed: schemaChanged } = migrateIndex(parsed);
-  const { index: normalized, changed: snippetChanged } = normalizeSideTrackIndex(migrated);
+  const { index: normalized, changed: snippetChanged } = normalizeParallelDocsIndex(migrated);
   const index = assertValidIndex(normalized as unknown);
   const changed = schemaChanged || snippetChanged;
   if (changed) {
@@ -326,7 +330,7 @@ export async function refreshIndexMigrationsOnDisk(
   return { index, changed };
 }
 
-export async function readIndex(repoRoot: string): Promise<SideTrackIndex | null> {
+export async function readIndex(repoRoot: string): Promise<ParallelDocsIndex | null> {
   try {
     const { index } = await refreshIndexMigrationsOnDisk(repoRoot);
     return index;
@@ -339,10 +343,10 @@ export async function readIndex(repoRoot: string): Promise<SideTrackIndex | null
 
 /**
  * Write the metadata index to the default location under `repoRoot`, creating
- * the `.sidetrack/metadata/` directory if missing. The file is written with
+ * the `.parallel-docs/metadata/` directory if missing. The file is written with
  * two-space indentation and a trailing newline so diffs are easy to read.
  */
-export async function writeIndex(repoRoot: string, index: SideTrackIndex): Promise<void> {
+export async function writeIndex(repoRoot: string, index: ParallelDocsIndex): Promise<void> {
   const indexPath = path.join(repoRoot, defaultMetadataIndexPath());
   await fs.mkdir(path.dirname(indexPath), { recursive: true });
   const serialized = `${JSON.stringify(index, null, 2)}\n`;

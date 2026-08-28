@@ -7,7 +7,7 @@
   "include": [
     "packages/core/src/**/*.ts",
     "packages/render/src/**/*.ts",
-    "packages/code-sidetrack-static/src/**/*.ts",
+    "packages/code-parallel-docs-static/src/**/*.ts",
     "packages/mcp-server/src/**/*.ts",
     "packages/cli/src/**/*.ts",
     "packages/vscode/src/**/*.ts",

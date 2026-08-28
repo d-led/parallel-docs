@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { installMcpConfigs } from "../mcp-install.js";
-import { setupTempSideTrackProject } from "./test-helpers.js";
+import { setupTempParallelDocsProject } from "./test-helpers.js";
 
 describe("installMcpConfigs", () => {
   let repoRoot = "";
@@ -13,7 +13,7 @@ describe("installMcpConfigs", () => {
   });
 
   it("dry run reports would_create for each harness", async () => {
-    const setup = await setupTempSideTrackProject();
+    const setup = await setupTempParallelDocsProject();
     repoRoot = setup.repoRoot;
     cleanup = setup.cleanup;
 
@@ -30,7 +30,7 @@ describe("installMcpConfigs", () => {
   });
 
   it("writes config files on real install", async () => {
-    const setup = await setupTempSideTrackProject();
+    const setup = await setupTempParallelDocsProject();
     repoRoot = setup.repoRoot;
     cleanup = setup.cleanup;
 
@@ -40,21 +40,21 @@ describe("installMcpConfigs", () => {
     const created = results.filter((r) => r.action === "created");
     expect(created.length).toBeGreaterThan(0);
 
-    // Verify .vscode/mcp.json was written and contains sidetrack entry
+    // Verify .vscode/mcp.json was written and contains parallel-docs entry
     const vscodePath = path.join(repoRoot, ".vscode", "mcp.json");
     const content = await fs.readFile(vscodePath, "utf8");
     const parsed = JSON.parse(content);
 
     expect(parsed.servers).toBeDefined();
-    expect(parsed.servers.sidetrack).toBeDefined();
-    expect(parsed.servers.sidetrack.command).toBe("sidetrack");
-    expect(parsed.servers.sidetrack.args).toEqual(["mcp", "serve"]);
-    expect(parsed.servers.sidetrack.description).toContain("SideTrack");
-    expect(parsed.servers.sidetrack.description).toContain("design decisions");
+    expect(parsed.servers["parallel-docs"]).toBeDefined();
+    expect(parsed.servers["parallel-docs"].command).toBe("parallel-docs");
+    expect(parsed.servers["parallel-docs"].args).toEqual(["mcp", "serve"]);
+    expect(parsed.servers["parallel-docs"].description).toContain("ParallelDocs");
+    expect(parsed.servers["parallel-docs"].description).toContain("design decisions");
   });
 
   it("skips existing entries by default", async () => {
-    const setup = await setupTempSideTrackProject();
+    const setup = await setupTempParallelDocsProject();
     repoRoot = setup.repoRoot;
     cleanup = setup.cleanup;
 
@@ -70,7 +70,7 @@ describe("installMcpConfigs", () => {
   });
 
   it("force overwrites existing entries", async () => {
-    const setup = await setupTempSideTrackProject();
+    const setup = await setupTempParallelDocsProject();
     repoRoot = setup.repoRoot;
     cleanup = setup.cleanup;
 
@@ -84,7 +84,7 @@ describe("installMcpConfigs", () => {
   });
 
   it("does not contain absolute paths in generated config", async () => {
-    const setup = await setupTempSideTrackProject();
+    const setup = await setupTempParallelDocsProject();
     repoRoot = setup.repoRoot;
     cleanup = setup.cleanup;
 
@@ -94,8 +94,8 @@ describe("installMcpConfigs", () => {
     const content = await fs.readFile(vscodePath, "utf8");
     const parsed = JSON.parse(content);
 
-    // The command should be "sidetrack", never an absolute path
-    expect(parsed.servers.sidetrack.command).toBe("sidetrack");
-    expect(parsed.servers.sidetrack.command).not.toContain("/");
+    // The command should be "parallel-docs", never an absolute path
+    expect(parsed.servers["parallel-docs"].command).toBe("parallel-docs");
+    expect(parsed.servers["parallel-docs"].command).not.toContain("/");
   });
 });

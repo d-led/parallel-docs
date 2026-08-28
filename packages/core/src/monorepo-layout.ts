@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 /**
  * Starting directory for locating the monorepo `packages/` folder: typically
  * `dirname(import.meta.url)` in normal ESM, or `dirname(process.argv[1])` when
- * `import.meta.url` is missing (e.g. code bundled into the sidetrack CLI's single
+ * `import.meta.url` is missing (e.g. code bundled into the parallel-docs CLI's single
  * CJS file, where esbuild emits empty `import.meta` shims for nested packages).
  */
 export function monorepoLayoutStartDir(importMetaUrl: string | undefined): string {
@@ -44,6 +44,6 @@ export function findMonorepoPackagesDir(layoutStartDir: string): string {
     dir = parent;
   }
   throw new Error(
-    `Could not find SideTrack monorepo packages/ (expected .../packages/render/package.json) starting from ${layoutStartDir}`,
+    `Could not find ParallelDocs monorepo packages/ (expected .../packages/render/package.json) starting from ${layoutStartDir}`,
   );
 }

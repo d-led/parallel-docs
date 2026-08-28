@@ -126,7 +126,7 @@ dist
 .vscode-test
 
 # Generated when running the VS Code extension against fixtures/dogfood
-packages/vscode/fixtures/dogfood/.sidetrack/
+packages/vscode/fixtures/dogfood/.parallel-docs/
 
 # yarn v2
 .yarn/cache
@@ -251,8 +251,8 @@ fabric.properties
 !.idea/codeStyles
 !.idea/runConfigurations
 
-# SideTrack generated static site (@sidetrack/code-sidetrack-static)
-packages/code-sidetrack-static/site/
+# ParallelDocs generated static site (@parallel-docs/code-parallel-docs-static)
+packages/code-parallel-docs-static/site/
 
 # GitHub Pages output (`npm run pages:build`)
 _site/
@@ -267,5 +267,5 @@ cypress/screenshots/
 packages/vscode/dist/*.vsix
 
 # End of https://www.toptal.com/developers/gitignore/api/node,webstorm+all,visualstudiocode
-.sidetrack-dev/
+.parallel-docs-dev/
 .approval_tests_temp/

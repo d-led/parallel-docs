@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Rasterize the canonical vector logo into the PNG icon shipped inside the
-# SideTrack VSIX. The Marketplace requires a PNG (SVG is rejected).
+# ParallelDocs VSIX. The Marketplace requires a PNG (SVG is rejected).
 # Source: `docs/logos/2.svg`. After changing `docs/logos/2.svg`, run:
 #   `bash scripts/refresh-logo-assets.sh`
 #

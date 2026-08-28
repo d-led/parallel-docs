@@ -39,7 +39,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ["packages/cli/src/**/*.ts", "packages/code-sidetrack-static/src/**/*.ts"],
+    files: ["packages/cli/src/**/*.ts", "packages/code-parallel-docs-static/src/**/*.ts"],
     rules: {
       "no-console": "off",
     },

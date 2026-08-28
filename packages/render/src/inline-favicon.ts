@@ -5,7 +5,7 @@
  *
  * Geometry / flat colors align with `docs/logos/2.svg` (and traced `docs/logos/2.png`).
  */
-const SIDETRACK_LOGO_SVG_FAVICON =
+const PARALLEL_DOCS_LOGO_SVG_FAVICON =
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img">' +
   '<rect x="2" y="2" width="60" height="60" rx="12" fill="#13203b"/>' +
   '<rect x="11" y="17" width="19" height="30" rx="3" fill="#ffffff"/>' +
@@ -23,6 +23,6 @@ const SIDETRACK_LOGO_SVG_FAVICON =
   '<circle cx="34" cy="36" r="2" fill="#e8ba26"/>' +
   "</svg>";
 
-export const SIDETRACK_FAVICON_LINK_HTML = `<link rel="icon" href="data:image/svg+xml,${encodeURIComponent(
-  SIDETRACK_LOGO_SVG_FAVICON,
+export const PARALLEL_DOCS_FAVICON_LINK_HTML = `<link rel="icon" href="data:image/svg+xml,${encodeURIComponent(
+  PARALLEL_DOCS_LOGO_SVG_FAVICON,
 )}" />`;

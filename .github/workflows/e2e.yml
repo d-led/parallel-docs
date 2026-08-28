@@ -34,7 +34,7 @@ jobs:
       - name: Validate Pages GitHub/blob + browse link shapes
         run: node scripts/validate-pages-github-links.mjs
         env:
-          SIDETRACK_VALIDATE_PAGES_LIVE: "1"
+          PARALLEL_DOCS_VALIDATE_PAGES_LIVE: "1"
 
       - name: Start static server
         run: |

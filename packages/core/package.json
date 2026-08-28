@@ -1,10 +1,10 @@
 {
-  "name": "@sidetrack/core",
+  "name": "@parallel-docs/core",
   "version": "1.0.0",
   "publishConfig": {
     "access": "public"
   },
-  "description": "SideTrack models, validation, SCM adapters, and staleness helpers",
+  "description": "ParallelDocs models, validation, SCM adapters, and staleness helpers",
   "license": "MPL-2.0",
   "type": "module",
   "sideEffects": false,
@@ -20,8 +20,8 @@
       "import": "./dist/block-scroll-pickers.js"
     },
     "./static-browse-path": {
-      "types": "./dist/sidetrack-static-browse-path.d.ts",
-      "import": "./dist/sidetrack-static-browse-path.js"
+      "types": "./dist/parallel-docs-static-browse-path.d.ts",
+      "import": "./dist/parallel-docs-static-browse-path.js"
     },
     "./buffering-flow-synchronizer": {
       "types": "./dist/buffering-flow-synchronizer.d.ts",

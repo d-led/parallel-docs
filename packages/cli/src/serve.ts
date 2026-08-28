@@ -6,11 +6,11 @@ import process from "node:process";
 
 import {
   ensureCompanionForSource,
-  isSideTrackProjectInitialized,
-  loadSideTrackConfig,
-  resolveSideTrackMarkdownPath,
-} from "@sidetrack/core";
-import { appendHtmlToOpaqueBrowseRequestUrl } from "@sidetrack/render";
+  isParallelDocsProjectInitialized,
+  loadParallelDocsConfig,
+  resolveParallelDocsMarkdownPath,
+} from "@parallel-docs/core";
+import { appendHtmlToOpaqueBrowseRequestUrl } from "@parallel-docs/render";
 import handler from "serve-handler";
 
 import { runInitFull } from "./init.js";
@@ -22,9 +22,9 @@ export type ServeCliOptions = {
   port: number;
 };
 
-const EMPTY_STATE_MARKDOWN_ENV = "SIDETRACK_EMPTY_STATE_MARKDOWN" as const;
-export const SERVE_ROUTE_INIT = "/__sidetrack/serve/init" as const;
-export const SERVE_ROUTE_GENERATE_ENTRY = "/__sidetrack/serve/generate-entry" as const;
+const EMPTY_STATE_MARKDOWN_ENV = "PARALLEL_DOCS_EMPTY_STATE_MARKDOWN" as const;
+export const SERVE_ROUTE_INIT = "/__parallel_docs/serve/init" as const;
+export const SERVE_ROUTE_GENERATE_ENTRY = "/__parallel_docs/serve/generate-entry" as const;
 
 type ServeActionContext = {
   repoRoot: string;
@@ -34,24 +34,25 @@ type ServeActionContext = {
 async function serveEmptyStateMarkdown(port: number, repoRoot: string): Promise<string> {
   const base = `http://127.0.0.1:${String(port)}`;
   try {
-    const initialized = await isSideTrackProjectInitialized(repoRoot);
+    const initialized = await isParallelDocsProjectInitialized(repoRoot);
     if (!initialized) {
       return [
         "Use local actions to bootstrap this page:",
-        `- [Initialize SideTrack in this repository](${base}${SERVE_ROUTE_INIT})`,
+        `- [Initialize ParallelDocs in this repository](${base}${SERVE_ROUTE_INIT})`,
       ].join("\n");
     }
-    const cfg = await loadSideTrackConfig(repoRoot);
-    const explicit = cfg.staticSite.sidetrackMarkdownFile?.trim();
-    const desiredSideTrackPath =
+    const cfg = await loadParallelDocsConfig(repoRoot);
+    const explicit = cfg.staticSite.parallelDocsMarkdownFile?.trim();
+    const desiredParallelDocsPath =
       explicit && explicit.length > 0
         ? explicit
-        : resolveSideTrackMarkdownPath(repoRoot, cfg.staticSite.sourceFile, cfg).sidetrackPath;
-    const mdAbs = path.resolve(repoRoot, desiredSideTrackPath);
+        : resolveParallelDocsMarkdownPath(repoRoot, cfg.staticSite.sourceFile, cfg)
+            .parallelDocsPath;
+    const mdAbs = path.resolve(repoRoot, desiredParallelDocsPath);
     if (!existsSync(mdAbs)) {
       return [
         "Use local actions to bootstrap this page:",
-        `- [Generate sidetrack for \`${cfg.staticSite.sourceFile}\`](${base}${SERVE_ROUTE_GENERATE_ENTRY})`,
+        `- [Generate parallel-docs for \`${cfg.staticSite.sourceFile}\`](${base}${SERVE_ROUTE_GENERATE_ENTRY})`,
       ].join("\n");
     }
   } catch {
@@ -100,9 +101,9 @@ export async function runServeAction(pathname: string, ctx: ServeActionContext):
   if (pathname === SERVE_ROUTE_INIT) {
     const code = await runInitFull(ctx.repoRoot);
     if (code !== 0) {
-      throw new Error("sidetrack init reported validation errors; fix them, then retry.");
+      throw new Error("parallel-docs init reported validation errors; fix them, then retry.");
     }
-    process.stderr.write("[sidetrack serve] initialized repository via serve action\n");
+    process.stderr.write("[parallel-docs serve] initialized repository via serve action\n");
     await ctx.rebuild(true);
     return;
   }
@@ -110,16 +111,16 @@ export async function runServeAction(pathname: string, ctx: ServeActionContext):
   if (pathname === SERVE_ROUTE_GENERATE_ENTRY) {
     const initCode = await runInitFull(ctx.repoRoot);
     if (initCode !== 0) {
-      throw new Error("sidetrack init reported validation errors; fix them, then retry.");
+      throw new Error("parallel-docs init reported validation errors; fix them, then retry.");
     }
-    const cfg = await loadSideTrackConfig(ctx.repoRoot);
+    const cfg = await loadParallelDocsConfig(ctx.repoRoot);
     const generated = await ensureCompanionForSource(ctx.repoRoot, cfg.staticSite.sourceFile, {
-      sidetrackPath: cfg.staticSite.sidetrackMarkdownFile,
+      parallelDocsPath: cfg.staticSite.parallelDocsMarkdownFile,
     });
     const actionWord = generated.createdMarkdown ? "created" : "already existed";
     const indexWord = generated.createdIndexEntry ? "added" : "already indexed";
     process.stderr.write(
-      `[sidetrack serve] ${actionWord}: ${generated.sidetrackPath} (for ${generated.sourcePath}; index ${indexWord})\n`,
+      `[parallel-docs serve] ${actionWord}: ${generated.parallelDocsPath} (for ${generated.sourcePath}; index ${indexWord})\n`,
     );
     await ctx.rebuild(true);
     return;
@@ -148,7 +149,7 @@ function tryServeActionRoute(
       redirectHome(res);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      process.stderr.write(`[sidetrack serve] action failed: ${message}\n`);
+      process.stderr.write(`[parallel-docs serve] action failed: ${message}\n`);
       if (!res.headersSent) writePlain(res, 500, `${message}\n`);
     }
   })();
@@ -198,7 +199,7 @@ function tryServeDevBuildIdRoute(
   } catch {
     return false;
   }
-  if (pathname !== "/__sidetrack/dev/build-id") return false;
+  if (pathname !== "/__parallel_docs/dev/build-id") return false;
   res.writeHead(200, {
     "Content-Type": "text/plain; charset=utf-8",
     "Cache-Control": "no-store",
@@ -221,7 +222,7 @@ function attachStaticSiteHandler(
     // `renderSingle` (lone `index.html` in humane browse dirs); see `github-pages-site.ts`.
     void handler(req, res, opts).catch((err: unknown) => {
       process.stderr.write(
-        `[sidetrack serve] request error: ${err instanceof Error ? err.message : String(err)}\n`,
+        `[parallel-docs serve] request error: ${err instanceof Error ? err.message : String(err)}\n`,
       );
       if (!res.headersSent) res.statusCode = 500;
       res.end();
@@ -255,25 +256,25 @@ export async function runServeStaticPages(
   opts: ServeCliOptions,
 ): Promise<void> {
   // Dynamic import: the static-site stack pulls `renderCodeBrowserHtml` and filesystem reads that
-  // assume a SideTrack **source** checkout. Consumer repos (and the Homebrew/SEA binary) only
+  // assume a ParallelDocs **source** checkout. Consumer repos (and the Homebrew/SEA binary) only
   // ship the bundled CLI — load this stack when `serve` actually runs, not for `--help` / `--version`.
   const { buildGithubPagesStaticSite } =
-    await import("@sidetrack/code-sidetrack-static/github-pages-site");
+    await import("@parallel-docs/code-parallel-docs-static/github-pages-site");
   const repoRoot = path.resolve(repoRootAbs);
   const siteRel = "_site";
   const siteAbs = path.join(repoRoot, siteRel);
   const livereload = await startLivereloadServer(opts.port + 1);
-  const serveDevBuildId = process.env.SIDETRACK_SERVE_BUILD_ID?.trim() ?? "";
+  const serveDevBuildId = process.env.PARALLEL_DOCS_SERVE_BUILD_ID?.trim() ?? "";
 
   async function rebuild(notifyBrowser = false): Promise<void> {
-    process.stderr.write("[sidetrack serve] rebuilding…\n");
+    process.stderr.write("[parallel-docs serve] rebuilding…\n");
     const emptyStateMarkdown = await serveEmptyStateMarkdown(opts.port, repoRoot);
     await withServeEmptyStateMarkdown(emptyStateMarkdown, async () => {
       await buildGithubPagesStaticSite({ repoRoot });
     });
     await livereload?.injectIntoSite(siteAbs);
     await injectServeDevBuildWatchIntoSite(siteAbs, serveDevBuildId);
-    process.stderr.write("[sidetrack serve] rebuild finished\n");
+    process.stderr.write("[parallel-docs serve] rebuild finished\n");
     if (notifyBrowser) livereload?.notifyReload();
   }
 
@@ -289,12 +290,12 @@ export async function runServeStaticPages(
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     process.stderr.write(
-      `[sidetrack serve] failed to listen on port ${String(opts.port)}: ${msg}\n`,
+      `[parallel-docs serve] failed to listen on port ${String(opts.port)}: ${msg}\n`,
     );
     throw err;
   }
   process.stderr.write(
-    `[sidetrack serve] HTTP listening on http://127.0.0.1:${String(opts.port)}/ (${siteRel})\n`,
+    `[parallel-docs serve] HTTP listening on http://127.0.0.1:${String(opts.port)}/ (${siteRel})\n`,
   );
 
   const rebuildWatcher = await startServeRebuildWatcher(repoRoot, rebuild);
@@ -332,20 +333,20 @@ export async function runServeStaticPages(
 
 /**
  * Build the static `_site/` tree without starting an HTTP server.
- * Useful for CI / GitHub Pages workflows that call `sidetrack pages build`.
+ * Useful for CI / GitHub Pages workflows that call `parallel-docs pages build`.
  */
 export async function runPagesBuild(repoRootAbs: string): Promise<void> {
   const { buildGithubPagesStaticSite } =
-    await import("@sidetrack/code-sidetrack-static/github-pages-site");
+    await import("@parallel-docs/code-parallel-docs-static/github-pages-site");
   const repoRoot = path.resolve(repoRootAbs);
 
   // Ensure the project is initialized before building
-  const initialized = await isSideTrackProjectInitialized(repoRoot);
+  const initialized = await isParallelDocsProjectInitialized(repoRoot);
   if (!initialized) {
     const code = await runInitFull(repoRoot);
     if (code !== 0) {
       throw new Error(
-        `Failed to initialize SideTrack project at ${repoRoot} (exit code: ${String(code)})`,
+        `Failed to initialize ParallelDocs project at ${repoRoot} (exit code: ${String(code)})`,
       );
     }
   }

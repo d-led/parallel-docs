@@ -1,6 +1,6 @@
 import { describeIndexSchemaRemediation } from "./index-schema-messages.js";
 import {
-  type SideTrackIndex,
+  type ParallelDocsIndex,
   type SourceFileIndexEntry,
   coerceIndexSchemaVersion,
   CURRENT_SCHEMA_VERSION,
@@ -9,10 +9,10 @@ import {
 const LEGACY_SCHEMA_VERSION = 2 as const;
 
 /** Returns migrated index and whether the file should be rewritten. */
-export function migrateIndex(raw: unknown): { index: SideTrackIndex; changed: boolean } {
+export function migrateIndex(raw: unknown): { index: ParallelDocsIndex; changed: boolean } {
   if (typeof raw !== "object" || raw === null) {
     return {
-      index: { schemaVersion: CURRENT_SCHEMA_VERSION, bySideTrackPath: {} },
+      index: { schemaVersion: CURRENT_SCHEMA_VERSION, byParallelDocsPath: {} },
       changed: true,
     };
   }
@@ -23,7 +23,7 @@ export function migrateIndex(raw: unknown): { index: SideTrackIndex; changed: bo
   }
 
   if (version === CURRENT_SCHEMA_VERSION) {
-    const index = obj as SideTrackIndex;
+    const index = obj as ParallelDocsIndex;
     return { index, changed: false };
   }
 
@@ -33,15 +33,15 @@ export function migrateIndex(raw: unknown): { index: SideTrackIndex; changed: bo
     version === 0 ||
     version === 1
   ) {
-    const bySideTrackPath = toBySideTrackPath(obj);
-    const next: SideTrackIndex = {
+    const byParallelDocsPath = toByParallelDocsPath(obj);
+    const next: ParallelDocsIndex = {
       schemaVersion: CURRENT_SCHEMA_VERSION,
-      bySideTrackPath,
+      byParallelDocsPath,
     };
     const before = JSON.stringify({
       schemaVersion: version === undefined ? 0 : version,
       bySourceFile: obj.bySourceFile ?? {},
-      bySideTrackPath: obj.bySideTrackPath ?? {},
+      byParallelDocsPath: obj.byParallelDocsPath ?? {},
     });
     const after = JSON.stringify(next);
     const changed = before !== after;
@@ -51,12 +51,12 @@ export function migrateIndex(raw: unknown): { index: SideTrackIndex; changed: bo
   if (typeof version === "number" && version > CURRENT_SCHEMA_VERSION) {
     /**
      * Future CLI may bump `schemaVersion` before every consumer updates. Prefer opening
-     * the repo over hard failure: keep `bySideTrackPath` as parsed, stamp this build’s
+     * the repo over hard failure: keep `byParallelDocsPath` as parsed, stamp this build’s
      * schema, and let `assertValidIndex` reject only truly incompatible shapes.
      */
-    const bySideTrackPath = toBySideTrackPath(obj);
+    const byParallelDocsPath = toByParallelDocsPath(obj);
     return {
-      index: { schemaVersion: CURRENT_SCHEMA_VERSION, bySideTrackPath },
+      index: { schemaVersion: CURRENT_SCHEMA_VERSION, byParallelDocsPath },
       changed: true,
     };
   }
@@ -66,14 +66,14 @@ export function migrateIndex(raw: unknown): { index: SideTrackIndex; changed: bo
   );
 }
 
-function toBySideTrackPath(obj: Record<string, unknown>): Record<string, SourceFileIndexEntry> {
+function toByParallelDocsPath(obj: Record<string, unknown>): Record<string, SourceFileIndexEntry> {
   if (
-    obj.bySideTrackPath &&
-    typeof obj.bySideTrackPath === "object" &&
-    obj.bySideTrackPath !== null
+    obj.byParallelDocsPath &&
+    typeof obj.byParallelDocsPath === "object" &&
+    obj.byParallelDocsPath !== null
   ) {
     const out: Record<string, SourceFileIndexEntry> = {};
-    for (const [k, entry] of Object.entries(obj.bySideTrackPath as Record<string, unknown>)) {
+    for (const [k, entry] of Object.entries(obj.byParallelDocsPath as Record<string, unknown>)) {
       out[k] = normalizeEntry(entry);
     }
     return out;
@@ -85,9 +85,9 @@ function toBySideTrackPath(obj: Record<string, unknown>): Record<string, SourceF
   }
   for (const [, entry] of Object.entries(bySourceFile as Record<string, unknown>)) {
     const norm = normalizeEntry(entry);
-    const cp = norm.sidetrackPath;
+    const cp = norm.parallelDocsPath;
     if (out[cp]) {
-      throw new Error(`Duplicate sidetrackPath in legacy index: ${cp}`);
+      throw new Error(`Duplicate parallelDocsPath in legacy index: ${cp}`);
     }
     out[cp] = norm;
   }
@@ -99,13 +99,13 @@ function normalizeEntry(entry: unknown): SourceFileIndexEntry {
     throw new Error("Invalid index entry");
   }
   const e = entry as Record<string, unknown>;
-  if (typeof e.sidetrackPath === "string") {
+  if (typeof e.parallelDocsPath === "string") {
     return e as SourceFileIndexEntry;
   }
   /** Legacy on-disk field name from older releases (v2 `commentrayPath`). */
   if (typeof e.commentrayPath === "string") {
     const { commentrayPath, ...rest } = e;
-    return { ...rest, sidetrackPath: commentrayPath } as SourceFileIndexEntry;
+    return { ...rest, parallelDocsPath: commentrayPath } as SourceFileIndexEntry;
   }
   return e as SourceFileIndexEntry;
 }

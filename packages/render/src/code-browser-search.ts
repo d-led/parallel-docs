@@ -124,18 +124,18 @@ export type HubPathSearchRow = {
  *
  * When several pairs share the same source filename (multi-angle), we must emit one source-path
  * row per pair — same visible `text`, distinct `crPath` — so ordered path hits open the right
- * companion (not only the first pair after lexicographic sort of sidetrack paths).
+ * companion (not only the first pair after lexicographic sort of parallel-docs paths).
  */
 export function pathRowsFromDocumentedPairs(
-  pairs: Array<{ sourcePath: string; sidetrackPath: string }>,
+  pairs: Array<{ sourcePath: string; parallelDocsPath: string }>,
 ): HubPathSearchRow[] {
   const seenSourceWithCompanion = new Set<string>();
-  const seenSideTrack = new Set<string>();
+  const seenParallelDocs = new Set<string>();
   const out: HubPathSearchRow[] = [];
   let line = 0;
   for (const p of pairs) {
     const sp = p.sourcePath.trim();
-    const cr = p.sidetrackPath.trim();
+    const cr = p.parallelDocsPath.trim();
     if (sp.length > 0) {
       const spKey = `${sp}\0${cr}`;
       if (!seenSourceWithCompanion.has(spKey)) {
@@ -145,18 +145,18 @@ export function pathRowsFromDocumentedPairs(
           line: line++,
           text: sp,
           spPath: p.sourcePath,
-          crPath: p.sidetrackPath,
+          crPath: p.parallelDocsPath,
         });
       }
     }
-    if (cr.length > 0 && !seenSideTrack.has(cr)) {
-      seenSideTrack.add(cr);
+    if (cr.length > 0 && !seenParallelDocs.has(cr)) {
+      seenParallelDocs.add(cr);
       out.push({
         kind: "path",
         line: line++,
         text: cr,
         spPath: p.sourcePath,
-        crPath: p.sidetrackPath,
+        crPath: p.parallelDocsPath,
       });
     }
   }
@@ -168,15 +168,15 @@ export const MAX_BROWSE_SOURCE_FILE_PREVIEW = 80;
 
 export type SourceFilePreviewRow = {
   sourcePath: string;
-  sidetrackPath: string;
+  parallelDocsPath: string;
 };
 
 /**
  * One preview row per distinct `sourcePath`. When several pairs share a source (multi-angle),
- * keeps the pair with the lexicographically smallest `sidetrackPath` so navigation is stable.
+ * keeps the pair with the lexicographically smallest `parallelDocsPath` so navigation is stable.
  */
 export function uniqueSourceFilePreviewRows(
-  pairs: Array<{ sourcePath: string; sidetrackPath: string }>,
+  pairs: Array<{ sourcePath: string; parallelDocsPath: string }>,
   maxRows: number = MAX_BROWSE_SOURCE_FILE_PREVIEW,
 ): { rows: SourceFilePreviewRow[]; totalUnique: number } {
   const bySource = new Map<string, SourceFilePreviewRow>();
@@ -186,13 +186,13 @@ export function uniqueSourceFilePreviewRows(
     const prev = bySource.get(sp);
     const candidate: SourceFilePreviewRow = {
       sourcePath: p.sourcePath.trim(),
-      sidetrackPath: p.sidetrackPath.trim(),
+      parallelDocsPath: p.parallelDocsPath.trim(),
     };
     if (!prev) {
       bySource.set(sp, candidate);
       continue;
     }
-    if (candidate.sidetrackPath.localeCompare(prev.sidetrackPath) < 0) {
+    if (candidate.parallelDocsPath.localeCompare(prev.parallelDocsPath) < 0) {
       bySource.set(sp, candidate);
     }
   }

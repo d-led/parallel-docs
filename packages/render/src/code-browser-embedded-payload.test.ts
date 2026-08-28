@@ -29,7 +29,7 @@ describe("Reading embedded base64 payloads from static HTML", () => {
   });
 
   it("falls back to #code-pane when #shell has no payload (legacy static HTML)", () => {
-    const codeB64 = Buffer.from("# SideTrack\n", "utf8").toString("base64");
+    const codeB64 = Buffer.from("# ParallelDocs\n", "utf8").toString("base64");
     const mdB64 = Buffer.from("## Notes\n", "utf8").toString("base64");
     const shell = { getAttribute: () => null };
     const pane = {
@@ -42,7 +42,7 @@ describe("Reading embedded base64 payloads from static HTML", () => {
     const picked = readEmbeddedRawB64Strings(shell, pane);
     const rawCode = decodeBase64Utf8(picked.rawCodeB64);
     const rawMd = decodeBase64Utf8(picked.rawMdB64);
-    expect(findOrderedTokenSpans(rawCode, ["sidetrack"]).length).toBeGreaterThan(0);
+    expect(findOrderedTokenSpans(rawCode, ["paralleldocs"]).length).toBeGreaterThan(0);
     expect(rawMd).toContain("Notes");
   });
 });

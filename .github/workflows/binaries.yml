@@ -1,4 +1,4 @@
-# Standalone `sidetrack` CLI (Node SEA) per OS/arch.
+# Standalone `parallel-docs` CLI (Node SEA) per OS/arch.
 #
 # - **Workflow artifacts** (`actions/upload-artifact`): short-lived by design
 #   (`retention-days` below). Use them to debug a run or bridge jobs in this workflow only.
@@ -51,7 +51,7 @@ jobs:
       - run: npm ci
 
       - name: Build CLI bundle
-        run: npm run build:bundle -w sidetrack
+        run: npm run build:bundle -w parallel-docs
 
       - name: Build standalone binary
         shell: bash
@@ -64,8 +64,8 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: sidetrack-${{ matrix.target }}
-          path: packages/cli/dist/bin/sidetrack-*
+          name: parallel-docs-${{ matrix.target }}
+          path: packages/cli/dist/bin/parallel-docs-*
           if-no-files-found: error
           # Expire CI blobs automatically; tagged releases copy these into GitHub Release assets first.
           retention-days: 14
@@ -92,8 +92,8 @@ jobs:
       - name: Upload VSIX artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: sidetrack-vsix
-          path: packages/vscode/dist/sidetrack-vscode-*.vsix
+          name: parallel-docs-vsix
+          path: packages/vscode/dist/parallel-docs-vscode-*.vsix
           if-no-files-found: error
           retention-days: 14
 
@@ -110,7 +110,7 @@ jobs:
       - name: Stage release attachments
         run: |
           mkdir -p release-binaries
-          find artifacts -type f -name 'sidetrack-*' -exec cp -v {} release-binaries/ \;
+          find artifacts -type f -name 'parallel-docs-*' -exec cp -v {} release-binaries/ \;
           ls -lah release-binaries/
 
       - name: Create GitHub release
@@ -119,12 +119,12 @@ jobs:
           files: release-binaries/*
           generate_release_notes: true
 
-  # Pushes an updated binary-style `sidetrack.rb` to https://github.com/d-led/homebrew-d-led
+  # Pushes an updated binary-style `parallel-docs.rb` to https://github.com/d-led/homebrew-d-led
   # (macOS + Linux only — matches the build matrix, excluding Windows). Requires
   # HOMEBREW_TAP_PUSH_TOKEN (see docs/development.md); the push script fails in CI if unset.
   update-homebrew-tap:
     needs: [release]
-    if: github.repository == 'd-led/sidetrack' && startsWith(github.ref,
+    if: github.repository == 'd-led/parallel-docs' && startsWith(github.ref,
       'refs/tags/v')
     runs-on: ubuntu-latest
     steps:

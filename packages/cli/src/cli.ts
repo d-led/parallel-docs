@@ -1,21 +1,21 @@
 #!/usr/bin/env node
-// Also runnable as `npx sidetrack`; `--help` prints Usage: sidetrack [options] [command].
+// Also runnable as `npx parallel-docs`; `--help` prints Usage: parallel-docs [options] [command].
 import fs from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 
 import cliPackage from "../package.json" with { type: "json" };
 import {
-  applyPathRenamesToSideTrackIndex,
-  convertSideTrackSourceMarkersToLanguage,
+  applyPathRenamesToParallelDocsIndex,
+  convertParallelDocsSourceMarkersToLanguage,
   defaultMetadataIndexPath,
   GitScmProvider,
-  loadSideTrackConfig,
+  loadParallelDocsConfig,
   refreshIndexMigrationsOnDisk,
   normalizeRepoRelativePath,
   parseGithubRepoWebUrl,
   readIndex,
-  resolveSideTrackMarkdownPath,
+  resolveParallelDocsMarkdownPath,
   resolveMermaidRuntimePath,
   runCommanderMain,
   type ValidationIssue,
@@ -23,8 +23,8 @@ import {
   validateProject,
   type ValidateProjectOptions,
   writeIndex,
-} from "@sidetrack/core";
-import { renderSideBySideHtml } from "@sidetrack/render";
+} from "@parallel-docs/core";
+import { renderSideBySideHtml } from "@parallel-docs/render";
 import { Command } from "commander";
 
 import { runInitConfig, runInitFull, runInitScm } from "./init.js";
@@ -35,7 +35,7 @@ import { logCliValidationIssue, logCliWarning } from "./cli-output.js";
 import { runAnglesAddFromCwd } from "./angles-add-cmd.js";
 import { readGitStagedRepoRelativePaths } from "./git-staged-paths.js";
 import { runServeStaticPages, runPagesBuild } from "./serve.js";
-import { installMcpConfigs } from "@sidetrack/mcp-server";
+import { installMcpConfigs } from "@parallel-docs/mcp-server";
 
 async function repoRootFromCwd(): Promise<string> {
   const root = await findProjectRoot(process.cwd());
@@ -90,7 +90,7 @@ async function cmdValidate(opts?: { staged?: boolean }): Promise<number> {
 async function cmdDoctor(opts?: { allowDeletions?: boolean }): Promise<number> {
   const repoRoot = await repoRootFromCwd();
   if (opts?.allowDeletions) {
-    const cfg = await loadSideTrackConfig(repoRoot);
+    const cfg = await loadParallelDocsConfig(repoRoot);
     const { removedAbsPaths } = await pruneOrphanCompanionMarkdown(repoRoot, cfg.storageDir);
     if (removedAbsPaths.length > 0) {
       console.log(
@@ -133,7 +133,7 @@ async function cmdConvertSourceMarkers(opts: {
     }
     throw err;
   }
-  const { sourceText, changed, convertedPairs } = convertSideTrackSourceMarkersToLanguage(
+  const { sourceText, changed, convertedPairs } = convertParallelDocsSourceMarkersToLanguage(
     raw,
     opts.language,
   );
@@ -177,15 +177,15 @@ async function cmdSyncMovedPaths(opts: {
     console.log("No Git-detected renames in that range.");
     return 0;
   }
-  const cfg = await loadSideTrackConfig(repoRoot);
+  const cfg = await loadParallelDocsConfig(repoRoot);
   const index = await readIndex(repoRoot);
   if (index === null) {
-    console.error(`No index at ${defaultMetadataIndexPath()}. Run: sidetrack init`);
+    console.error(`No index at ${defaultMetadataIndexPath()}. Run: parallel-docs init`);
     return 1;
   }
   let next;
   try {
-    next = applyPathRenamesToSideTrackIndex(index, renames, repoRoot, cfg);
+    next = applyPathRenamesToParallelDocsIndex(index, renames, repoRoot, cfg);
   } catch (e) {
     console.error(e instanceof Error ? e.message : String(e));
     return 1;
@@ -225,7 +225,7 @@ async function cmdMigrate(): Promise<number> {
   } catch (err) {
     const code = (err as NodeJS.ErrnoException).code;
     if (code === "ENOENT") {
-      console.error(`Missing index at ${defaultMetadataIndexPath()}. Run: sidetrack init`);
+      console.error(`Missing index at ${defaultMetadataIndexPath()}. Run: parallel-docs init`);
       return 1;
     }
     throw err;
@@ -234,7 +234,7 @@ async function cmdMigrate(): Promise<number> {
 
 async function cmdRender(opts: RenderCliOptions & { mermaid: boolean }) {
   const repoRoot = await repoRootFromCwd();
-  const cfg = await loadSideTrackConfig(repoRoot);
+  const cfg = await loadParallelDocsConfig(repoRoot);
   const inputs = resolveRenderInputs(cfg, opts, repoRoot);
   const source = normalizeRepoRelativePath(inputs.source);
   const md = await fs.readFile(path.resolve(repoRoot, inputs.markdown), "utf8");
@@ -246,12 +246,12 @@ async function cmdRender(opts: RenderCliOptions & { mermaid: boolean }) {
     cfg.render.relativeGithubBlobLinks && cfg.staticSite.githubUrl
       ? parseGithubRepoWebUrl(cfg.staticSite.githubUrl)
       : null;
-  const sidetrackStorageRootAbs = path.resolve(repoRoot, cfg.storageDir);
-  const sidetrackOutputUrls = {
+  const parallelDocsStorageRootAbs = path.resolve(repoRoot, cfg.storageDir);
+  const parallelDocsOutputUrls = {
     repoRootAbs: repoRoot,
     htmlOutputFileAbs: outPath,
     markdownUrlBaseDirAbs: path.dirname(mdAbs),
-    sidetrackStorageRootAbs,
+    parallelDocsStorageRootAbs,
     sourceLinkPrefix:
       cfg.staticSite.sourceLinkPrefix ??
       (ghParsed
@@ -265,11 +265,11 @@ async function cmdRender(opts: RenderCliOptions & { mermaid: boolean }) {
     title: source,
     code,
     language: ext === "ts" ? "ts" : ext,
-    sidetrackMarkdown: md,
+    parallelDocsMarkdown: md,
     hljsTheme: cfg.render.syntaxTheme,
     includeMermaidRuntime: opts.mermaid,
     mermaidRuntimePath: resolveMermaidRuntimePath(repoRoot, cfg.render.mermaidRuntimePath),
-    sidetrackOutputUrls,
+    parallelDocsOutputUrls,
   });
   await fs.mkdir(path.dirname(outPath), { recursive: true });
   await fs.writeFile(outPath, html, "utf8");
@@ -277,20 +277,22 @@ async function cmdRender(opts: RenderCliOptions & { mermaid: boolean }) {
 }
 
 const program = new Command();
-program.name("sidetrack").description("SideTrack CLI").version(cliPackage.version);
+program.name("parallel-docs").description("ParallelDocs CLI").version(cliPackage.version);
 
 const initCmd = program
   .command("init")
   .description(
-    "Idempotent workspace setup: storage dirs, index.json if missing, .sidetrack.toml if missing; " +
-      "merges d-led.sidetrack-vscode into .vscode/extensions.json when mergeable; " +
+    "Idempotent workspace setup: storage dirs, index.json if missing, .parallel-docs.toml if missing; " +
+      "merges d-led.parallel-docs-vscode into .vscode/extensions.json when mergeable; " +
       "always refreshes index migrations and runs validate (exit 1 on validation errors)",
   );
 
 initCmd
   .command("config")
-  .description("Ensure .sidetrack.toml exists with commented defaults (use --force to overwrite)")
-  .option("--force", "Replace an existing .sidetrack.toml", false)
+  .description(
+    "Ensure .parallel-docs.toml exists with commented defaults (use --force to overwrite)",
+  )
+  .option("--force", "Replace an existing .parallel-docs.toml", false)
   .action(async (opts: { force?: boolean }) => {
     process.exitCode = await runInitConfig(await repoRootFromCwd(), { force: Boolean(opts.force) });
   });
@@ -298,7 +300,7 @@ initCmd
 initCmd
   .command("scm")
   .description(
-    "Install or refresh SideTrack's block in .git/hooks/pre-commit (runs validate when CLI is present)",
+    "Install or refresh ParallelDocs's block in .git/hooks/pre-commit (runs validate when CLI is present)",
   )
   .action(async () => {
     process.exitCode = await runInitScm(await repoRootFromCwd());
@@ -310,7 +312,7 @@ initCmd.action(async () => {
 
 program
   .command("validate")
-  .description("Validate SideTrack metadata and configuration")
+  .description("Validate ParallelDocs metadata and configuration")
   .option("--staged", "Only validate index entries touched by staged files (Git index)", false)
   .action(async (opts: { staged?: boolean }) => {
     process.exitCode = await cmdValidate({ staged: Boolean(opts.staged) });
@@ -340,7 +342,7 @@ program
 program
   .command("migrate-angles")
   .description(
-    "Convert flat .sidetrack/source companions (*.md beside path) to Angles layout (per-source folders + [angles])",
+    "Convert flat .parallel-docs/source companions (*.md beside path) to Angles layout (per-source folders + [angles])",
   )
   .option("--angle-id <id>", "Angle id for migrated files", "main")
   .option("--dry-run", "Print planned moves without writing files", false)
@@ -354,17 +356,19 @@ program
 
 const anglesCmd = program
   .command("angles")
-  .description("Work with SideTrack Angles (multi-companion layout under .sidetrack/source/)");
+  .description(
+    "Work with ParallelDocs Angles (multi-companion layout under .parallel-docs/source/)",
+  );
 
 anglesCmd
   .command("add")
   .description(
-    "Register a new angle in .sidetrack.toml and create its companion Markdown file for the chosen primary",
+    "Register a new angle in .parallel-docs.toml and create its companion Markdown file for the chosen primary",
   )
   .argument("<angleId>", "New angle id (letters, digits, underscores, hyphens)")
   .option(
     "--source <path>",
-    "Repo-relative primary path (defaults to [static_site].source_file from .sidetrack.toml)",
+    "Repo-relative primary path (defaults to [static_site].source_file from .parallel-docs.toml)",
   )
   .option("--title <text>", "Angle label in the UI (defaults to a title-cased angle id)")
   .option("--make-default", "Set angles.default_angle to this id after registration", false)
@@ -401,7 +405,7 @@ program
 program
   .command("convert-source-markers")
   .description(
-    "Rewrite SideTrack marker pairs in a source file to the delimiter style for a VS Code language id",
+    "Rewrite ParallelDocs marker pairs in a source file to the delimiter style for a VS Code language id",
   )
   .requiredOption("--file <path>", "Repo-relative path to the source file")
   .requiredOption("--language <id>", "VS Code language id (e.g. typescript, rust, yaml, css)")
@@ -417,19 +421,19 @@ program
 program
   .command("paths")
   .argument("<file>", "Repo-relative source file path")
-  .description("Print the sidetrack Markdown path for a source file")
+  .description("Print the parallel-docs Markdown path for a source file")
   .action(async (file: string) => {
     const repoRoot = await repoRootFromCwd();
-    const cfg = await loadSideTrackConfig(repoRoot);
+    const cfg = await loadParallelDocsConfig(repoRoot);
     const normalized = normalizeRepoRelativePath(file);
-    const resolved = resolveSideTrackMarkdownPath(repoRoot, normalized, cfg);
-    console.log(resolved.sidetrackPath);
+    const resolved = resolveParallelDocsMarkdownPath(repoRoot, normalized, cfg);
+    console.log(resolved.parallelDocsPath);
   });
 
 program
   .command("serve")
   .description(
-    "Watch `.sidetrack.toml`, `[static_site].source_file`, `.sidetrack/metadata/index.json`, " +
+    "Watch `.parallel-docs.toml`, `[static_site].source_file`, `.parallel-docs/metadata/index.json`, " +
       "and Markdown under the configured storage `source/` tree; rebuild `_site` on change, " +
       "and serve it over HTTP (same output as `pages:build`)",
   )
@@ -454,7 +458,7 @@ const pagesCmd = program.command("pages").description("GitHub Pages build helper
 pagesCmd
   .command("build")
   .description(
-    "Build the static `_site/` tree from `.sidetrack.toml` [static_site] config. " +
+    "Build the static `_site/` tree from `.parallel-docs.toml` [static_site] config. " +
       "Use in CI workflows before deploying to GitHub Pages or any static host.",
   )
   .action(async () => {
@@ -469,14 +473,14 @@ pagesCmd
 program
   .command("render")
   .description(
-    "Render a side-by-side HTML view; missing flags fall back to .sidetrack.toml [static_site] " +
+    "Render a side-by-side HTML view; missing flags fall back to .parallel-docs.toml [static_site] " +
       "(default --out: _site/index.html)",
   )
   .option("--source <path>", "Repo-relative source file (defaults to static_site.source_file)")
   .option(
     "--markdown <path>",
-    "Path to side-track markdown file (defaults to static_site.sidetrack_markdown, " +
-      "or the conventional .sidetrack/source/<src>.md)",
+    "Path to side-track markdown file (defaults to static_site.parallel_docs_markdown, " +
+      "or the conventional .parallel-docs/source/<src>.md)",
   )
   .option("--out <path>", "Output HTML path (defaults to _site/index.html)")
   .option("--mermaid", "Include Mermaid runtime in HTML output", false)
@@ -493,7 +497,7 @@ program
 
 const mcpCmd = program
   .command("mcp")
-  .description("Start or install the SideTrack MCP server for AI coding assistants");
+  .description("Start or install the ParallelDocs MCP server for AI coding assistants");
 
 mcpCmd
   .command("serve")
@@ -502,7 +506,7 @@ mcpCmd
   )
   .action(async () => {
     // Dynamic import — the mcp-server package is heavy and only needed here.
-    const { createMcpServer } = await import("@sidetrack/mcp-server");
+    const { createMcpServer } = await import("@parallel-docs/mcp-server");
     const { StdioServerTransport } = await import("@modelcontextprotocol/sdk/server/stdio.js");
     const repoRoot = await repoRootFromCwd();
     const server = createMcpServer(repoRoot);
@@ -514,13 +518,13 @@ mcpCmd
   .command("install")
   .description(
     "Write repo-local MCP config files (.vscode/mcp.json, .claude/mcp.json, etc.) " +
-      "so AI coding assistants can discover the SideTrack MCP server. " +
-      "Uses 'sidetrack mcp serve' as the command — fully portable, no absolute paths.",
+      "so AI coding assistants can discover the ParallelDocs MCP server. " +
+      "Uses 'parallel-docs mcp serve' as the command — fully portable, no absolute paths.",
   )
   .option("--dry-run", "Print what would be written without touching files", false)
   .option(
     "--force",
-    "Overwrite existing SideTrack entries (default: skip if already present)",
+    "Overwrite existing ParallelDocs entries (default: skip if already present)",
     false,
   )
   .action(async (opts: { dryRun?: boolean; force?: boolean }) => {
@@ -536,7 +540,7 @@ mcpCmd
     if (opts.dryRun) {
       console.log("\nDry run — no files written. Re-run without --dry-run to apply.");
     } else {
-      console.log("\nDone. AI assistants in this repo can now use SideTrack tools.");
+      console.log("\nDone. AI assistants in this repo can now use ParallelDocs tools.");
     }
   });
 

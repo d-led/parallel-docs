@@ -4,15 +4,15 @@ set -euo pipefail
 # Run Vitest with V8 coverage and open the HTML report for developers.
 #
 # Environment:
-#   SIDETRACK_COVERAGE_MODE=unit|all   (default: unit — fast; "all" includes integration tests)
-#   SIDETRACK_COVERAGE_OPEN=0        skip opening a browser after the run
-#   SIDETRACK_COVERAGE_OPEN=1        open coverage/index.html (default)
+#   PARALLEL_DOCS_COVERAGE_MODE=unit|all   (default: unit — fast; "all" includes integration tests)
+#   PARALLEL_DOCS_COVERAGE_OPEN=0        skip opening a browser after the run
+#   PARALLEL_DOCS_COVERAGE_OPEN=1        open coverage/index.html (default)
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
-mode="${SIDETRACK_COVERAGE_MODE:-unit}"
-open_report="${SIDETRACK_COVERAGE_OPEN:-1}"
+mode="${PARALLEL_DOCS_COVERAGE_MODE:-unit}"
+open_report="${PARALLEL_DOCS_COVERAGE_OPEN:-1}"
 
 case "$mode" in
   unit)
@@ -22,7 +22,7 @@ case "$mode" in
     npx vitest run --coverage -c vitest.coverage.config.ts
     ;;
   *)
-    echo "Unknown SIDETRACK_COVERAGE_MODE=$mode (use unit|all)" >&2
+    echo "Unknown PARALLEL_DOCS_COVERAGE_MODE=$mode (use unit|all)" >&2
     exit 1
     ;;
 esac

@@ -1,5 +1,5 @@
-/** SideTrack block aligned to a region of a primary source file. */
-export type SideTrackBlock = {
+/** ParallelDocs block aligned to a region of a primary source file. */
+export type ParallelDocsBlock = {
   /** Stable id within the side-track markdown file. */
   id: string;
   /** Human or machine anchor string (see anchor grammar in docs). */
@@ -12,9 +12,9 @@ export type SideTrackBlock = {
   snippet?: string;
   /**
    * When the anchor is `marker:<id>`, the same id appears in source as the
-   * region name `sidetrack:<id>` (e.g. `//#region` / `//#endregion` in
+   * region name `parallelDocs:<id>` (e.g. `//#region` / `//#endregion` in
    * TypeScript, aligned with the Region Marker extension), or in legacy
-   * `sidetrack:start id=…` / `sidetrack:end id=…` line comments.
+   * `parallelDocs:start id=…` / `parallelDocs:end id=…` line comments.
    */
   markerId?: string;
   /** Last human-verified commit (full SHA) when this block was considered accurate. */
@@ -26,21 +26,21 @@ export type SideTrackBlock = {
 };
 
 export type SourceFileIndexEntry = {
-  /** Repo-relative path to the primary file this sidetrack belongs to. */
+  /** Repo-relative path to the primary file this parallel-docs belongs to. */
   sourcePath: string;
-  /** Repo-relative path to the Markdown sidetrack file. */
-  sidetrackPath: string;
-  blocks: SideTrackBlock[];
+  /** Repo-relative path to the Markdown parallel-docs file. */
+  parallelDocsPath: string;
+  blocks: ParallelDocsBlock[];
 };
 
-/** Root metadata document stored as JSON under `.sidetrack/metadata/`. */
-export type SideTrackIndex = {
+/** Root metadata document stored as JSON under `.parallel-docs/metadata/`. */
+export type ParallelDocsIndex = {
   schemaVersion: number;
   /**
-   * Blocks grouped by repo-relative sidetrack Markdown path so multiple **Angles**
+   * Blocks grouped by repo-relative parallel-docs Markdown path so multiple **Angles**
    * for the same `sourcePath` each keep their own block lists (schema v3+).
    */
-  bySideTrackPath: Record<string, SourceFileIndexEntry>;
+  byParallelDocsPath: Record<string, SourceFileIndexEntry>;
 };
 
 export const CURRENT_SCHEMA_VERSION = 3 as const;

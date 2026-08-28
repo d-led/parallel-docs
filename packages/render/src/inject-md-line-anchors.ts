@@ -1,13 +1,13 @@
-import { MARKER_ID_BODY, type BlockScrollLink } from "@sidetrack/core";
+import { MARKER_ID_BODY, type BlockScrollLink } from "@parallel-docs/core";
 
 import { escapeHtml } from "./html-utils.js";
 
 /** Single capture: marker id (avoid a wrapping group around the whole comment — that shifted indices). */
 const BLOCK_MARKER_HTML_LINE = new RegExp(
-  `^<!--\\s*sidetrack:block\\s+id=(${MARKER_ID_BODY})\\s*-->$`,
+  `^<!--\\s*parallelDocs:block\\s+id=(${MARKER_ID_BODY})\\s*-->$`,
   "i",
 );
-const PAGE_BREAK_MARKER_HTML_LINE = /^<!--\s*sidetrack:page-break\s*-->$/i;
+const PAGE_BREAK_MARKER_HTML_LINE = /^<!--\s*parallelDocs:page-break\s*-->$/i;
 
 function trimEndSpacesTabs(s: string): string {
   let end = s.length;
@@ -76,7 +76,7 @@ function isGfmTableDelimiterRow(line: string): boolean {
 /**
  * 0-based line indices that must not receive a trailing line-anchor span: they belong to a GFM
  * table (header + delimiter + following rows until a blank line). Scans full `lines` so indices
- * align with {@link injectSideTrackDocAnchors}; lines inside fenced code are harmless to mark
+ * align with {@link injectParallelDocsDocAnchors}; lines inside fenced code are harmless to mark
  * because that pass never appends anchors there anyway.
  */
 function gfmTableLineIndicesWithoutAnchors(lines: string[]): Set<number> {
@@ -106,12 +106,12 @@ function gfmTableLineIndicesWithoutAnchors(lines: string[]): Set<number> {
 
 function lineAnchorHtml(mdLine0: number): string {
   const mdLine = String(mdLine0);
-  return `<span class="sidetrack-line-anchor" data-sidetrack-md-line="${mdLine}" id="sidetrack-md-line-${mdLine}" aria-hidden="true"></span>`;
+  return `<span class="parallel-docs-line-anchor" data-parallel-docs-md-line="${mdLine}" id="parallel-docs-md-line-${mdLine}" aria-hidden="true"></span>`;
 }
 
 function sourceLineAnchorHtml(line0: number): string {
   const s = String(line0);
-  return `<span class="sidetrack-line-anchor sidetrack-line-anchor--source" data-source-md-line="${s}" id="code-md-line-${s}" aria-hidden="true"></span>`;
+  return `<span class="parallel-docs-line-anchor parallel-docs-line-anchor--source" data-source-md-line="${s}" id="code-md-line-${s}" aria-hidden="true"></span>`;
 }
 
 function appendMdLineAnchorWhenAllowed(line: string, mdLine0: number): string {
@@ -136,7 +136,7 @@ function appendSourceMdLineAnchorWhenAllowed(line: string, line0: number): strin
  * mappers agree and monotonicity is preserved across page-break crossings.
  */
 type PageBreakNextBlockMeta = {
-  sidetrackLine: number;
+  parallelDocsLine: number;
   viewportSourceLine1Based?: number;
 };
 
@@ -154,8 +154,8 @@ function pageBreakNextBlockMetaByLine(
       const viewportSourceLine1Based = byId?.get(id)?.markerViewportHalfOpen1Based.lo;
       nextMeta =
         viewportSourceLine1Based !== undefined
-          ? { sidetrackLine: i, viewportSourceLine1Based }
-          : { sidetrackLine: i };
+          ? { parallelDocsLine: i, viewportSourceLine1Based }
+          : { parallelDocsLine: i };
       continue;
     }
     if (!PAGE_BREAK_MARKER_HTML_LINE.test(line) || nextMeta === null) continue;
@@ -166,22 +166,22 @@ function pageBreakNextBlockMetaByLine(
 
 function blockAnchorAttrs(link: BlockScrollLink | undefined): string {
   if (link === undefined) return "";
-  return ` data-source-start="${String(link.sourceStart)}" data-sidetrack-line="${String(link.sidetrackLine)}"`;
+  return ` data-source-start="${String(link.sourceStart)}" data-parallel-docs-line="${String(link.parallelDocsLine)}"`;
 }
 
 function pageBreakNextAttrs(next: PageBreakNextBlockMeta | undefined): string {
   if (next === undefined) return "";
-  const nextSideTrackAttr = ` data-next-sidetrack-line="${String(next.sidetrackLine)}"`;
+  const nextParallelDocsAttr = ` data-next-parallel-docs-line="${String(next.parallelDocsLine)}"`;
   const nextSourceAttr =
     next.viewportSourceLine1Based !== undefined
       ? ` data-next-source-viewport-line="${String(next.viewportSourceLine1Based)}"`
       : "";
-  return `${nextSideTrackAttr}${nextSourceAttr}`;
+  return `${nextParallelDocsAttr}${nextSourceAttr}`;
 }
 
 /**
  * Inserts per-line anchors for search / hash jumps and block separator anchors after each
- * `<!-- sidetrack:block … -->` line (optional index attrs).
+ * `<!-- parallelDocs:block … -->` line (optional index attrs).
  *
  * Anchors are appended to the line when safe. A **leading** `<span>` breaks CommonMark block
  * recognition (`#` headings, lists, thematic breaks, fences). Fenced code lines must not get a
@@ -189,7 +189,7 @@ function pageBreakNextAttrs(next: PageBreakNextBlockMeta | undefined): string {
  * tables** must not get a trailing anchor: extra HTML after the row breaks `remark-gfm` table
  * detection, so tables would render as plain text.
  */
-export function injectSideTrackDocAnchors(markdown: string, links?: BlockScrollLink[]): string {
+export function injectParallelDocsDocAnchors(markdown: string, links?: BlockScrollLink[]): string {
   const byId = links ? new Map(links.map((l) => [l.id, l])) : undefined;
   const lines = markdown.split("\n");
   const pageBreakNextByLine = pageBreakNextBlockMetaByLine(lines, byId);
@@ -225,7 +225,7 @@ export function injectSideTrackDocAnchors(markdown: string, links?: BlockScrollL
       out.push(`${line}${lineAnchorHtml(i)}`);
       out.push("");
       out.push(
-        `<div id="sidetrack-block-${escapeHtml(id)}" class="sidetrack-block-anchor" aria-hidden="true"${attrs}></div>`,
+        `<div id="parallel-docs-block-${escapeHtml(id)}" class="parallel-docs-block-anchor" aria-hidden="true"${attrs}></div>`,
       );
       out.push("");
       continue;
@@ -236,7 +236,7 @@ export function injectSideTrackDocAnchors(markdown: string, links?: BlockScrollL
       out.push(`${line}${lineAnchorHtml(i)}`);
       out.push("");
       out.push(
-        `<div class="sidetrack-page-break" data-sidetrack-page-break="true"${nextAttrs} aria-hidden="true"><div class="sidetrack-page-break__rule"></div></div>`,
+        `<div class="parallel-docs-page-break" data-parallel-docs-page-break="true"${nextAttrs} aria-hidden="true"><div class="parallel-docs-page-break__rule"></div></div>`,
       );
       out.push("");
       continue;

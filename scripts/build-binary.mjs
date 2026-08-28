@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 /**
- * Build a standalone SideTrack CLI binary for the current platform using
+ * Build a standalone ParallelDocs CLI binary for the current platform using
  * Node.js Single Executable Applications (SEA).
  *
- * Output: packages/cli/dist/bin/sidetrack-<platform>-<arch>[.exe]
+ * Output: packages/cli/dist/bin/parallel-docs-<platform>-<arch>[.exe]
  *
  * Steps:
- *   1. Ensure the CLI bundle exists (`npm run build:bundle -w sidetrack`).
+ *   1. Ensure the CLI bundle exists (`npm run build:bundle -w parallel-docs`).
  *   2. Resolve a **SEA-capable** Node binary (see below).
  *   3. Generate the SEA blob via `node --experimental-sea-config`.
  *   4. Copy that Node binary to the output path.
@@ -19,8 +19,8 @@
  * fuse, this script downloads the matching **official** Node.js build from
  * `https://nodejs.org/dist/<version>/` (cached under `packages/cli/dist/.official-node/`).
  *
- * Override: `SIDETRACK_SEA_NODE=/path/to/node` (must contain the fuse).
- * Opt out of download: `SIDETRACK_SEA_SKIP_OFFICIAL_DOWNLOAD=1` (then you must supply a capable binary).
+ * Override: `PARALLEL_DOCS_SEA_NODE=/path/to/node` (must contain the fuse).
+ * Opt out of download: `PARALLEL_DOCS_SEA_SKIP_OFFICIAL_DOWNLOAD=1` (then you must supply a capable binary).
  *
  * Notes:
  *   - Windows / Linux signing is intentionally minimal; macOS uses ad-hoc codesign.
@@ -77,13 +77,13 @@ function binarySuffix() {
   const platform = process.platform === "win32" ? "windows" : process.platform;
   const arch = process.arch;
   const ext = process.platform === "win32" ? ".exe" : "";
-  return { name: `sidetrack-${platform}-${arch}${ext}`, platform, arch, ext };
+  return { name: `parallel-docs-${platform}-${arch}${ext}`, platform, arch, ext };
 }
 
 function ensureBundle() {
   if (existsSync(BUNDLE)) return;
-  console.log("Bundle missing; running `npm run build:bundle -w sidetrack`.");
-  run("npm", ["run", "build:bundle", "-w", "sidetrack"], {
+  console.log("Bundle missing; running `npm run build:bundle -w parallel-docs`.");
+  run("npm", ["run", "build:bundle", "-w", "parallel-docs"], {
     cwd: REPO_ROOT,
     shell: process.platform === "win32",
   });
@@ -157,17 +157,17 @@ async function fetchToFile(url, dest) {
   if (!res.ok) {
     throw new Error(
       `Failed to download official Node (${res.status} ${res.statusText}): ${url}. ` +
-        "Check that this Node version exists on nodejs.org, or set SIDETRACK_SEA_NODE to a capable binary.",
+        "Check that this Node version exists on nodejs.org, or set PARALLEL_DOCS_SEA_NODE to a capable binary.",
     );
   }
   writeFileSync(dest, Buffer.from(await res.arrayBuffer()));
 }
 
 async function ensureOfficialSeaNodeDownloaded() {
-  if (process.env.SIDETRACK_SEA_SKIP_OFFICIAL_DOWNLOAD === "1") {
+  if (process.env.PARALLEL_DOCS_SEA_SKIP_OFFICIAL_DOWNLOAD === "1") {
     throw new Error(
       `${process.execPath} lacks the SEA fuse (typical for Homebrew). ` +
-        "Set SIDETRACK_SEA_NODE to an official nodejs.org `node` binary, or unset SIDETRACK_SEA_SKIP_OFFICIAL_DOWNLOAD " +
+        "Set PARALLEL_DOCS_SEA_NODE to an official nodejs.org `node` binary, or unset PARALLEL_DOCS_SEA_SKIP_OFFICIAL_DOWNLOAD " +
         "to allow downloading one that matches your current Node version.",
     );
   }
@@ -221,14 +221,14 @@ async function ensureOfficialSeaNodeDownloaded() {
 }
 
 async function resolveSeaNodeBinary() {
-  const override = process.env.SIDETRACK_SEA_NODE?.trim();
+  const override = process.env.PARALLEL_DOCS_SEA_NODE?.trim();
   if (override) {
     if (!existsSync(override)) {
-      throw new Error(`SIDETRACK_SEA_NODE=${override} does not exist.`);
+      throw new Error(`PARALLEL_DOCS_SEA_NODE=${override} does not exist.`);
     }
     if (!hasSeaSentinel(override)) {
       throw new Error(
-        `SIDETRACK_SEA_NODE=${override} does not contain ${FUSE}. ` +
+        `PARALLEL_DOCS_SEA_NODE=${override} does not contain ${FUSE}. ` +
           "Use an official Node.js build from nodejs.org (or nvm/fnm default install).",
       );
     }

@@ -1,13 +1,17 @@
 import { parseAnchor, type ParsedAnchor } from "./anchors.js";
 import { describeIndexSchemaRemediation } from "./index-schema-messages.js";
 import { assertValidMarkerId } from "./marker-ids.js";
-import { type SideTrackIndex, coerceIndexSchemaVersion, CURRENT_SCHEMA_VERSION } from "./model.js";
+import {
+  type ParallelDocsIndex,
+  coerceIndexSchemaVersion,
+  CURRENT_SCHEMA_VERSION,
+} from "./model.js";
 
-export function emptyIndex(): SideTrackIndex {
-  return { schemaVersion: CURRENT_SCHEMA_VERSION, bySideTrackPath: {} };
+export function emptyIndex(): ParallelDocsIndex {
+  return { schemaVersion: CURRENT_SCHEMA_VERSION, byParallelDocsPath: {} };
 }
 
-export function assertValidIndex(value: unknown): SideTrackIndex {
+export function assertValidIndex(value: unknown): ParallelDocsIndex {
   if (typeof value !== "object" || value === null) {
     throw new TypeError("index.json must be a JSON object");
   }
@@ -23,69 +27,69 @@ export function assertValidIndex(value: unknown): SideTrackIndex {
       `index.json schemaVersion mismatch. ${describeIndexSchemaRemediation(obj.schemaVersion)}`,
     );
   }
-  const bySideTrackPath = obj.bySideTrackPath;
-  if (typeof bySideTrackPath !== "object" || bySideTrackPath === null) {
-    throw new TypeError("index.json.bySideTrackPath must be an object");
+  const byParallelDocsPath = obj.byParallelDocsPath;
+  if (typeof byParallelDocsPath !== "object" || byParallelDocsPath === null) {
+    throw new TypeError("index.json.byParallelDocsPath must be an object");
   }
-  for (const [key, entry] of Object.entries(bySideTrackPath)) {
-    validateSideTrackEntry(key, entry);
+  for (const [key, entry] of Object.entries(byParallelDocsPath)) {
+    validateParallelDocsEntry(key, entry);
   }
-  return { ...obj, schemaVersion: CURRENT_SCHEMA_VERSION } as SideTrackIndex;
+  return { ...obj, schemaVersion: CURRENT_SCHEMA_VERSION } as ParallelDocsIndex;
 }
 
-function validateSideTrackEntry(sidetrackPathKey: string, entry: unknown): void {
+function validateParallelDocsEntry(parallelDocsPathKey: string, entry: unknown): void {
   if (typeof entry !== "object" || entry === null) {
-    throw new TypeError(`Invalid index entry for ${sidetrackPathKey}`);
+    throw new TypeError(`Invalid index entry for ${parallelDocsPathKey}`);
   }
   const e = entry as Record<string, unknown>;
   if (typeof e.sourcePath !== "string") {
-    throw new TypeError(`Missing sourcePath for ${sidetrackPathKey}`);
+    throw new TypeError(`Missing sourcePath for ${parallelDocsPathKey}`);
   }
-  if (typeof e.sidetrackPath !== "string") {
-    throw new TypeError(`Missing sidetrackPath for ${sidetrackPathKey}`);
+  if (typeof e.parallelDocsPath !== "string") {
+    throw new TypeError(`Missing parallelDocsPath for ${parallelDocsPathKey}`);
   }
-  if (e.sidetrackPath !== sidetrackPathKey) {
+  if (e.parallelDocsPath !== parallelDocsPathKey) {
     throw new TypeError(
-      `index key must equal entry.sidetrackPath (key=${sidetrackPathKey}, entry=${e.sidetrackPath})`,
+      `index key must equal entry.parallelDocsPath (key=${parallelDocsPathKey}, entry=${e.parallelDocsPath})`,
     );
   }
   if (!Array.isArray(e.blocks)) {
-    throw new TypeError(`blocks must be an array for ${sidetrackPathKey}`);
+    throw new TypeError(`blocks must be an array for ${parallelDocsPathKey}`);
   }
-  for (const block of e.blocks) validateBlock(sidetrackPathKey, block);
+  for (const block of e.blocks) validateBlock(parallelDocsPathKey, block);
 }
 
-function parseValidatedMarkerId(sidetrackPathKey: string, raw: string): string {
+function parseValidatedMarkerId(parallelDocsPathKey: string, raw: string): string {
   try {
     return assertValidMarkerId(raw);
   } catch (e) {
     throw new TypeError(
-      `block.id invalid under ${sidetrackPathKey}: ${e instanceof Error ? e.message : String(e)}`,
+      `block.id invalid under ${parallelDocsPathKey}: ${e instanceof Error ? e.message : String(e)}`,
       { cause: e },
     );
   }
 }
 
-function parseValidatedAnchor(sidetrackPathKey: string, raw: string): ParsedAnchor {
+function parseValidatedAnchor(parallelDocsPathKey: string, raw: string): ParsedAnchor {
   try {
     return parseAnchor(raw);
   } catch (e) {
     throw new TypeError(
-      `Invalid block.anchor under ${sidetrackPathKey}: ${e instanceof Error ? e.message : String(e)}`,
+      `Invalid block.anchor under ${parallelDocsPathKey}: ${e instanceof Error ? e.message : String(e)}`,
       { cause: e },
     );
   }
 }
 
 function assertBlockMarkerAnchorConsistency(
-  sidetrackPathKey: string,
+  parallelDocsPathKey: string,
   b: Record<string, unknown>,
   bid: string,
   parsedAnchor: ParsedAnchor,
 ): void {
   if (parsedAnchor.kind === "marker" && parsedAnchor.id !== bid) {
     throw new TypeError(
-      `block.id must match marker anchor id (got id=${b.id}, anchor=${b.anchor}) under ${sidetrackPathKey}`,
+      `block.id must match marker anchor id (got id=${b.id}, anchor=${b.anchor}) under ${parallelDocsPathKey}`,
     );
   }
   if (
@@ -96,48 +100,53 @@ function assertBlockMarkerAnchorConsistency(
     assertValidMarkerId(b.markerId) !== parsedAnchor.id
   ) {
     throw new TypeError(
-      `block.markerId must match marker anchor id under ${sidetrackPathKey} (block ${b.id})`,
+      `block.markerId must match marker anchor id under ${parallelDocsPathKey} (block ${b.id})`,
     );
   }
 }
 
-function validateBlockOptionalFields(sidetrackPathKey: string, b: Record<string, unknown>): void {
+function validateBlockOptionalFields(
+  parallelDocsPathKey: string,
+  b: Record<string, unknown>,
+): void {
   if (b.lastVerifiedCommit !== undefined && typeof b.lastVerifiedCommit !== "string") {
     throw new TypeError(
-      `block.lastVerifiedCommit must be a string when present under ${sidetrackPathKey}`,
+      `block.lastVerifiedCommit must be a string when present under ${parallelDocsPathKey}`,
     );
   }
   if (b.lastVerifiedBlob !== undefined && typeof b.lastVerifiedBlob !== "string") {
     throw new TypeError(
-      `block.lastVerifiedBlob must be a string when present under ${sidetrackPathKey}`,
+      `block.lastVerifiedBlob must be a string when present under ${parallelDocsPathKey}`,
     );
   }
   if (b.markerId !== undefined && typeof b.markerId !== "string") {
-    throw new TypeError(`block.markerId must be a string when present under ${sidetrackPathKey}`);
+    throw new TypeError(
+      `block.markerId must be a string when present under ${parallelDocsPathKey}`,
+    );
   }
   if (b.snippet !== undefined && typeof b.snippet !== "string") {
-    throw new TypeError(`block.snippet must be a string when present under ${sidetrackPathKey}`);
+    throw new TypeError(`block.snippet must be a string when present under ${parallelDocsPathKey}`);
   }
   if (b.fingerprint !== undefined) {
     throw new TypeError(
-      `block.fingerprint is no longer supported under ${sidetrackPathKey}; re-open the repo to migrate index.json`,
+      `block.fingerprint is no longer supported under ${parallelDocsPathKey}; re-open the repo to migrate index.json`,
     );
   }
 }
 
-function validateBlock(sidetrackPathKey: string, block: unknown): void {
+function validateBlock(parallelDocsPathKey: string, block: unknown): void {
   if (typeof block !== "object" || block === null) {
-    throw new TypeError(`Invalid block under ${sidetrackPathKey}`);
+    throw new TypeError(`Invalid block under ${parallelDocsPathKey}`);
   }
   const b = block as Record<string, unknown>;
   if (typeof b.id !== "string") {
-    throw new TypeError(`block.id must be a string under ${sidetrackPathKey}`);
+    throw new TypeError(`block.id must be a string under ${parallelDocsPathKey}`);
   }
-  const bid = parseValidatedMarkerId(sidetrackPathKey, b.id);
+  const bid = parseValidatedMarkerId(parallelDocsPathKey, b.id);
   if (typeof b.anchor !== "string") {
-    throw new TypeError(`block.anchor must be a string under ${sidetrackPathKey}`);
+    throw new TypeError(`block.anchor must be a string under ${parallelDocsPathKey}`);
   }
-  const parsedAnchor = parseValidatedAnchor(sidetrackPathKey, b.anchor);
-  assertBlockMarkerAnchorConsistency(sidetrackPathKey, b, bid, parsedAnchor);
-  validateBlockOptionalFields(sidetrackPathKey, b);
+  const parsedAnchor = parseValidatedAnchor(parallelDocsPathKey, b.anchor);
+  assertBlockMarkerAnchorConsistency(parallelDocsPathKey, b, bid, parsedAnchor);
+  validateBlockOptionalFields(parallelDocsPathKey, b);
 }

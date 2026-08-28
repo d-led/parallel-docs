@@ -1,6 +1,6 @@
 {
-  "name": "sidetrack-vscode",
-  "displayName": "SideTrack",
+  "name": "parallel-docs",
+  "displayName": "Parallel Docs",
   "description": "Out-of-file documentation side tracks, authored side-by-side with your code",
   "version": "1.0.0",
   "publisher": "d-led",
@@ -8,12 +8,12 @@
   "icon": "icon.png",
   "repository": {
     "type": "git",
-    "url": "https://github.com/d-led/sidetrack.git",
+    "url": "https://github.com/d-led/parallel-docs.git",
     "directory": "packages/vscode"
   },
-  "homepage": "https://github.com/d-led/sidetrack#readme",
+  "homepage": "https://github.com/d-led/parallel-docs#readme",
   "bugs": {
-    "url": "https://github.com/d-led/sidetrack/issues"
+    "url": "https://github.com/d-led/parallel-docs/issues"
   },
   "engines": {
     "vscode": "^1.95.0"
@@ -22,200 +22,200 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:sidetrack.init",
-    "onCommand:sidetrack.openSideBySide",
-    "onCommand:sidetrack.openSideTrackAngle",
-    "onCommand:sidetrack.addAngleDefinition",
-    "onCommand:sidetrack.startBlockFromSelection",
-    "onCommand:sidetrack.openSideTrackPreview",
-    "onCommand:sidetrack.openRenderedPreview",
-    "onCommand:sidetrack.openRenderedPreviewChooseAngle",
-    "onCommand:sidetrack.validateWorkspace",
-    "onCommand:sidetrack.openCorrespondingSource",
-    "onCommand:sidetrack.removeBlock",
-    "onCommand:sidetrack.cleanRegions",
-    "onCommand:sidetrack.repairFile"
+    "onCommand:parallel-docs.init",
+    "onCommand:parallel-docs.openSideBySide",
+    "onCommand:parallel-docs.openParallelDocsAngle",
+    "onCommand:parallel-docs.addAngleDefinition",
+    "onCommand:parallel-docs.startBlockFromSelection",
+    "onCommand:parallel-docs.openParallelDocsPreview",
+    "onCommand:parallel-docs.openRenderedPreview",
+    "onCommand:parallel-docs.openRenderedPreviewChooseAngle",
+    "onCommand:parallel-docs.validateWorkspace",
+    "onCommand:parallel-docs.openCorrespondingSource",
+    "onCommand:parallel-docs.removeBlock",
+    "onCommand:parallel-docs.cleanRegions",
+    "onCommand:parallel-docs.repairFile"
   ],
   "main": "./dist/extension.js",
   "contributes": {
     "configuration": {
-      "title": "SideTrack",
+      "title": "ParallelDocs",
       "properties": {
-        "sidetrack.scrollSync.enabled": {
+        "parallel-docs.scrollSync.enabled": {
           "type": "boolean",
           "default": true,
-          "markdownDescription": "When enabled, scrolling the source editor updates the paired sidetrack editor (and vice versa), using block anchors when available. Reload or reopen the pair after changing this setting."
+          "markdownDescription": "When enabled, scrolling the source editor updates the paired parallel-docs editor (and vice versa), using block anchors when available. Reload or reopen the pair after changing this setting."
         }
       }
     },
     "commands": [
       {
-        "command": "sidetrack.init",
+        "command": "parallel-docs.init",
         "title": "Initialize workspace",
-        "category": "SideTrack",
-        "enablement": "!sidetrack.workspaceInitialized"
+        "category": "ParallelDocs",
+        "enablement": "!parallel-docs.workspaceInitialized"
       },
       {
-        "command": "sidetrack.openSideBySide",
+        "command": "parallel-docs.openSideBySide",
         "title": "Open paired markdown beside editor",
-        "category": "SideTrack",
-        "enablement": "sidetrack.workspaceInitialized && !sidetrack.activeEditorUnderCompanionSourceTree"
+        "category": "ParallelDocs",
+        "enablement": "parallel-docs.workspaceInitialized && !parallel-docs.activeEditorUnderCompanionSourceTree"
       },
       {
-        "command": "sidetrack.openSideTrackAngle",
+        "command": "parallel-docs.openParallelDocsAngle",
         "title": "Open paired markdown (choose angle)",
-        "category": "SideTrack",
-        "enablement": "sidetrack.workspaceInitialized && !sidetrack.activeEditorUnderCompanionSourceTree"
+        "category": "ParallelDocs",
+        "enablement": "parallel-docs.workspaceInitialized && !parallel-docs.activeEditorUnderCompanionSourceTree"
       },
       {
-        "command": "sidetrack.addAngleDefinition",
+        "command": "parallel-docs.addAngleDefinition",
         "title": "Add angle to project…",
-        "category": "SideTrack",
-        "enablement": "sidetrack.workspaceInitialized"
+        "category": "ParallelDocs",
+        "enablement": "parallel-docs.workspaceInitialized"
       },
       {
-        "command": "sidetrack.startBlockFromSelection",
+        "command": "parallel-docs.startBlockFromSelection",
         "title": "Add side-track block from selection",
-        "category": "SideTrack",
-        "enablement": "sidetrack.workspaceInitialized && !sidetrack.activeEditorUnderCompanionSourceTree && !editorReadonly"
+        "category": "ParallelDocs",
+        "enablement": "parallel-docs.workspaceInitialized && !parallel-docs.activeEditorUnderCompanionSourceTree && !editorReadonly"
       },
       {
-        "command": "sidetrack.openSideTrackPreview",
+        "command": "parallel-docs.openParallelDocsPreview",
         "title": "Open Markdown preview for paired file",
-        "category": "SideTrack",
-        "enablement": "sidetrack.workspaceInitialized && (!sidetrack.activeEditorUnderCompanionSourceTree || editorLangId == markdown)"
+        "category": "ParallelDocs",
+        "enablement": "parallel-docs.workspaceInitialized && (!parallel-docs.activeEditorUnderCompanionSourceTree || editorLangId == markdown)"
       },
       {
-        "command": "sidetrack.openRenderedPreview",
-        "title": "Open rendered SideTrack preview (default angle)",
-        "category": "SideTrack",
-        "enablement": "sidetrack.workspaceInitialized && !sidetrack.activeEditorUnderCompanionSourceTree"
+        "command": "parallel-docs.openRenderedPreview",
+        "title": "Open rendered ParallelDocs preview (default angle)",
+        "category": "ParallelDocs",
+        "enablement": "parallel-docs.workspaceInitialized && !parallel-docs.activeEditorUnderCompanionSourceTree"
       },
       {
-        "command": "sidetrack.openRenderedPreviewChooseAngle",
-        "title": "Open rendered SideTrack preview (choose angle)…",
-        "category": "SideTrack",
-        "enablement": "sidetrack.workspaceInitialized && !sidetrack.activeEditorUnderCompanionSourceTree"
+        "command": "parallel-docs.openRenderedPreviewChooseAngle",
+        "title": "Open rendered ParallelDocs preview (choose angle)…",
+        "category": "ParallelDocs",
+        "enablement": "parallel-docs.workspaceInitialized && !parallel-docs.activeEditorUnderCompanionSourceTree"
       },
       {
-        "command": "sidetrack.validateWorkspace",
+        "command": "parallel-docs.validateWorkspace",
         "title": "Validate workspace",
-        "category": "SideTrack"
+        "category": "ParallelDocs"
       },
       {
-        "command": "sidetrack.openCorrespondingSource",
+        "command": "parallel-docs.openCorrespondingSource",
         "title": "Open corresponding source file",
-        "category": "SideTrack",
-        "enablement": "sidetrack.workspaceInitialized && sidetrack.activeEditorIsResolvableCompanionMarkdown"
+        "category": "ParallelDocs",
+        "enablement": "parallel-docs.workspaceInitialized && parallel-docs.activeEditorIsResolvableCompanionMarkdown"
       },
       {
-        "command": "sidetrack.removeBlock",
+        "command": "parallel-docs.removeBlock",
         "title": "Remove side-track block/region",
-        "category": "SideTrack",
-        "enablement": "sidetrack.workspaceInitialized && !editorReadonly"
+        "category": "ParallelDocs",
+        "enablement": "parallel-docs.workspaceInitialized && !editorReadonly"
       },
       {
-        "command": "sidetrack.cleanRegions",
-        "title": "Clean and align sidetrack regions",
-        "category": "SideTrack",
-        "enablement": "sidetrack.workspaceInitialized"
+        "command": "parallel-docs.cleanRegions",
+        "title": "Clean and align parallel-docs regions",
+        "category": "ParallelDocs",
+        "enablement": "parallel-docs.workspaceInitialized"
       },
       {
-        "command": "sidetrack.repairFile",
-        "title": "Repair sidetrack region markers",
-        "category": "SideTrack",
-        "enablement": "sidetrack.workspaceInitialized && !editorReadonly"
+        "command": "parallel-docs.repairFile",
+        "title": "Repair parallel-docs region markers",
+        "category": "ParallelDocs",
+        "enablement": "parallel-docs.workspaceInitialized && !editorReadonly"
       }
     ],
     "keybindings": [
       {
-        "command": "sidetrack.openSideBySide",
+        "command": "parallel-docs.openSideBySide",
         "key": "ctrl+alt+o",
         "mac": "cmd+alt+o",
-        "when": "editorTextFocus && sidetrack.workspaceInitialized && !sidetrack.activeEditorUnderCompanionSourceTree"
+        "when": "editorTextFocus && parallel-docs.workspaceInitialized && !parallel-docs.activeEditorUnderCompanionSourceTree"
       },
       {
-        "command": "sidetrack.startBlockFromSelection",
+        "command": "parallel-docs.startBlockFromSelection",
         "key": "ctrl+alt+k",
         "mac": "cmd+alt+k",
-        "when": "editorTextFocus && sidetrack.workspaceInitialized && !editorReadonly && !sidetrack.activeEditorUnderCompanionSourceTree"
+        "when": "editorTextFocus && parallel-docs.workspaceInitialized && !editorReadonly && !parallel-docs.activeEditorUnderCompanionSourceTree"
       }
     ],
     "menus": {
       "editor/context": [
         {
-          "command": "sidetrack.init",
-          "group": "sidetrack@0",
-          "when": "editorTextFocus && !sidetrack.workspaceInitialized"
+          "command": "parallel-docs.init",
+          "group": "parallel-docs@0",
+          "when": "editorTextFocus && !parallel-docs.workspaceInitialized"
         },
         {
-          "command": "sidetrack.openSideBySide",
-          "group": "sidetrack@1",
-          "when": "editorTextFocus && sidetrack.workspaceInitialized && !sidetrack.activeEditorUnderCompanionSourceTree"
+          "command": "parallel-docs.openSideBySide",
+          "group": "parallel-docs@1",
+          "when": "editorTextFocus && parallel-docs.workspaceInitialized && !parallel-docs.activeEditorUnderCompanionSourceTree"
         },
         {
-          "command": "sidetrack.openSideTrackAngle",
-          "group": "sidetrack@1b",
-          "when": "editorTextFocus && sidetrack.workspaceInitialized && !sidetrack.activeEditorUnderCompanionSourceTree"
+          "command": "parallel-docs.openParallelDocsAngle",
+          "group": "parallel-docs@1b",
+          "when": "editorTextFocus && parallel-docs.workspaceInitialized && !parallel-docs.activeEditorUnderCompanionSourceTree"
         },
         {
-          "command": "sidetrack.openRenderedPreview",
-          "group": "sidetrack@1d",
-          "when": "editorTextFocus && sidetrack.workspaceInitialized && !sidetrack.activeEditorUnderCompanionSourceTree"
+          "command": "parallel-docs.openRenderedPreview",
+          "group": "parallel-docs@1d",
+          "when": "editorTextFocus && parallel-docs.workspaceInitialized && !parallel-docs.activeEditorUnderCompanionSourceTree"
         },
         {
-          "command": "sidetrack.openRenderedPreviewChooseAngle",
-          "group": "sidetrack@1e",
-          "when": "editorTextFocus && sidetrack.workspaceInitialized && !sidetrack.activeEditorUnderCompanionSourceTree"
+          "command": "parallel-docs.openRenderedPreviewChooseAngle",
+          "group": "parallel-docs@1e",
+          "when": "editorTextFocus && parallel-docs.workspaceInitialized && !parallel-docs.activeEditorUnderCompanionSourceTree"
         },
         {
-          "command": "sidetrack.addAngleDefinition",
-          "group": "sidetrack@1c",
-          "when": "editorTextFocus && sidetrack.workspaceInitialized"
+          "command": "parallel-docs.addAngleDefinition",
+          "group": "parallel-docs@1c",
+          "when": "editorTextFocus && parallel-docs.workspaceInitialized"
         },
         {
-          "command": "sidetrack.startBlockFromSelection",
-          "group": "sidetrack@2",
-          "when": "editorTextFocus && sidetrack.workspaceInitialized && !editorReadonly && !sidetrack.activeEditorUnderCompanionSourceTree"
+          "command": "parallel-docs.startBlockFromSelection",
+          "group": "parallel-docs@2",
+          "when": "editorTextFocus && parallel-docs.workspaceInitialized && !editorReadonly && !parallel-docs.activeEditorUnderCompanionSourceTree"
         },
         {
-          "command": "sidetrack.openCorrespondingSource",
-          "group": "sidetrack@1f",
-          "when": "editorTextFocus && sidetrack.workspaceInitialized && sidetrack.activeEditorIsResolvableCompanionMarkdown"
+          "command": "parallel-docs.openCorrespondingSource",
+          "group": "parallel-docs@1f",
+          "when": "editorTextFocus && parallel-docs.workspaceInitialized && parallel-docs.activeEditorIsResolvableCompanionMarkdown"
         },
         {
-          "command": "sidetrack.removeBlock",
-          "group": "sidetrack@2a",
-          "when": "editorTextFocus && sidetrack.workspaceInitialized && !editorReadonly"
+          "command": "parallel-docs.removeBlock",
+          "group": "parallel-docs@2a",
+          "when": "editorTextFocus && parallel-docs.workspaceInitialized && !editorReadonly"
         },
         {
-          "command": "sidetrack.cleanRegions",
-          "group": "sidetrack@2b",
-          "when": "editorTextFocus && sidetrack.workspaceInitialized"
+          "command": "parallel-docs.cleanRegions",
+          "group": "parallel-docs@2b",
+          "when": "editorTextFocus && parallel-docs.workspaceInitialized"
         },
         {
-          "command": "sidetrack.repairFile",
-          "group": "sidetrack@2c",
-          "when": "editorTextFocus && sidetrack.workspaceInitialized && !editorReadonly"
+          "command": "parallel-docs.repairFile",
+          "group": "parallel-docs@2c",
+          "when": "editorTextFocus && parallel-docs.workspaceInitialized && !editorReadonly"
         }
       ],
       "explorer/context": [
         {
-          "command": "sidetrack.init",
-          "group": "sidetrack@0",
-          "when": "resourceScheme == file && !sidetrack.workspaceInitialized"
+          "command": "parallel-docs.init",
+          "group": "parallel-docs@0",
+          "when": "resourceScheme == file && !parallel-docs.workspaceInitialized"
         },
         {
-          "command": "sidetrack.openSideBySide",
-          "group": "sidetrack@1",
-          "when": "resourceScheme == file && sidetrack.workspaceInitialized"
+          "command": "parallel-docs.openSideBySide",
+          "group": "parallel-docs@1",
+          "when": "resourceScheme == file && parallel-docs.workspaceInitialized"
         }
       ]
     },
     "snippets": [
       {
         "language": "markdown",
-        "path": "./snippets/sidetrack-markdown.code-snippets"
+        "path": "./snippets/parallel-docs-markdown.code-snippets"
       }
     ]
   },
@@ -226,8 +226,8 @@
     "test:vscode": "tsc -p tsconfig.tests.json && vscode-test"
   },
   "dependencies": {
-    "@sidetrack/core": "1.0.0",
-    "@sidetrack/render": "1.0.0"
+    "@parallel-docs/core": "1.0.0",
+    "@parallel-docs/render": "1.0.0"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",

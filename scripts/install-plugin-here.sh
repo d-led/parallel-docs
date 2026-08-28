@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Build, package, and install the SideTrack VS Code extension into the
+# Build, package, and install the ParallelDocs VS Code extension into the
 # IDE that is currently running (the one whose integrated terminal we're in).
 #
 # Detects the running IDE through the environment it sets. Unlike
@@ -11,7 +11,7 @@ set -euo pipefail
 # Detection order for the running IDE:
 #   1. $VSCODE_IPC_HOOK_CLI  — set by VS Code / Cursor integrated terminal
 #   2. $ANTIGRAVITY_EDITOR_APP_ROOT — set by Antigravity
-#   3. $SIDETRACK_EDITOR     — user override (path or command name)
+#   3. $PARALLEL_DOCS_EDITOR     — user override (path or command name)
 #   4. scripts/lib/pick-editor-cli.sh fallback
 #
 # Usage:
@@ -19,18 +19,18 @@ set -euo pipefail
 #   bash scripts/install-plugin-here.sh --package-only   # just produce the .vsix
 #   bash scripts/install-plugin-here.sh --uninstall      # remove from running IDE
 #
-# Honors $SIDETRACK_EDITOR (path or command) to override.
+# Honors $PARALLEL_DOCS_EDITOR (path or command) to override.
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
 # shellcheck source=lib/pick-editor-cli.sh
 source "$REPO_ROOT/scripts/lib/pick-editor-cli.sh"
-# shellcheck source=lib/sidetrack-vscode-ext.sh
-source "$REPO_ROOT/scripts/lib/sidetrack-vscode-ext.sh"
+# shellcheck source=lib/parallel-docs-vscode-ext.sh
+source "$REPO_ROOT/scripts/lib/parallel-docs-vscode-ext.sh"
 
 EXT_DIR="$REPO_ROOT/packages/vscode"
-EXT_ID="$SIDETRACK_VSCODE_EXTENSION_ID"
+EXT_ID="$PARALLEL_DOCS_VSCODE_EXTENSION_ID"
 
 # ---- detect running IDE ------------------------------------------------
 
@@ -84,8 +84,8 @@ detect_running_editor_cli() {
     return 0
   fi
 
-  # Fall back to the library detection (respects $SIDETRACK_EDITOR).
-  sidetrack_pick_editor_cli
+  # Fall back to the library detection (respects $PARALLEL_DOCS_EDITOR).
+  parallel_docs_pick_editor_cli
 }
 
 # ---- main ---------------------------------------------------------------
@@ -112,21 +112,21 @@ echo "Rendering Marketplace icon from canonical SVG..." >&2
 bash "$REPO_ROOT/scripts/build-vscode-icon.sh"
 
 echo "Cleaning extension dependency workspaces (fresh dist + TS incremental state)..." >&2
-npm run clean -w @sidetrack/core -w @sidetrack/render -w sidetrack-vscode 2>/dev/null || true
+npm run clean -w @parallel-docs/core -w @parallel-docs/render -w parallel-docs-vscode 2>/dev/null || true
 rm -f \
   "$REPO_ROOT/packages/core"/tsconfig*.tsbuildinfo \
   "$REPO_ROOT/packages/render"/tsconfig*.tsbuildinfo \
   "$REPO_ROOT/packages/vscode"/tsconfig*.tsbuildinfo
 
 echo "Building workspace packages the extension depends on, then bundling..." >&2
-npm run build -w @sidetrack/core -w @sidetrack/render -w @sidetrack/mcp-server -w sidetrack-vscode
+npm run build -w @parallel-docs/core -w @parallel-docs/render -w @parallel-docs/mcp-server -w parallel-docs-vscode
 
 echo "Packaging extension..." >&2
 pushd "$EXT_DIR" >/dev/null
-npx vsce package --no-dependencies --out dist/sidetrack.vsix
+npx vsce package --no-dependencies --out dist/parallel-docs.vsix
 popd >/dev/null
 
-vsix="$EXT_DIR/dist/sidetrack.vsix"
+vsix="$EXT_DIR/dist/parallel-docs.vsix"
 
 if [[ "$mode" == "package" ]]; then
   echo "VSIX packaged: $vsix" >&2
@@ -134,12 +134,12 @@ if [[ "$mode" == "package" ]]; then
 fi
 
 # Uninstall any previously installed copy first (avoids Marketplace vs local conflicts).
-sidetrack_uninstall_packaged_sidetrack_if_present "$editor_cli"
+parallel_docs_uninstall_packaged_parallel_docs_if_present "$editor_cli"
 
 echo "Installing $vsix into $editor_cli..." >&2
 "$editor_cli" --install-extension "$vsix" --force
 
-echo "Done. SideTrack $(node -e "process.stdout.write(require('$EXT_DIR/package.json').version)") installed into $editor_cli." >&2
+echo "Done. ParallelDocs $(node -e "process.stdout.write(require('$EXT_DIR/package.json').version)") installed into $editor_cli." >&2
 
 # Install MCP server config for this repo so AI assistants can use it.
 # Points directly at the locally built mcp-server.js — no CLI needed on PATH.
@@ -154,7 +154,7 @@ write_mcp_config() {
   cat > "$file" <<JSONEOF
 {
   "servers": {
-    "sidetrack": {
+    "parallel-docs": {
       "type": "stdio",
       "command": "node",
       "cwd": "\${workspaceFolder}",
@@ -172,4 +172,4 @@ write_mcp_config "$REPO_ROOT/.antigravity/mcp.json"
 write_mcp_config "$REPO_ROOT/.opencode/mcp.json"
 
 echo "" >&2
-echo "MCP server ready. Open the MCP panel (Cmd+Shift+P → 'MCP: List Servers') and restart 'sidetrack' to pick up the new config." >&2
+echo "MCP server ready. Open the MCP panel (Cmd+Shift+P → 'MCP: List Servers') and restart 'parallel-docs' to pick up the new config." >&2

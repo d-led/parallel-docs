@@ -52,58 +52,58 @@ pre {
   margin: 0;
 }
 
-.sidetrack {
+.parallel-docs {
   font-size: 15px;
   line-height: 1.45;
 }
 
-.sidetrack img {
+.parallel-docs img {
   max-width: 100%;
   height: auto;
 }
 
-.sidetrack :where(table) {
+.parallelDocs :where(table) {
   width: max-content;
   max-width: none;
   border-collapse: collapse;
   margin: 0.85em 0;
 }
 
-.sidetrack :where(th, td) {
+.parallelDocs :where(th, td) {
   border: 1px solid color-mix(in oklab, CanvasText 22%, Canvas);
   padding: 8px 12px;
   vertical-align: top;
 }
 
-.sidetrack :where(thead th) {
+.parallelDocs :where(thead th) {
   font-weight: 600;
   background: color-mix(in oklab, CanvasText 7%, Canvas);
 }
 
-.sidetrack tbody tr:nth-child(even) :where(td) {
+.parallel-docs tbody tr:nth-child(even) :where(td) {
   background: color-mix(in oklab, CanvasText 3.5%, Canvas);
 }
 
-.sidetrack :where(ul.contains-task-list) {
+.parallelDocs :where(ul.contains-task-list) {
   list-style: none;
   padding-inline-start: 1.2em;
 }
 
-.sidetrack :where(li.task-list-item) {
+.parallelDocs :where(li.task-list-item) {
   position: relative;
 }
 
-.sidetrack :where(li.task-list-item input[type="checkbox"]) {
+.parallelDocs :where(li.task-list-item input[type="checkbox"]) {
   position: absolute;
   margin-inline-start: -1.35em;
   margin-top: 0.2em;
 }
 
-.sidetrack :where(del) {
+.parallelDocs :where(del) {
   opacity: 0.82;
 }
 
-.sidetrack :where(section.footnotes) {
+.parallelDocs :where(section.footnotes) {
   margin-top: 1.5em;
   padding-top: 0.75em;
   border-top: 1px solid color-mix(in oklab, CanvasText 18%, Canvas);

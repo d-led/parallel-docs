@@ -1,6 +1,6 @@
 {
-  "name": "@sidetrack/architecture",
+  "name": "@parallel-docs/architecture",
   "private": true,
   "version": "1.0.0",
-  "description": "Monorepo architecture rules (ArchUnitTS); intent in .sidetrack/source/README.md/architecture.md"
+  "description": "Monorepo architecture rules (ArchUnitTS); intent in .parallel-docs/source/README.md/architecture.md"
 }

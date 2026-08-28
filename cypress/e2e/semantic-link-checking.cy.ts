@@ -1,7 +1,10 @@
 describe("Semantic link checking and permalink verification", () => {
   function currentPageSupportsScrollAnchors(): Cypress.Chainable<boolean> {
     return cy.document().then((doc) => {
-      return doc.querySelectorAll(".sidetrack-block-anchor, [id^='sidetrack-md-line-']").length > 0;
+      return (
+        doc.querySelectorAll(".parallel-docs-block-anchor, [id^='parallel-docs-md-line-']").length >
+        0
+      );
     });
   }
 
@@ -9,7 +12,8 @@ describe("Semantic link checking and permalink verification", () => {
     return cy.document().then((doc) => {
       const hrefs = new Set<string>();
       const shell = doc.querySelector(".shell");
-      const pairBrowseHref = shell?.getAttribute("data-sidetrack-pair-browse-href")?.trim() ?? "";
+      const pairBrowseHref =
+        shell?.getAttribute("data-parallel-docs-pair-browse-href")?.trim() ?? "";
       if (pairBrowseHref.length > 0 && pairBrowseHref.startsWith("/")) {
         hrefs.add(pairBrowseHref);
       }
@@ -53,7 +57,7 @@ describe("Semantic link checking and permalink verification", () => {
     return cy
       .visit(candidate, {
         onBeforeLoad(win) {
-          win.localStorage.setItem("sidetrack.codeSideTrackStatic.wideModeIntro.v1", "1");
+          win.localStorage.setItem("parallel-docs.codeParallelDocsStatic.wideModeIntro.v1", "1");
         },
       })
       .then(() => currentPageSupportsScrollAnchors())
@@ -126,7 +130,7 @@ describe("Semantic link checking and permalink verification", () => {
       cy.stub(win.navigator.clipboard, "writeText").as("clipboardWrite");
     });
 
-    cy.get("#sidetrack-share-link").click();
+    cy.get("#parallel-docs-share-link").click();
 
     cy.get<Cypress.SinonStub>("@clipboardWrite").should("have.been.calledOnce");
     cy.get<Cypress.SinonStub>("@clipboardWrite").then((stub) => {
@@ -155,7 +159,7 @@ describe("Semantic link checking and permalink verification", () => {
       cy.stub(win.navigator.clipboard, "writeText").as("clipboardWriteArch");
     });
 
-    cy.get("#sidetrack-share-link").click();
+    cy.get("#parallel-docs-share-link").click();
 
     cy.get<Cypress.SinonStub>("@clipboardWriteArch").should("have.been.calledOnce");
     cy.get<Cypress.SinonStub>("@clipboardWriteArch").then((stub) => {
@@ -167,7 +171,7 @@ describe("Semantic link checking and permalink verification", () => {
       cy.visit(copiedUrl);
       cy.CurrentPageShouldDisplayCodeBrowserShell();
       cy.DisplayedValueOfAngleSelectShouldBe("architecture");
-      cy.SideTrackPaneShouldContainText("architecture angle");
+      cy.ParallelDocsPaneShouldContainText("architecture angle");
     });
   });
 
@@ -199,16 +203,16 @@ describe("Semantic link checking and permalink verification", () => {
       cy.stub(win.navigator.clipboard, "writeText").as("clipboardWriteScroll");
     });
 
-    cy.get("#sidetrack-share-link").click();
+    cy.get("#parallel-docs-share-link").click();
 
     cy.get<Cypress.SinonStub>("@clipboardWriteScroll").should("have.been.calledOnce");
     cy.get<Cypress.SinonStub>("@clipboardWriteScroll").then((stub) => {
       const copiedUrl = stub.firstCall.args[0];
-      expect(copiedUrl).to.match(/#.*sidetrack-md-line-\d+/);
+      expect(copiedUrl).to.match(/#.*parallel-docs-md-line-\d+/);
 
       cy.visit(copiedUrl, {
         onBeforeLoad(win) {
-          win.localStorage.setItem("sidetrack.codeSideTrackStatic.wideModeIntro.v1", "1");
+          win.localStorage.setItem("parallel-docs.codeParallelDocsStatic.wideModeIntro.v1", "1");
         },
       });
       cy.CurrentPageShouldDisplayCodeBrowserShell();

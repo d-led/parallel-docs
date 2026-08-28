@@ -1,28 +1,32 @@
-# @sidetrack/core
+# @parallel-docs/core
 
-Models, TOML config parsing, JSON metadata validation + migrations, Git SCM adapter, and staleness helpers for [SideTrack](https://github.com/d-led/sidetrack) — a side-by-side "side track" for code.
+Models, TOML config parsing, JSON metadata validation + migrations, Git SCM adapter, and staleness helpers for [ParallelDocs](https://github.com/d-led/parallel-docs) — a side-by-side "side track" for code.
 
-This package is the library all other SideTrack packages build on. It has no UI and no process side-effects.
+This package is the library all other ParallelDocs packages build on. It has no UI and no process side-effects.
 
 ## Install
 
 ```bash
-npm install @sidetrack/core
+npm install @parallel-docs/core
 ```
 
 ## Use
 
 ```ts
-import { sidetrackMarkdownPath, loadSideTrackConfig, validateProject } from "@sidetrack/core";
+import {
+  parallelDocsMarkdownPath,
+  loadParallelDocsConfig,
+  validateProject,
+} from "@parallel-docs/core";
 
-const config = await loadSideTrackConfig(process.cwd());
+const config = await loadParallelDocsConfig(process.cwd());
 const report = await validateProject(process.cwd());
 for (const issue of report.issues) {
   console.log(issue.level, issue.message);
 }
 ```
 
-Paths, schema, and anchor grammar are specified under [`docs/spec/`](https://github.com/d-led/sidetrack/tree/main/docs/spec) in the monorepo.
+Paths, schema, and anchor grammar are specified under [`docs/spec/`](https://github.com/d-led/parallel-docs/tree/main/docs/spec) in the monorepo.
 
 ## License
 

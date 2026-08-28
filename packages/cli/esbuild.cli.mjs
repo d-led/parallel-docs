@@ -24,7 +24,7 @@ await esbuild.build({
   outfile,
   legalComments: "none",
   logLevel: "info",
-  // The `@sidetrack/render` barrel re-exports `code-browser.ts`, which uses
+  // The `@parallel-docs/render` barrel re-exports `code-browser.ts`, which uses
   // `import.meta.url`. The CLI never reaches that code path and esbuild
   // tree-shakes it out, but the static scan still emits a warning.
   logOverride: {

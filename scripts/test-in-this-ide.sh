@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Run SideTrack VS Code extension integration tests inside your current
-# Antigravity IDE (or Cursor/VS Code if specified via SIDETRACK_EDITOR).
+# Run ParallelDocs VS Code extension integration tests inside your current
+# Antigravity IDE (or Cursor/VS Code if specified via PARALLEL_DOCS_EDITOR).
 #
 # Usage:
 #   bash scripts/test-in-this-ide.sh
@@ -12,8 +12,8 @@ cd "$REPO_ROOT"
 
 # Resolve the path to the Antigravity IDE/editor application CLI
 IDE_BIN=""
-if [[ -n "${SIDETRACK_EDITOR:-}" ]]; then
-  IDE_BIN="$SIDETRACK_EDITOR"
+if [[ -n "${PARALLEL_DOCS_EDITOR:-}" ]]; then
+  IDE_BIN="$PARALLEL_DOCS_EDITOR"
 elif command -v antigravity-ide >/dev/null 2>&1; then
   IDE_BIN="$(which antigravity-ide)"
 elif [[ -n "${ANTIGRAVITY_EDITOR_APP_ROOT:-}" ]] && [[ -f "$ANTIGRAVITY_EDITOR_APP_ROOT/bin/antigravity-ide" ]]; then
@@ -57,8 +57,8 @@ fi
 echo "==> Running VS Code integration tests using: $VSCODE_TEST_PATH"
 
 # Build all dependencies to be sure we are running on fresh bundles
-npm run build -w @sidetrack/core
-npm run build -w @sidetrack/render
+npm run build -w @parallel-docs/core
+npm run build -w @parallel-docs/render
 cd packages/vscode
 npm run build
 

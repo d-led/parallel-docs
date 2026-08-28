@@ -2,17 +2,17 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 import {
-  applyAnglesFlatMigrationToSideTrackToml,
-  sidetrackAnglesLayoutEnabled,
+  applyAnglesFlatMigrationToParallelDocsToml,
+  parallelDocsAnglesLayoutEnabled,
   discoverFlatCompanionMarkdownFiles,
   ensureAnglesSentinelFile,
-  loadSideTrackConfig,
+  loadParallelDocsConfig,
   planAnglesMigrationFromCompanions,
   readIndex,
   rewriteIndexKeysForAnglesMigration,
   writeIndex,
   type AnglesMigrationPlan,
-} from "@sidetrack/core";
+} from "@parallel-docs/core";
 
 import { findProjectRoot } from "./project-root.js";
 
@@ -35,10 +35,12 @@ async function printDryRun(
   for (const m of plan.moves) {
     console.log(`  ${m.fromRepoRel} -> ${m.toRepoRel}`);
   }
-  console.log("Would create .sidetrack/source/.default and update .sidetrack.toml [angles].");
+  console.log(
+    "Would create .parallel-docs/source/.default and update .parallel-docs.toml [angles].",
+  );
   const idx = await readIndex(repoRoot);
   if (!idx) return;
-  const keys = Object.keys(idx.bySideTrackPath).filter((k) => plan.flatToAnglePath.has(k));
+  const keys = Object.keys(idx.byParallelDocsPath).filter((k) => plan.flatToAnglePath.has(k));
   if (keys.length > 0) {
     console.log(`Would rewrite ${String(keys.length)} index.json path key(s).`);
   }
@@ -65,12 +67,12 @@ async function executeMoves(repoRoot: string, plan: AnglesMigrationPlan): Promis
 
 export async function runMigrateAnglesFromCwd(opts: MigrateAnglesCliOptions): Promise<number> {
   const repoRoot = opts.repoRootOverride ?? (await findProjectRoot(process.cwd())).dir;
-  const cfg = await loadSideTrackConfig(repoRoot);
+  const cfg = await loadParallelDocsConfig(repoRoot);
   const storageDir = cfg.storageDir;
 
-  if (sidetrackAnglesLayoutEnabled(repoRoot, storageDir)) {
+  if (parallelDocsAnglesLayoutEnabled(repoRoot, storageDir)) {
     console.log(
-      "Angles layout is already enabled (.sidetrack/source/.default exists). Nothing to do.",
+      "Angles layout is already enabled (.parallel-docs/source/.default exists). Nothing to do.",
     );
     return 0;
   }
@@ -78,7 +80,7 @@ export async function runMigrateAnglesFromCwd(opts: MigrateAnglesCliOptions): Pr
   const companions = await discoverFlatCompanionMarkdownFiles(repoRoot, storageDir);
   if (companions.length === 0) {
     console.log(
-      "No flat companion Markdown files found under .sidetrack/source/. Nothing to migrate.",
+      "No flat companion Markdown files found under .parallel-docs/source/. Nothing to migrate.",
     );
     return 0;
   }
@@ -95,12 +97,12 @@ export async function runMigrateAnglesFromCwd(opts: MigrateAnglesCliOptions): Pr
 
   await ensureAnglesSentinelFile(repoRoot, storageDir);
 
-  const staticFrom = cfg.staticSite.sidetrackMarkdownFile.trim();
+  const staticFrom = cfg.staticSite.parallelDocsMarkdownFile.trim();
   const staticTo = staticFrom ? (plan.flatToAnglePath.get(staticFrom) ?? "") : "";
-  await applyAnglesFlatMigrationToSideTrackToml(repoRoot, {
+  await applyAnglesFlatMigrationToParallelDocsToml(repoRoot, {
     angleId: opts.angleId,
     ...(staticFrom && staticTo
-      ? { staticSideTrackMarkdownFrom: staticFrom, staticSideTrackMarkdownTo: staticTo }
+      ? { staticParallelDocsMarkdownFrom: staticFrom, staticParallelDocsMarkdownTo: staticTo }
       : {}),
   });
 
@@ -113,6 +115,6 @@ export async function runMigrateAnglesFromCwd(opts: MigrateAnglesCliOptions): Pr
   console.log(
     `Migrated ${String(plan.moves.length)} flat companion(s) to Angles layout (angle "${opts.angleId}").`,
   );
-  console.log("Updated .sidetrack.toml [angles] and index.json where paths matched.");
+  console.log("Updated .parallel-docs.toml [angles] and index.json where paths matched.");
   return 0;
 }

@@ -7,18 +7,18 @@ import { createServeRepoWatchIgnored, repoRelativePosix } from "./serve-repo-wat
 
 describe("serve repo watch ignore", () => {
   it("repoRelativePosix maps absolute paths under the repo", async () => {
-    const root = await mkdtemp(path.join(tmpdir(), "sidetrack-rel-"));
+    const root = await mkdtemp(path.join(tmpdir(), "parallel-docs-rel-"));
     expect(repoRelativePosix(root, path.join(root, "a", "b.txt"))).toBe("a/b.txt");
     expect(repoRelativePosix(root, root)).toBe("");
   });
 
   it("repoRelativePosix returns null outside the repo", async () => {
-    const root = await mkdtemp(path.join(tmpdir(), "sidetrack-rel-out-"));
+    const root = await mkdtemp(path.join(tmpdir(), "parallel-docs-rel-out-"));
     expect(repoRelativePosix(root, path.resolve(tmpdir(), "other-out", "x"))).toBe(null);
   });
 
   it("createServeRepoWatchIgnored respects root .gitignore and .git", async () => {
-    const root = await mkdtemp(path.join(tmpdir(), "sidetrack-serve-ig-"));
+    const root = await mkdtemp(path.join(tmpdir(), "parallel-docs-serve-ig-"));
     await writeFile(
       path.join(root, ".gitignore"),
       ["node_modules/", "dist/", "!.gitkeep", ""].join("\n"),
@@ -41,7 +41,7 @@ describe("serve repo watch ignore", () => {
   });
 
   it("createServeRepoWatchIgnored never ignores paths under configured storage dir", async () => {
-    const root = await mkdtemp(path.join(tmpdir(), "sidetrack-serve-storage-"));
+    const root = await mkdtemp(path.join(tmpdir(), "parallel-docs-serve-storage-"));
     await writeFile(path.join(root, ".gitignore"), ["data/", ""].join("\n"), "utf8");
     await mkdir(path.join(root, "data", "cr", "source"), { recursive: true });
     await writeFile(path.join(root, "data", "cr", "source", "x.md"), "# x\n", "utf8");
@@ -55,18 +55,18 @@ describe("serve repo watch ignore", () => {
   });
 
   it("createServeRepoWatchIgnored skips _site and node_modules even without .gitignore", async () => {
-    const root = await mkdtemp(path.join(tmpdir(), "sidetrack-serve-builtin-"));
+    const root = await mkdtemp(path.join(tmpdir(), "parallel-docs-serve-builtin-"));
     await mkdir(path.join(root, "_site"), { recursive: true });
-    await mkdir(path.join(root, ".sidetrack", "source", "x"), { recursive: true });
-    await writeFile(path.join(root, ".sidetrack", "source", "x", "main.md"), "# hi\n", "utf8");
+    await mkdir(path.join(root, ".parallel-docs", "source", "x"), { recursive: true });
+    await writeFile(path.join(root, ".parallel-docs", "source", "x", "main.md"), "# hi\n", "utf8");
 
     const ign = createServeRepoWatchIgnored(root);
     expect(ign(path.join(root, "_site", "index.html"))).toBe(true);
-    expect(ign(path.join(root, ".sidetrack", "source", "x", "main.md"))).toBe(false);
+    expect(ign(path.join(root, ".parallel-docs", "source", "x", "main.md"))).toBe(false);
   });
 
   it("createServeRepoWatchIgnored resolves repo-relative paths chokidar may pass", async () => {
-    const root = await mkdtemp(path.join(tmpdir(), "sidetrack-serve-rel-raw-"));
+    const root = await mkdtemp(path.join(tmpdir(), "parallel-docs-serve-rel-raw-"));
     await writeFile(path.join(root, ".gitignore"), "out.txt\n", "utf8");
     await writeFile(path.join(root, "in.txt"), "", "utf8");
 
@@ -76,7 +76,7 @@ describe("serve repo watch ignore", () => {
   });
 
   it("createServeRepoWatchIgnored applies nested .gitignore relative to that directory", async () => {
-    const root = await mkdtemp(path.join(tmpdir(), "sidetrack-serve-nested-ig-"));
+    const root = await mkdtemp(path.join(tmpdir(), "parallel-docs-serve-nested-ig-"));
     await writeFile(path.join(root, ".gitignore"), "", "utf8");
     await mkdir(path.join(root, "pkg", "src"), { recursive: true });
     await writeFile(path.join(root, "pkg", ".gitignore"), "secret.txt\n", "utf8");

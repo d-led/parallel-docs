@@ -4,7 +4,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { mkTempRepoWithBrowsePairHtmlLayout } from "./browse-pair-html-test-fixtures.js";
 import {
-  type SideTrackStaticAssetCopy,
+  type ParallelDocsStaticAssetCopy,
   type MarkdownPipelineOptions,
   renderMarkdownToHtml,
 } from "./markdown-pipeline.js";
@@ -14,10 +14,10 @@ function markdownWithAcmeDemoGithubBlob(opts: {
   repoRootAbs: string;
   htmlOutputFileAbs: string;
   markdownUrlBaseDirAbs: string;
-  sidetrackStorageRootAbs: string;
+  parallelDocsStorageRootAbs: string;
 }): MarkdownPipelineOptions {
   return {
-    sidetrackOutputUrls: {
+    parallelDocsOutputUrls: {
       ...opts,
       githubBlobRepo: { owner: "acme", repo: "demo" },
     },
@@ -77,7 +77,7 @@ describe("Markdown to HTML pipeline", () => {
     await writeFile(path.join(repoRoot, "docs", "spec", "storage.md"), "# hi\n", "utf8");
     const outHtml = path.join(repoRoot, "_site", "index.html");
     await mkdir(path.dirname(outHtml), { recursive: true });
-    const storageRoot = path.join(repoRoot, ".sidetrack");
+    const storageRoot = path.join(repoRoot, ".parallel-docs");
     await mkdir(storageRoot, { recursive: true });
 
     const md =
@@ -89,7 +89,7 @@ describe("Markdown to HTML pipeline", () => {
         repoRootAbs: repoRoot,
         htmlOutputFileAbs: outHtml,
         markdownUrlBaseDirAbs: repoRoot,
-        sidetrackStorageRootAbs: storageRoot,
+        parallelDocsStorageRootAbs: storageRoot,
       }),
     );
     expect(html).toContain('href="../docs/spec/storage.md"');
@@ -102,7 +102,7 @@ describe("Markdown to HTML pipeline", () => {
     await mkdir(repoRoot, { recursive: true });
     const outHtml = path.join(repoRoot, "out.html");
     const md = "[x](https://github.com/wrong/repo/blob/main/README.md)";
-    const storageRoot = path.join(repoRoot, ".sidetrack");
+    const storageRoot = path.join(repoRoot, ".parallel-docs");
     await mkdir(storageRoot, { recursive: true });
     const html = await renderMarkdownToHtml(
       md,
@@ -110,7 +110,7 @@ describe("Markdown to HTML pipeline", () => {
         repoRootAbs: repoRoot,
         htmlOutputFileAbs: outHtml,
         markdownUrlBaseDirAbs: repoRoot,
-        sidetrackStorageRootAbs: storageRoot,
+        parallelDocsStorageRootAbs: storageRoot,
       }),
     );
     expect(html).toContain("github.com/wrong/repo");
@@ -123,7 +123,7 @@ describe("Side-by-side static HTML layout", () => {
       title: "Demo",
       code: "const x = 1;",
       language: "ts",
-      sidetrackMarkdown: "## Notes\n\nSee `x`.",
+      parallelDocsMarkdown: "## Notes\n\nSee `x`.",
       includeMermaidRuntime: false,
     });
     expect(html).toContain("grid-template-columns");
@@ -136,7 +136,7 @@ describe("Side-by-side static HTML layout", () => {
       title: "Demo",
       code: "x",
       language: "txt",
-      sidetrackMarkdown: "y",
+      parallelDocsMarkdown: "y",
       includeMermaidRuntime: false,
     });
     expect(html).not.toContain("cdn.jsdelivr.net");
@@ -150,7 +150,7 @@ describe("Side-by-side static HTML layout", () => {
       title: "Demo",
       code: "x",
       language: "txt",
-      sidetrackMarkdown: "y",
+      parallelDocsMarkdown: "y",
       hljsTheme: "github-dark",
       includeMermaidRuntime: false,
     });
@@ -160,26 +160,26 @@ describe("Side-by-side static HTML layout", () => {
     expect(html).toContain("Theme: GitHub Dark");
   });
 
-  it("should apply sidetrackOutputUrls when rewriting links in the companion column", async () => {
+  it("should apply parallelDocsOutputUrls when rewriting links in the companion column", async () => {
     const tmp = await mkdtemp(path.join(tmpdir(), "cr-sbs-"));
     const repoRoot = path.join(tmp, "repo");
     await mkdir(path.join(repoRoot, "a"), { recursive: true });
     await writeFile(path.join(repoRoot, "a", "b.md"), "x", "utf8");
     const outHtml = path.join(repoRoot, "dist", "x.html");
     await mkdir(path.dirname(outHtml), { recursive: true });
-    await mkdir(path.join(repoRoot, ".sidetrack"), { recursive: true });
+    await mkdir(path.join(repoRoot, ".parallel-docs"), { recursive: true });
 
     const html = await renderSideBySideHtml({
       title: "Demo",
       code: "x",
       language: "txt",
-      sidetrackMarkdown: "[b](https://github.com/o/r/blob/main/a/b.md)",
+      parallelDocsMarkdown: "[b](https://github.com/o/r/blob/main/a/b.md)",
       includeMermaidRuntime: false,
-      sidetrackOutputUrls: {
+      parallelDocsOutputUrls: {
         repoRootAbs: repoRoot,
         htmlOutputFileAbs: outHtml,
         markdownUrlBaseDirAbs: repoRoot,
-        sidetrackStorageRootAbs: path.join(repoRoot, ".sidetrack"),
+        parallelDocsStorageRootAbs: path.join(repoRoot, ".parallel-docs"),
         githubBlobRepo: { owner: "o", repo: "r" },
       },
     });
@@ -188,10 +188,10 @@ describe("Side-by-side static HTML layout", () => {
 });
 
 describe("Markdown to HTML — static asset URL rewriting (storage sandbox)", () => {
-  it("should resolve companion-local images and block repo-root images outside SideTrack storage", async () => {
+  it("should resolve companion-local images and block repo-root images outside ParallelDocs storage", async () => {
     const tmp = await mkdtemp(path.join(tmpdir(), "cr-img-"));
     const repoRoot = path.join(tmp, "repo");
-    const storageRoot = path.join(repoRoot, ".sidetrack");
+    const storageRoot = path.join(repoRoot, ".parallel-docs");
     const companionDir = path.join(storageRoot, "source");
     await mkdir(companionDir, { recursive: true });
     await writeFile(path.join(companionDir, "diagram.svg"), "<svg/>", "utf8");
@@ -202,15 +202,15 @@ describe("Markdown to HTML — static asset URL rewriting (storage sandbox)", ()
 
     const md = "![local](./diagram.svg) ![root](/docs/logo.svg)";
     const html = await renderMarkdownToHtml(md, {
-      sidetrackOutputUrls: {
+      parallelDocsOutputUrls: {
         repoRootAbs: repoRoot,
         htmlOutputFileAbs: outHtml,
         markdownUrlBaseDirAbs: companionDir,
-        sidetrackStorageRootAbs: storageRoot,
+        parallelDocsStorageRootAbs: storageRoot,
       },
     });
-    expect(html).toContain('src="../.sidetrack/source/diagram.svg"');
-    expect(html).not.toContain("sidetrack-static-assets");
+    expect(html).toContain('src="../.parallel-docs/source/diagram.svg"');
+    expect(html).not.toContain("parallel-docs-static-assets");
     expect(html).not.toContain("docs/logo.svg");
     const imgTags = [...html.matchAll(/<img[^>]*>/g)].map((m) => m[0]);
     expect(imgTags.some((t) => t.includes("diagram.svg"))).toBe(true);
@@ -220,7 +220,7 @@ describe("Markdown to HTML — static asset URL rewriting (storage sandbox)", ()
   it("should resolve figures next to the companion file without a leading ./", async () => {
     const tmp = await mkdtemp(path.join(tmpdir(), "cr-img2-"));
     const repoRoot = path.join(tmp, "repo");
-    const storageRoot = path.join(repoRoot, ".sidetrack");
+    const storageRoot = path.join(repoRoot, ".parallel-docs");
     const companionDir = path.join(storageRoot, "source");
     await mkdir(path.join(companionDir, "figures"), { recursive: true });
     await writeFile(path.join(companionDir, "figures", "a.svg"), "<svg/>", "utf8");
@@ -228,20 +228,20 @@ describe("Markdown to HTML — static asset URL rewriting (storage sandbox)", ()
     await mkdir(path.dirname(outHtml), { recursive: true });
 
     const html = await renderMarkdownToHtml("![](figures/a.svg)", {
-      sidetrackOutputUrls: {
+      parallelDocsOutputUrls: {
         repoRootAbs: repoRoot,
         htmlOutputFileAbs: outHtml,
         markdownUrlBaseDirAbs: companionDir,
-        sidetrackStorageRootAbs: storageRoot,
+        parallelDocsStorageRootAbs: storageRoot,
       },
     });
-    expect(html).toContain('src="../.sidetrack/source/figures/a.svg"');
+    expect(html).toContain('src="../.parallel-docs/source/figures/a.svg"');
   });
 
   it("should block images that escape storage via relative traversal", async () => {
     const tmp = await mkdtemp(path.join(tmpdir(), "cr-img3-"));
     const repoRoot = path.join(tmp, "repo");
-    const storageRoot = path.join(repoRoot, ".sidetrack");
+    const storageRoot = path.join(repoRoot, ".parallel-docs");
     const companionDir = path.join(storageRoot, "source", "pkg");
     await mkdir(companionDir, { recursive: true });
     await mkdir(path.join(repoRoot, "docs"), { recursive: true });
@@ -250,11 +250,11 @@ describe("Markdown to HTML — static asset URL rewriting (storage sandbox)", ()
     await mkdir(path.dirname(outHtml), { recursive: true });
 
     const html = await renderMarkdownToHtml("![](../../../docs/leak.svg)", {
-      sidetrackOutputUrls: {
+      parallelDocsOutputUrls: {
         repoRootAbs: repoRoot,
         htmlOutputFileAbs: outHtml,
         markdownUrlBaseDirAbs: companionDir,
-        sidetrackStorageRootAbs: storageRoot,
+        parallelDocsStorageRootAbs: storageRoot,
       },
     });
     expect(html).not.toContain("leak.svg");
@@ -266,7 +266,7 @@ type MirrorRenderFixture = {
   html: string;
   repoRoot: string;
   companionDir: string;
-  companionStaticAssetCopies: SideTrackStaticAssetCopy[];
+  companionStaticAssetCopies: ParallelDocsStaticAssetCopy[];
 };
 
 async function renderStorageDiagramWithSiteMirror(
@@ -276,19 +276,19 @@ async function renderStorageDiagramWithSiteMirror(
   const tmpRoot = await mkdtemp(path.join(tmpdir(), tmpPrefix));
   const repoRoot = path.join(tmpRoot, "repo");
   await mkdir(repoRoot, { recursive: true });
-  const storageRoot = path.join(repoRoot, ".sidetrack");
+  const storageRoot = path.join(repoRoot, ".parallel-docs");
   const companionDir = path.join(storageRoot, "source");
   await mkdir(companionDir, { recursive: true });
   await writeFile(path.join(companionDir, "diagram.svg"), "<svg/>", "utf8");
   const outHtml = path.join(repoRoot, ...outHtmlUnderRepo);
   await mkdir(path.dirname(outHtml), { recursive: true });
-  const companionStaticAssetCopies: SideTrackStaticAssetCopy[] = [];
+  const companionStaticAssetCopies: ParallelDocsStaticAssetCopy[] = [];
   const html = await renderMarkdownToHtml("![d](./diagram.svg)", {
-    sidetrackOutputUrls: {
+    parallelDocsOutputUrls: {
       repoRootAbs: repoRoot,
       htmlOutputFileAbs: outHtml,
       markdownUrlBaseDirAbs: companionDir,
-      sidetrackStorageRootAbs: storageRoot,
+      parallelDocsStorageRootAbs: storageRoot,
       staticSiteOutDirAbs: path.join(repoRoot, "_site"),
       companionStaticAssetCopies,
     },
@@ -301,21 +301,21 @@ describe("Markdown to HTML — static asset URL rewriting (site mirror)", () => 
     const { html, repoRoot, companionDir, companionStaticAssetCopies } =
       await renderStorageDiagramWithSiteMirror("cr-img-mirror-", ["_site", "index.html"]);
 
-    expect(html).toContain('src="sidetrack-static-assets/source/diagram.svg"');
+    expect(html).toContain('src="parallel-docs-static-assets/source/diagram.svg"');
     expect(companionStaticAssetCopies).toHaveLength(1);
     expect(companionStaticAssetCopies[0]?.fromAbs).toBe(path.join(companionDir, "diagram.svg"));
     expect(companionStaticAssetCopies[0]?.toAbs).toBe(
-      path.join(repoRoot, "_site", "sidetrack-static-assets", "source", "diagram.svg"),
+      path.join(repoRoot, "_site", "parallel-docs-static-assets", "source", "diagram.svg"),
     );
   });
 
-  it("should use ../sidetrack-static-assets from browse HTML nested under the site root", async () => {
+  it("should use ../parallel-docs-static-assets from browse HTML nested under the site root", async () => {
     const { html, companionStaticAssetCopies } = await renderStorageDiagramWithSiteMirror(
       "cr-img-mirror2-",
       ["_site", "browse", "pair.html"],
     );
 
-    expect(html).toContain('src="../sidetrack-static-assets/source/diagram.svg"');
+    expect(html).toContain('src="../parallel-docs-static-assets/source/diagram.svg"');
     expect(companionStaticAssetCopies).toHaveLength(1);
   });
 });
@@ -326,11 +326,11 @@ describe("Markdown to HTML — source link prefix fallback", () => {
       await mkTempRepoWithBrowsePairHtmlLayout("cr-source-prefix-");
 
     const html = await renderMarkdownToHtml("[Install](docs/user/install.md)", {
-      sidetrackOutputUrls: {
+      parallelDocsOutputUrls: {
         repoRootAbs: repoRoot,
         htmlOutputFileAbs: outHtml,
         markdownUrlBaseDirAbs: repoRoot,
-        sidetrackStorageRootAbs: storageRoot,
+        parallelDocsStorageRootAbs: storageRoot,
         staticSiteOutDirAbs: path.join(repoRoot, "_site"),
         sourceLinkPrefix: "https://github.com/acme/demo/blob/main",
       },
@@ -346,11 +346,11 @@ describe("Markdown to HTML — source link prefix fallback", () => {
     );
 
     const html = await renderMarkdownToHtml("[Install](docs/user/install.md)", {
-      sidetrackOutputUrls: {
+      parallelDocsOutputUrls: {
         repoRootAbs: repoRoot,
         htmlOutputFileAbs: outHtml,
         markdownUrlBaseDirAbs: repoRoot,
-        sidetrackStorageRootAbs: storageRoot,
+        parallelDocsStorageRootAbs: storageRoot,
         staticSiteOutDirAbs: path.join(repoRoot, "_site"),
         sourceLinkPrefix: "https://github.com/acme/demo/blob/main////",
       },

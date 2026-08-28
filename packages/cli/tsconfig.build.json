@@ -3,6 +3,6 @@
   "references": [
     { "path": "../core" },
     { "path": "../render" },
-    { "path": "../code-sidetrack-static" }
+    { "path": "../code-parallel-docs-static" }
   ]
 }

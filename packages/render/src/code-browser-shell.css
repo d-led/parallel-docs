@@ -8,13 +8,13 @@
   /** Matches code/doc pane horizontal padding so pair-context rows line up with pane content (e.g. line nums). */
   --cr-pane-inline-pad: 12px;
 }
-:root:is(:not([data-sidetrack-theme]), [data-sidetrack-theme="system"]) {
+:root:is(:not([data-parallel-docs-theme]), [data-parallel-docs-theme="system"]) {
   color-scheme: light dark;
 }
-:root[data-sidetrack-theme="light"] {
+:root[data-parallel-docs-theme="light"] {
   color-scheme: light;
 }
-:root[data-sidetrack-theme="dark"] {
+:root[data-parallel-docs-theme="dark"] {
   color-scheme: dark;
 }
 * {
@@ -576,7 +576,7 @@ body {
 .toolbar-icon-btn--source-markdown {
   display: inline-flex;
 }
-/* __SIDETRACK_INTRO_CSS__ */
+/* __PARALLEL_DOCS_INTRO_CSS__ */
 .toolbar label input:focus-visible {
   outline: 2px solid color-mix(in oklab, CanvasText 45%, Canvas);
   outline-offset: 2px;
@@ -629,9 +629,9 @@ body {
   display: none;
   flex: 0 0 auto;
 }
-.toolbar-theme__trigger[data-sidetrack-trigger-mode="system"] .toolbar-theme__icon--system,
-.toolbar-theme__trigger[data-sidetrack-trigger-mode="light"] .toolbar-theme__icon--light,
-.toolbar-theme__trigger[data-sidetrack-trigger-mode="dark"] .toolbar-theme__icon--dark {
+.toolbar-theme__trigger[data-parallel-docs-trigger-mode="system"] .toolbar-theme__icon--system,
+.toolbar-theme__trigger[data-parallel-docs-trigger-mode="light"] .toolbar-theme__icon--light,
+.toolbar-theme__trigger[data-parallel-docs-trigger-mode="dark"] .toolbar-theme__icon--dark {
   display: block;
 }
 .toolbar-theme__menu {
@@ -861,13 +861,13 @@ body {
   -webkit-box-decoration-break: clone;
 }
 @media (prefers-color-scheme: dark) {
-  :root:is(:not([data-sidetrack-theme]), [data-sidetrack-theme="system"])
+  :root:is(:not([data-parallel-docs-theme]), [data-parallel-docs-theme="system"])
     .search-results
     mark.search-hit {
     background: color-mix(in oklab, #c9a227 55%, Canvas);
   }
 }
-:root[data-sidetrack-theme="dark"] .search-results mark.search-hit {
+:root[data-parallel-docs-theme="dark"] .search-results mark.search-hit {
   background: color-mix(in oklab, #c9a227 55%, Canvas);
 }
 .shell:not(.shell--stretch-rows) {
@@ -1010,11 +1010,11 @@ body {
   max-width: 100%;
   height: auto;
 }
-.source-pane--rendered-md .sidetrack-mermaid {
+.source-pane--rendered-md .parallel-docs-mermaid {
   overflow-x: auto;
   max-width: 100%;
 }
-.source-pane--rendered-md .sidetrack-line-anchor--source {
+.source-pane--rendered-md .parallel-docs-line-anchor--source {
   display: inline;
   vertical-align: baseline;
 }
@@ -1081,15 +1081,15 @@ body {
   cursor: col-resize;
   background: color-mix(in oklab, CanvasText 12%, Canvas);
   position: relative;
-  --sidetrack-ray-accent: #3b7dd8;
+  --parallel-docs-ray-accent: #3b7dd8;
 }
 @media (prefers-color-scheme: dark) {
-  :root:is(:not([data-sidetrack-theme]), [data-sidetrack-theme="system"]) .gutter {
-    --sidetrack-ray-accent: #6eb0ff;
+  :root:is(:not([data-parallel-docs-theme]), [data-parallel-docs-theme="system"]) .gutter {
+    --parallel-docs-ray-accent: #6eb0ff;
   }
 }
-:root[data-sidetrack-theme="dark"] .gutter {
-  --sidetrack-ray-accent: #6eb0ff;
+:root[data-parallel-docs-theme="dark"] .gutter {
+  --parallel-docs-ray-accent: #6eb0ff;
 }
 .gutter__rays {
   position: absolute;
@@ -1107,7 +1107,7 @@ body {
   fill: none;
   stroke-linecap: round;
   vector-effect: non-scaling-stroke;
-  stroke: color-mix(in oklab, var(--sidetrack-ray-accent) 72%, CanvasText);
+  stroke: color-mix(in oklab, var(--parallel-docs-ray-accent) 72%, CanvasText);
   stroke-width: 1.35px;
   opacity: 0.26;
 }
@@ -1182,17 +1182,17 @@ body {
   color: inherit;
 }
 @media (prefers-color-scheme: dark) {
-  :root:is(:not([data-sidetrack-theme]), [data-sidetrack-theme="system"])
+  :root:is(:not([data-parallel-docs-theme]), [data-parallel-docs-theme="system"])
     .pane--doc
     .doc-pane-body
     :where(p, li, blockquote, td, th, h1, h2, h3, h4, h5, h6)
     > code,
-  :root:is(:not([data-sidetrack-theme]), [data-sidetrack-theme="system"])
+  :root:is(:not([data-parallel-docs-theme]), [data-parallel-docs-theme="system"])
     .shell--stretch-rows
     .stretch-preamble
     :where(p, li, blockquote, td, th, h1, h2, h3, h4, h5, h6)
     > code,
-  :root:is(:not([data-sidetrack-theme]), [data-sidetrack-theme="system"])
+  :root:is(:not([data-parallel-docs-theme]), [data-parallel-docs-theme="system"])
     .block-stretch
     td.stretch-doc
     .stretch-doc-inner
@@ -1202,17 +1202,17 @@ body {
     background: color-mix(in oklab, CanvasText 16%, Canvas);
   }
 }
-:root[data-sidetrack-theme="dark"]
+:root[data-parallel-docs-theme="dark"]
   .pane--doc
   .doc-pane-body
   :where(p, li, blockquote, td, th, h1, h2, h3, h4, h5, h6)
   > code,
-:root[data-sidetrack-theme="dark"]
+:root[data-parallel-docs-theme="dark"]
   .shell--stretch-rows
   .stretch-preamble
   :where(p, li, blockquote, td, th, h1, h2, h3, h4, h5, h6)
   > code,
-:root[data-sidetrack-theme="dark"]
+:root[data-parallel-docs-theme="dark"]
   .block-stretch
   td.stretch-doc
   .stretch-doc-inner
@@ -1285,7 +1285,7 @@ body {
   border-top: 1px solid color-mix(in oklab, CanvasText 18%, Canvas);
   font-size: 0.92em;
 }
-.pane--doc .doc-pane-body .sidetrack-mermaid {
+.pane--doc .doc-pane-body .parallel-docs-mermaid {
   overflow-x: auto;
   max-width: 100%;
 }
@@ -1301,21 +1301,21 @@ body {
   overflow-wrap: normal;
   word-break: normal;
 }
-#doc-pane-body .sidetrack-page-break {
+#doc-pane-body .parallel-docs-page-break {
   position: relative;
-  min-height: var(--sidetrack-page-break-min-height, clamp(260px, 56vh, 620px));
+  min-height: var(--parallel-docs-page-break-min-height, clamp(260px, 56vh, 620px));
   margin: 24px 0;
   display: flex;
   align-items: center;
   justify-content: center;
   pointer-events: none;
 }
-#doc-pane-body .sidetrack-page-break__rule {
+#doc-pane-body .parallel-docs-page-break__rule {
   width: 100%;
   border-top: 1px dashed var(--border);
   opacity: 0.38;
 }
-#shell[data-page-breaks-enabled="false"] .sidetrack-page-break {
+#shell[data-page-breaks-enabled="false"] .parallel-docs-page-break {
   display: none;
 }
 .toolbar-angle-picker {
@@ -1751,12 +1751,12 @@ body {
   max-width: 100%;
   height: auto;
 }
-.pane--doc .sidetrack-line-anchor {
+.pane--doc .parallel-docs-line-anchor {
   display: inline;
   vertical-align: baseline;
   scroll-margin-top: 10px;
 }
-.pane--doc .sidetrack-block-anchor {
+.pane--doc .parallel-docs-block-anchor {
   display: block;
   height: 0;
   margin: 0;
@@ -1846,7 +1846,7 @@ body {
   max-width: 100%;
   height: auto;
 }
-.block-stretch td.stretch-doc .stretch-doc-inner .sidetrack-mermaid {
+.block-stretch td.stretch-doc .stretch-doc-inner .parallel-docs-mermaid {
   overflow-x: auto;
   overflow-y: hidden;
   max-width: 100%;
@@ -1942,14 +1942,14 @@ body {
   border-right: 1px solid color-mix(in oklab, CanvasText 10%, Canvas);
   background: color-mix(in oklab, CanvasText 8%, Canvas);
   border-radius: 999px;
-  --sidetrack-ray-accent: #3b7dd8;
+  --parallel-docs-ray-accent: #3b7dd8;
   z-index: 6;
 }
 @media (prefers-color-scheme: dark) {
-  :root:is(:not([data-sidetrack-theme]), [data-sidetrack-theme="system"]) .stretch-gutter {
-    --sidetrack-ray-accent: #6eb0ff;
+  :root:is(:not([data-parallel-docs-theme]), [data-parallel-docs-theme="system"]) .stretch-gutter {
+    --parallel-docs-ray-accent: #6eb0ff;
   }
 }
-:root[data-sidetrack-theme="dark"] .stretch-gutter {
-  --sidetrack-ray-accent: #6eb0ff;
+:root[data-parallel-docs-theme="dark"] .stretch-gutter {
+  --parallel-docs-ray-accent: #6eb0ff;
 }

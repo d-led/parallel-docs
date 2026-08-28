@@ -37,34 +37,37 @@ Cypress.Commands.add("PressEnterInFocusedSearchField", () => {
   cy.get(shellA11y.search.input).type("{enter}");
 });
 
-Cypress.Commands.add("FocusSideTrackedFilesFilter", () => {
+Cypress.Commands.add("FocusParallelDocsedFilesFilter", () => {
   cy.get(shellA11y.documentedFiles.filter).focus();
 });
 
-Cypress.Commands.add("SideTrackedFilesFilterShouldBeFocused", () => {
+Cypress.Commands.add("ParallelDocsedFilesFilterShouldBeFocused", () => {
   cy.get(shellA11y.documentedFiles.filter).should("be.focused");
 });
 
-Cypress.Commands.add("MoveKeyboardFocusFromSideTrackedFilterToFirstTreeLink", () => {
-  cy.FocusSideTrackedFilesFilter();
+Cypress.Commands.add("MoveKeyboardFocusFromParallelDocsedFilterToFirstTreeLink", () => {
+  cy.FocusParallelDocsedFilesFilter();
   cy.PressArrowDownInFocusedElement();
 });
 
-Cypress.Commands.add("FirstSideTrackedTreeFileLinkShouldBeFocused", () => {
+Cypress.Commands.add("FirstParallelDocsedTreeFileLinkShouldBeFocused", () => {
   cy.get(shellA11y.documentedFiles.fileLink).first().should("be.focused");
 });
 
-Cypress.Commands.add("SideTrackedTreeFileLinkAtIndexShouldBeFocused", (zeroBasedIndex: number) => {
-  cy.get(shellA11y.documentedFiles.fileLink).eq(zeroBasedIndex).should("be.focused");
-});
+Cypress.Commands.add(
+  "ParallelDocsedTreeFileLinkAtIndexShouldBeFocused",
+  (zeroBasedIndex: number) => {
+    cy.get(shellA11y.documentedFiles.fileLink).eq(zeroBasedIndex).should("be.focused");
+  },
+);
 
-Cypress.Commands.add("SideTrackedFilesTreeFileLinksShouldBeAtLeast", (min: number) => {
+Cypress.Commands.add("ParallelDocsedFilesTreeFileLinksShouldBeAtLeast", (min: number) => {
   cy.get(shellA11y.documentedFiles.fileLink).should("have.length.at.least", min);
 });
 
-Cypress.Commands.add("OpenSideTrackedFilesHubWithTreeVisible", () => {
-  cy.OpenSideTrackedFilesDisclosure();
-  cy.SideTrackedFilesTreeShouldExposeAtLeastOneFileLink();
+Cypress.Commands.add("OpenParallelDocsedFilesHubWithTreeVisible", () => {
+  cy.OpenParallelDocsedFilesDisclosure();
+  cy.ParallelDocsedFilesTreeShouldExposeAtLeastOneFileLink();
 });
 
 /** Forces vertical overflow so ArrowDown through hits must scroll `#search-results`. */
@@ -97,7 +100,7 @@ Cypress.Commands.add("SearchResultsPanelScrollTopShouldBeGreaterThan", (pixels: 
   cy.get(shellA11y.search.results).invoke("scrollTop").should("be.gt", pixels);
 });
 
-Cypress.Commands.add("ConstrainSideTrackedFilesTreeHeightForScrollCoverage", () => {
+Cypress.Commands.add("ConstrainParallelDocsedFilesTreeHeightForScrollCoverage", () => {
   cy.get(shellA11y.documentedFiles.tree).should("be.visible");
   cy.get(shellA11y.documentedFiles.tree)
     .invoke("css", "max-height", "22px")
@@ -122,7 +125,7 @@ Cypress.Commands.add("TreeKeyboardNavigateFromFirstLinkToLastLink", () => {
   });
 });
 
-Cypress.Commands.add("SideTrackedFilesTreeScrollTopShouldBeGreaterThan", (pixels: number) => {
+Cypress.Commands.add("ParallelDocsedFilesTreeScrollTopShouldBeGreaterThan", (pixels: number) => {
   cy.get(shellA11y.documentedFiles.tree).invoke("scrollTop").should("be.gt", pixels);
 });
 
@@ -130,10 +133,10 @@ Cypress.Commands.add("SideTrackedFilesTreeScrollTopShouldBeGreaterThan", (pixels
  * Clicks outside the hub. Uses the page footer so the hit target is never under the doc-hub
  * flyout (which can stack above the top of `main` and swallow top-left clicks in CI).
  */
-Cypress.Commands.add("ClickPageFooterToDismissSideTrackedFilesHub", () => {
+Cypress.Commands.add("ClickPageFooterToDismissParallelDocsedFilesHub", () => {
   cy.get(shellA11y.contentinfo).should("be.visible").click("center");
 });
 
-Cypress.Commands.add("SideTrackedFilesHubOpenPropShouldBe", (open: boolean) => {
+Cypress.Commands.add("ParallelDocsedFilesHubOpenPropShouldBe", (open: boolean) => {
   cy.get(shellA11y.documentedFiles.hub).should("have.prop", "open", open);
 });

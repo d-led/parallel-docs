@@ -20,10 +20,10 @@ describe("Git-backed SCM — blobs and rename detection", () => {
   });
 
   it("resolves blob ids at HEAD and ancestry", async () => {
-    repo = await mkdtemp(path.join(tmpdir(), "sidetrack-git-"));
+    repo = await mkdtemp(path.join(tmpdir(), "parallel-docs-git-"));
     await git(repo, ["init", "-b", "main"]);
     await git(repo, ["config", "user.email", "test@example.com"]);
-    await git(repo, ["config", "user.name", "SideTrack Test"]);
+    await git(repo, ["config", "user.name", "ParallelDocs Test"]);
     await mkdir(path.join(repo, "src"), { recursive: true });
     await writeFile(path.join(repo, "src", "a.ts"), "v1\n");
     await git(repo, ["add", "src/a.ts"]);
@@ -44,10 +44,10 @@ describe("Git-backed SCM — blobs and rename detection", () => {
   });
 
   it("lists path renames between commits", async () => {
-    repo = await mkdtemp(path.join(tmpdir(), "sidetrack-git-rename-"));
+    repo = await mkdtemp(path.join(tmpdir(), "parallel-docs-git-rename-"));
     await git(repo, ["init", "-b", "main"]);
     await git(repo, ["config", "user.email", "test@example.com"]);
-    await git(repo, ["config", "user.name", "SideTrack Test"]);
+    await git(repo, ["config", "user.name", "ParallelDocs Test"]);
     await mkdir(path.join(repo, "src"), { recursive: true });
     await writeFile(path.join(repo, "src", "old.ts"), "x\n");
     await git(repo, ["add", "src/old.ts"]);

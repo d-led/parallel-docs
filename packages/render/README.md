@@ -1,23 +1,23 @@
-# @sidetrack/render
+# @parallel-docs/render
 
-Markdown → HTML rendering stack for [SideTrack](https://github.com/d-led/sidetrack): `remark-parse` + `remark-gfm` (tables, task lists, strikethrough, autolink literals, footnotes), `rehype-slug` on headings, `rehype-sanitize`, `rehype-highlight` (lowlight), Mermaid containers, and ready-made HTML shells (side-by-side and a client-side interactive code browser with in-page token search).
+Markdown → HTML rendering stack for [ParallelDocs](https://github.com/d-led/parallel-docs): `remark-parse` + `remark-gfm` (tables, task lists, strikethrough, autolink literals, footnotes), `rehype-slug` on headings, `rehype-sanitize`, `rehype-highlight` (lowlight), Mermaid containers, and ready-made HTML shells (side-by-side and a client-side interactive code browser with in-page token search).
 
 ## Install
 
 ```bash
-npm install @sidetrack/render
+npm install @parallel-docs/render
 ```
 
 ## Use
 
 ```ts
-import { renderSideBySideHtml } from "@sidetrack/render";
+import { renderSideBySideHtml } from "@parallel-docs/render";
 
 const html = await renderSideBySideHtml({
   title: "src/example.ts",
   code: sourceText,
   language: "ts",
-  sidetrackMarkdown: markdownText,
+  parallelDocsMarkdown: markdownText,
 });
 ```
 

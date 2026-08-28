@@ -39,7 +39,7 @@ export function hljsThemeCss(themeBaseName: string | undefined): string {
   const css = (requested ? readThemeCss(requested) : undefined) ?? readThemeCss(DEFAULT_THEME);
   if (css === undefined) {
     throw new Error(
-      "Missing vendored Highlight.js theme CSS; run `npm run build -w @sidetrack/render`.",
+      "Missing vendored Highlight.js theme CSS; run `npm run build -w @parallel-docs/render`.",
     );
   }
   return css;

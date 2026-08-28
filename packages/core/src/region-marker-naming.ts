@@ -7,7 +7,7 @@ export type RegionMarkerNamingRange = {
   endLine: number;
 };
 
-/** Suggest marker id inputs; full pipeline: `region-marker-naming.ts` sidetrack. */
+/** Suggest marker id inputs; full pipeline: `region-marker-naming.ts` parallel-docs. */
 export type RegionMarkerNamingInput = {
   languageId: string;
   sourceText: string;
@@ -18,17 +18,17 @@ export type RegionMarkerNamingInput = {
   rng?: () => number;
 };
 
-/** Pure policy for `marker:<id>` / `sidetrack:<id>`; see sidetrack. */
+/** Pure policy for `marker:<id>` / `parallelDocs:<id>`; see parallel-docs. */
 export interface RegionMarkerNamingStrategy {
   suggestMarkerId(input: RegionMarkerNamingInput): string;
 }
 
-/** Return a valid id or `null` to defer; see sidetrack. */
+/** Return a valid id or `null` to defer; see parallel-docs. */
 export interface RegionMarkerNamingHintStrategy {
   trySuggestMarkerId(input: RegionMarkerNamingInput): string | null;
 }
 
-/** Ordered hints then `generateBlockId`; see sidetrack. */
+/** Ordered hints then `generateBlockId`; see parallel-docs. */
 export class CompositeRegionMarkerNamingStrategy implements RegionMarkerNamingStrategy {
   constructor(
     private readonly hints: readonly RegionMarkerNamingHintStrategy[],
@@ -51,7 +51,7 @@ export class CompositeRegionMarkerNamingStrategy implements RegionMarkerNamingSt
   }
 }
 
-/** Host-supplied id function; see sidetrack. */
+/** Host-supplied id function; see parallel-docs. */
 export class CallbackRegionMarkerNamingStrategy implements RegionMarkerNamingStrategy {
   constructor(private readonly suggest: (input: RegionMarkerNamingInput) => string) {}
 
@@ -103,7 +103,7 @@ export class CodeStructureHintStrategy implements RegionMarkerNamingHintStrategy
 const TOML_LINE_ARRAY_TABLE = /^\s*\[\[([^\]]+)\]\]\s*(?:#.*)?$/;
 const TOML_LINE_TABLE = /^\s*\[([^\]]+)\]\s*(?:#.*)?$/;
 
-/** Innermost TOML `[header]` / `[[array]]` path above `startLine1`; see sidetrack. */
+/** Innermost TOML `[header]` / `[[array]]` path above `startLine1`; see parallel-docs. */
 export function tryTomlTablePathAboveSelection(
   sourceText: string,
   startLine1: number,
@@ -124,7 +124,7 @@ export function tryTomlTablePathAboveSelection(
 
 const MD_HEADING = /^\s{0,3}(#{1,6})\s+(.+?)\s*$/;
 
-/** Nearest ATX heading at or above line; see sidetrack. */
+/** Nearest ATX heading at or above line; see parallel-docs. */
 export function tryMarkdownHeadingTitleAbove(
   sourceText: string,
   startLine1: number,
@@ -258,7 +258,7 @@ function patternsForLanguage(languageId: string): CodePattern[] | null {
 
 const PYTHON_CLASS_LINE = /^\s*class\s+(\w+)/;
 
-/** Declaration / class name near selection; see sidetrack. */
+/** Declaration / class name near selection; see parallel-docs. */
 export function tryCodeStructureNameHint(
   languageId: string,
   sourceText: string,

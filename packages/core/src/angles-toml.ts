@@ -3,8 +3,8 @@ import path from "node:path";
 import { parse as parseToml, stringify } from "@iarna/toml";
 
 import { assertValidAngleId } from "./angles.js";
-import { type SideTrackToml, mergeSideTrackConfig } from "./config.js";
-import { sidetrackAnglesSentinelPath } from "./paths.js";
+import { type ParallelDocsToml, mergeParallelDocsConfig } from "./config.js";
+import { parallelDocsAnglesSentinelPath } from "./paths.js";
 
 export type UpsertAngleDefinitionInput = {
   id: string;
@@ -14,7 +14,7 @@ export type UpsertAngleDefinitionInput = {
 };
 
 const MINIMAL_NEW_TOML = `[storage]
-dir = ".sidetrack"
+dir = ".parallel-docs"
 `;
 
 /**
@@ -25,7 +25,7 @@ export async function ensureAnglesSentinelFile(
   repoRoot: string,
   storageDir: string,
 ): Promise<void> {
-  const rel = sidetrackAnglesSentinelPath(storageDir);
+  const rel = parallelDocsAnglesSentinelPath(storageDir);
   const absolute = path.join(repoRoot, ...rel.split("/"));
   await fs.mkdir(path.dirname(absolute), { recursive: true });
   try {
@@ -33,23 +33,23 @@ export async function ensureAnglesSentinelFile(
   } catch {
     await fs.writeFile(
       absolute,
-      "# SideTrack Angles layout sentinel (see docs/spec/storage.md).\n",
+      "# ParallelDocs Angles layout sentinel (see docs/spec/storage.md).\n",
       "utf8",
     );
   }
 }
 
 /**
- * Reads `.sidetrack.toml`, appends a new `[[angles.definitions]]` row (or throws if the id
- * already exists), validates via {@link mergeSideTrackConfig}, and writes the file back using
+ * Reads `.parallel-docs.toml`, appends a new `[[angles.definitions]]` row (or throws if the id
+ * already exists), validates via {@link mergeParallelDocsConfig}, and writes the file back using
  * TOML stringify (comments and key order are not preserved).
  */
-export async function upsertAngleDefinitionInSideTrackToml(
+export async function upsertAngleDefinitionInParallelDocsToml(
   repoRoot: string,
   input: UpsertAngleDefinitionInput,
 ): Promise<void> {
   const id = assertValidAngleId(input.id);
-  const configPath = path.join(repoRoot, ".sidetrack.toml");
+  const configPath = path.join(repoRoot, ".parallel-docs.toml");
   let raw = "";
   try {
     raw = await fs.readFile(configPath, "utf8");
@@ -58,7 +58,7 @@ export async function upsertAngleDefinitionInSideTrackToml(
     if (code !== "ENOENT") throw err;
   }
 
-  const parsed: SideTrackToml = raw.trim() ? parseToml(raw) : {};
+  const parsed: ParallelDocsToml = raw.trim() ? parseToml(raw) : {};
   const angles = parsed.angles ?? {};
   const definitions = [...(angles.definitions ?? [])];
   if (
@@ -77,7 +77,7 @@ export async function upsertAngleDefinitionInSideTrackToml(
     angles.default_angle = id;
   }
   parsed.angles = angles;
-  mergeSideTrackConfig(parsed);
+  mergeParallelDocsConfig(parsed);
 
   const serialized = stringify(parsed as never);
   const body = raw.trim() ? serialized : `${MINIMAL_NEW_TOML.trim()}\n\n${serialized}`;
@@ -88,9 +88,9 @@ export type ApplyAnglesFlatMigrationTomlInput = {
   angleId: string;
   /** Optional label for the single migrated angle (defaults to title-cased id). */
   angleTitle?: string;
-  /** When both set, replace `[static_site].sidetrack_markdown` if it equals `from`. */
-  staticSideTrackMarkdownFrom?: string;
-  staticSideTrackMarkdownTo?: string;
+  /** When both set, replace `[static_site].parallel_docs_markdown` if it equals `from`. */
+  staticParallelDocsMarkdownFrom?: string;
+  staticParallelDocsMarkdownTo?: string;
 };
 
 function defaultTitleForAngleId(angleId: string): string {
@@ -101,39 +101,41 @@ function defaultTitleForAngleId(angleId: string): string {
     .join(" ");
 }
 
-function maybeRewriteStaticSideTrackMarkdown(
-  ss: NonNullable<SideTrackToml["static_site"]>,
+function maybeRewriteStaticParallelDocsMarkdown(
+  ss: NonNullable<ParallelDocsToml["static_site"]>,
   from: string | undefined,
   to: string | undefined,
 ): void {
   if (!from || !to) return;
-  const cur = (ss.sidetrack_markdown ?? "").trim();
+  const cur = (ss.parallel_docs_markdown ?? "").trim();
   if (cur !== from) return;
-  ss.sidetrack_markdown = to;
+  ss.parallel_docs_markdown = to;
 }
 
 /**
  * After flat → Angles filesystem moves, stamp `[angles]` and optionally rewrite
- * `[static_site].sidetrack_markdown` to the new companion path. Refuses when
+ * `[static_site].parallel_docs_markdown` to the new companion path. Refuses when
  * `[angles].definitions` is already non-empty (avoid clobbering a configured project).
  */
-export async function applyAnglesFlatMigrationToSideTrackToml(
+export async function applyAnglesFlatMigrationToParallelDocsToml(
   repoRoot: string,
   input: ApplyAnglesFlatMigrationTomlInput,
 ): Promise<void> {
   const id = assertValidAngleId(input.angleId);
-  const configPath = path.join(repoRoot, ".sidetrack.toml");
+  const configPath = path.join(repoRoot, ".parallel-docs.toml");
   let raw: string;
   try {
     raw = await fs.readFile(configPath, "utf8");
   } catch (err) {
     const code = (err as NodeJS.ErrnoException).code;
     if (code === "ENOENT") {
-      throw new Error("Missing .sidetrack.toml (run: sidetrack init config)", { cause: err });
+      throw new Error("Missing .parallel-docs.toml (run: parallel-docs init config)", {
+        cause: err,
+      });
     }
     throw err;
   }
-  const parsed: SideTrackToml = raw.trim() ? parseToml(raw) : {};
+  const parsed: ParallelDocsToml = raw.trim() ? parseToml(raw) : {};
   const existingDefs = parsed.angles?.definitions ?? [];
   if (existingDefs.length > 0) {
     throw new Error(
@@ -146,12 +148,12 @@ export async function applyAnglesFlatMigrationToSideTrackToml(
     definitions: [{ id, title }],
   };
   const ss = parsed.static_site ?? {};
-  maybeRewriteStaticSideTrackMarkdown(
+  maybeRewriteStaticParallelDocsMarkdown(
     ss,
-    input.staticSideTrackMarkdownFrom?.trim(),
-    input.staticSideTrackMarkdownTo?.trim(),
+    input.staticParallelDocsMarkdownFrom?.trim(),
+    input.staticParallelDocsMarkdownTo?.trim(),
   );
   parsed.static_site = ss;
-  mergeSideTrackConfig(parsed);
+  mergeParallelDocsConfig(parsed);
   await fs.writeFile(configPath, `${stringify(parsed as never)}\n`, "utf8");
 }

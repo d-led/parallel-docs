@@ -13,22 +13,22 @@ describe("angles add command", () => {
       process.chdir(dir);
       await mkdir(path.join(dir, "src"), { recursive: true });
       await writeFile(path.join(dir, "src", "x.ts"), "export const x = 1;\n", "utf8");
-      await mkdir(path.join(dir, ".sidetrack", "source", "src", "x.ts"), { recursive: true });
+      await mkdir(path.join(dir, ".parallel-docs", "source", "src", "x.ts"), { recursive: true });
       await writeFile(
-        path.join(dir, ".sidetrack", "source", "src", "x.ts", "main.md"),
+        path.join(dir, ".parallel-docs", "source", "src", "x.ts", "main.md"),
         "# Main\n",
         "utf8",
       );
       await writeFile(
-        path.join(dir, ".sidetrack.toml"),
+        path.join(dir, ".parallel-docs.toml"),
         [
           "[storage]",
-          'dir = ".sidetrack"',
+          'dir = ".parallel-docs"',
           "",
           "[static_site]",
           'title = "Demo"',
           'source_file = "src/x.ts"',
-          'sidetrack_markdown = ".sidetrack/source/src/x.ts/main.md"',
+          'parallel_docs_markdown = ".parallel-docs/source/src/x.ts/main.md"',
           "",
           "[angles]",
           'default_angle = "main"',
@@ -46,10 +46,10 @@ describe("angles add command", () => {
 
       expect(await runAnglesAddFromCwd({ angleId: "notes", title: "Release notes" })).toBe(0);
 
-      const companion = path.join(dir, ".sidetrack", "source", "src", "x.ts", "notes.md");
+      const companion = path.join(dir, ".parallel-docs", "source", "src", "x.ts", "notes.md");
       const body = await readFile(companion, "utf8");
       expect(body).toContain("# Release notes");
-      const toml = await readFile(path.join(dir, ".sidetrack.toml"), "utf8");
+      const toml = await readFile(path.join(dir, ".parallel-docs.toml"), "utf8");
       expect(toml).toContain("notes");
     } finally {
       process.chdir(prevCwd);

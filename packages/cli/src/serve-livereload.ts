@@ -3,16 +3,16 @@ import { createServer, type Server, type ServerResponse } from "node:http";
 import path from "node:path";
 import type { Writable } from "node:stream";
 
-const EVENT_PATH = "/__sidetrack_livereload/events";
-const SCRIPT_MARKER = "sidetrack-livereload";
+const EVENT_PATH = "/__parallel_docs_livereload/events";
+const SCRIPT_MARKER = "parallel-docs-livereload";
 
 export function livereloadScript(port: number): string {
   return `<script data-${SCRIPT_MARKER}>
 (() => {
   try {
     const u0 = new URL(window.location.href);
-    if (u0.searchParams.has("_sidetrack_bust")) {
-      u0.searchParams.delete("_sidetrack_bust");
+    if (u0.searchParams.has("_parallel_docs_bust")) {
+      u0.searchParams.delete("_parallel_docs_bust");
       const q = u0.searchParams.toString();
       history.replaceState(null, "", u0.pathname + (q ? "?" + q : "") + u0.hash);
     }
@@ -95,11 +95,11 @@ export async function startLivereloadServer(
   });
 
   if (port === undefined) {
-    stderr.write("[sidetrack serve] browser livereload disabled: could not bind listener\n");
+    stderr.write("[parallel-docs serve] browser livereload disabled: could not bind listener\n");
     return undefined;
   }
 
-  stderr.write(`[sidetrack serve] browser livereload listening on ${port}\n`);
+  stderr.write(`[parallel-docs serve] browser livereload listening on ${port}\n`);
   return {
     port,
     injectIntoSite: (siteRoot: string) => injectLivereloadIntoSite(siteRoot, port),

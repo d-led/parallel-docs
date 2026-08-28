@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Open VS Code / Cursor with the SideTrack extension loaded from source
+# Open VS Code / Cursor with the ParallelDocs extension loaded from source
 # (Extension Development Host) on the **dogfood** fixture so maintainers can
 # capture real UI for the **top-level README** companion.
 #
 # There is no automated screenshot step: save PNG/SVG/WebP under:
-#   .sidetrack/source/README.md/assets/
+#   .parallel-docs/source/README.md/assets/
 # Reference from main.md as:  ./assets/your-file.png  (see docs/spec/storage.md).
 #
 # Usage (repository root):
 #   bash scripts/refresh-root-readme-screenshots.sh
-#   npm run extension:sidetrack-screenshots
+#   npm run extension:parallel-docs-screenshots
 #
 # For the VS Code **extension** README (monorepo root in EDH), use:
 #   bash scripts/refresh-vscode-readme-screenshots-manual.sh
@@ -22,15 +22,15 @@ source "$REPO_ROOT/scripts/lib/pick-editor-cli.sh"
 
 EXT_DEV_PATH="$REPO_ROOT/packages/vscode"
 FIXTURE="$EXT_DEV_PATH/fixtures/dogfood"
-ASSETS_DIR="$REPO_ROOT/.sidetrack/source/README.md/assets"
+ASSETS_DIR="$REPO_ROOT/.parallel-docs/source/README.md/assets"
 
 mkdir -p "$ASSETS_DIR"
 
-echo "SideTrack screenshot prep (root README companion)"
+echo "ParallelDocs screenshot prep (root README companion)"
 echo "---------------------------------------------------"
 echo "1. This window will launch your editor in Extension Development Host on:"
 echo "   $FIXTURE"
-echo "2. Run SideTrack commands (e.g. open paired markdown), arrange the layout."
+echo "2. Run ParallelDocs commands (e.g. open paired markdown), arrange the layout."
 echo "3. Capture with your OS or editor screenshot tool."
 echo "4. Save files into (already created if missing):"
 echo "   $ASSETS_DIR"
@@ -38,7 +38,7 @@ echo "5. In main.md use:  ![…](./assets/<filename>)"
 echo "   See docs/spec/storage.md § Images and other local assets."
 echo ""
 
-editor_cli="$(sidetrack_pick_editor_cli)"
+editor_cli="$(parallel_docs_pick_editor_cli)"
 
 set +e
 "$editor_cli" --extensionDevelopmentPath="$EXT_DEV_PATH" "$FIXTURE"

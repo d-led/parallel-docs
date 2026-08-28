@@ -1,22 +1,25 @@
 /**
  * Static browser scroll helpers: proportional mirror plus block pickers from
- * `@sidetrack/core/block-scroll-pickers` (small browser bundle entry).
+ * `@parallel-docs/core/block-scroll-pickers` (small browser bundle entry).
  */
-export type { BlockScrollLink, BlockScrollStickyState } from "@sidetrack/core/block-scroll-pickers";
+export type {
+  BlockScrollLink,
+  BlockScrollStickyState,
+} from "@parallel-docs/core/block-scroll-pickers";
 export {
   blockStrictlyContainingSourceViewportLine,
-  sidetrackProbeInStrictInterMarkerGap,
-  DEFAULT_SIDETRACK_VIEWPORT_HYSTERESIS_LINES,
+  parallelDocsProbeInStrictInterMarkerGap,
+  DEFAULT_PARALLEL_DOCS_VIEWPORT_HYSTERESIS_LINES,
   DEFAULT_SOURCE_VIEWPORT_HYSTERESIS_LINES,
-  pickBlockScrollLinkForSideTrackScroll,
-  pickBlockScrollLinkForSideTrackViewportWithHysteresis,
+  pickBlockScrollLinkForParallelDocsScroll,
+  pickBlockScrollLinkForParallelDocsViewportWithHysteresis,
   pickBlockScrollLinkForSourceViewportTop,
   pickBlockScrollLinkForSourceViewportWithHysteresis,
-  pickSideTrackLineForSourceDualPane,
-  pickSideTrackLineForSourceScroll,
-  pickSourceLine0ForSideTrackScroll,
+  pickParallelDocsLineForSourceDualPane,
+  pickParallelDocsLineForSourceScroll,
+  pickSourceLine0ForParallelDocsScroll,
   sourceTopLineStrictlyBeforeFirstIndexLine,
-} from "@sidetrack/core/block-scroll-pickers";
+} from "@parallel-docs/core/block-scroll-pickers";
 
 /**
  * Maps one pane’s scroll position to the other for **proportional** scroll sync

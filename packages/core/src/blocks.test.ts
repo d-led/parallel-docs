@@ -1,20 +1,20 @@
 import { describe, expect, it } from "vitest";
-import { buildSideTrackSnippetV1 } from "./block-snippet.js";
+import { buildParallelDocsSnippetV1 } from "./block-snippet.js";
 import {
   addBlockToIndex,
   alignAndCleanRegions,
-  appendBlockToSideTrack,
+  appendBlockToParallelDocs,
   createBlockForRange,
   generateBlockId,
   insertBlockBySourceMarkerOrder,
   recoverSourceMarkersFromSnippet,
-  removeBlockFromSideTrack,
+  removeBlockFromParallelDocs,
   removeBlockFromIndex,
   removeSourceMarkersFromText,
-  wrapSourceLineRangeWithSideTrackMarkers,
+  wrapSourceLineRangeWithParallelDocsMarkers,
 } from "./blocks.js";
 import { emptyIndex } from "./metadata.js";
-import type { SideTrackBlock } from "./model.js";
+import type { ParallelDocsBlock } from "./model.js";
 
 const SOURCE = ["export function greet(name) {", "  return `Hello, ${name}!`;", "}"].join("\n");
 
@@ -23,30 +23,30 @@ function seeded(values: number[]): () => number {
   return () => values[i++ % values.length];
 }
 
-describe("Wrapping a source line range with SideTrack region delimiters", () => {
+describe("Wrapping a source line range with ParallelDocs region delimiters", () => {
   it("uses HTML-style regions in Markdown like the repository README", () => {
     const src = ["# Title", "body", "tail"].join("\n");
-    const { sourceText, innerRange } = wrapSourceLineRangeWithSideTrackMarkers({
+    const { sourceText, innerRange } = wrapSourceLineRangeWithParallelDocsMarkers({
       sourceText: src,
       range: { startLine: 2, endLine: 2 },
       languageId: "markdown",
       markerId: "readme-why",
     });
-    expect(sourceText).toContain("<!-- #region sidetrack:readme-why -->");
-    expect(sourceText).toContain("<!-- #endregion sidetrack:readme-why -->");
+    expect(sourceText).toContain("<!-- #region parallelDocs:readme-why -->");
+    expect(sourceText).toContain("<!-- #endregion parallelDocs:readme-why -->");
     expect(innerRange).toEqual({ startLine: 3, endLine: 3 });
   });
 
   it("uses hash line-comment markers in TOML (same pairing contract as README, different comment syntax)", () => {
     const src = ["[storage]", 'dir = "x"', "", "[scm]", "y = 1"].join("\n");
-    const { sourceText, innerRange } = wrapSourceLineRangeWithSideTrackMarkers({
+    const { sourceText, innerRange } = wrapSourceLineRangeWithParallelDocsMarkers({
       sourceText: src,
       range: { startLine: 1, endLine: 2 },
       languageId: "toml",
       markerId: "toml-lede",
     });
-    expect(sourceText).toContain("# sidetrack:start id=toml-lede");
-    expect(sourceText).toContain("# sidetrack:end id=toml-lede");
+    expect(sourceText).toContain("# parallelDocs:start id=toml-lede");
+    expect(sourceText).toContain("# parallelDocs:end id=toml-lede");
     expect(innerRange).toEqual({ startLine: 2, endLine: 3 });
   });
 });
@@ -71,7 +71,11 @@ describe("Creating a new documentation block for a source range", () => {
       id: "fixed1",
     });
     expect(block.snippet).toBe(
-      buildSideTrackSnippetV1(["export function greet(name) {", "return `Hello, ${name}!`;", "}"]),
+      buildParallelDocsSnippetV1([
+        "export function greet(name) {",
+        "return `Hello, ${name}!`;",
+        "}",
+      ]),
     );
   });
 
@@ -104,7 +108,7 @@ describe("Creating a new documentation block for a source range", () => {
       id: "fixed1",
     });
     expect(block.anchor).toBe("marker:fixed1");
-    expect(block.snippet).toBe(buildSideTrackSnippetV1(["return `Hello, ${name}!`;", "}"]));
+    expect(block.snippet).toBe(buildParallelDocsSnippetV1(["return `Hello, ${name}!`;", "}"]));
   });
 
   it("emits an invisible id marker that renders to nothing in HTML", () => {
@@ -114,7 +118,7 @@ describe("Creating a new documentation block for a source range", () => {
       range: { startLine: 1, endLine: 3 },
       id: "abc123",
     });
-    expect(markdown).toMatch(/^<!-- sidetrack:block id=abc123 -->\n/);
+    expect(markdown).toMatch(/^<!-- parallelDocs:block id=abc123 -->\n/);
     expect(block.id).toBe("abc123");
   });
 
@@ -126,7 +130,7 @@ describe("Creating a new documentation block for a source range", () => {
       id: "abc123",
     });
     const lines = markdown.split("\n");
-    expect(lines[caretLineOffset]).toBe("_(write sidetrack here)_");
+    expect(lines[caretLineOffset]).toBe("_(write parallel-docs here)_");
   });
 
   it("derives a deterministic id from the supplied rng", () => {
@@ -142,74 +146,74 @@ describe("Creating a new documentation block for a source range", () => {
 
 describe("Appending a block into companion Markdown", () => {
   it("separates the new block from existing content with a blank line", () => {
-    const existing = "# SideTrack\n\n";
-    const blockMd = "<!-- sidetrack:block id=abc -->\n## line 1\n\nbody\n";
-    const next = appendBlockToSideTrack(existing, blockMd);
-    expect(next).toBe(`# SideTrack\n\n${blockMd}`);
+    const existing = "# ParallelDocs\n\n";
+    const blockMd = "<!-- parallelDocs:block id=abc -->\n## line 1\n\nbody\n";
+    const next = appendBlockToParallelDocs(existing, blockMd);
+    expect(next).toBe(`# ParallelDocs\n\n${blockMd}`);
   });
 
   it("keeps a no-trailing-newline existing file intact and still separates", () => {
     const existing = "header without trailing newline";
-    const blockMd = "<!-- sidetrack:block id=abc -->\n## line 1\n";
-    const next = appendBlockToSideTrack(existing, blockMd);
+    const blockMd = "<!-- parallelDocs:block id=abc -->\n## line 1\n";
+    const next = appendBlockToParallelDocs(existing, blockMd);
     expect(next).toBe(`header without trailing newline\n\n${blockMd}`);
   });
 
   it("handles an empty file by writing the block at the top", () => {
-    const next = appendBlockToSideTrack("", "<!-- sidetrack:block id=abc -->\n## x\n");
-    expect(next).toBe("<!-- sidetrack:block id=abc -->\n## x\n");
+    const next = appendBlockToParallelDocs("", "<!-- parallelDocs:block id=abc -->\n## x\n");
+    expect(next).toBe("<!-- parallelDocs:block id=abc -->\n## x\n");
   });
 });
 
 describe("Inserting a block by source marker order", () => {
   it("places a new block before the first companion section that maps after it in source", () => {
     const source = [
-      "//#region sidetrack:a",
+      "//#region parallelDocs:a",
       "a",
-      "//#endregion sidetrack:a",
-      "//#region sidetrack:b",
+      "//#endregion parallelDocs:a",
+      "//#region parallelDocs:b",
       "b",
-      "//#endregion sidetrack:b",
-      "//#region sidetrack:c",
+      "//#endregion parallelDocs:b",
+      "//#region parallelDocs:c",
       "c",
-      "//#endregion sidetrack:c",
+      "//#endregion parallelDocs:c",
     ].join("\n");
     const existing = [
-      "<!-- sidetrack:block id=a -->",
+      "<!-- parallelDocs:block id=a -->",
       "## a",
       "",
       "A",
       "",
-      "<!-- sidetrack:block id=c -->",
+      "<!-- parallelDocs:block id=c -->",
       "## c",
       "",
       "C",
       "",
     ].join("\n");
-    const blockB = ["<!-- sidetrack:block id=b -->", "## b", "", "B", ""].join("\n");
+    const blockB = ["<!-- parallelDocs:block id=b -->", "## b", "", "B", ""].join("\n");
 
     const next = insertBlockBySourceMarkerOrder({
-      existingSideTrack: existing,
+      existingParallelDocs: existing,
       blockMarkdown: blockB,
       sourceText: source,
       markerId: "b",
     });
 
-    const aPos = next.indexOf("<!-- sidetrack:block id=a -->");
-    const bPos = next.indexOf("<!-- sidetrack:block id=b -->");
-    const cPos = next.indexOf("<!-- sidetrack:block id=c -->");
+    const aPos = next.indexOf("<!-- parallelDocs:block id=a -->");
+    const bPos = next.indexOf("<!-- parallelDocs:block id=b -->");
+    const cPos = next.indexOf("<!-- parallelDocs:block id=c -->");
     expect(aPos).toBeGreaterThanOrEqual(0);
     expect(bPos).toBeGreaterThan(aPos);
     expect(cPos).toBeGreaterThan(bPos);
   });
 
   it("falls back to append when marker id is missing from source order", () => {
-    const source = ["//#region sidetrack:a", "a", "//#endregion sidetrack:a"].join("\n");
-    const existing = "<!-- sidetrack:block id=a -->\n## a\n";
-    const blockZ = "<!-- sidetrack:block id=z -->\n## z\n";
+    const source = ["//#region parallelDocs:a", "a", "//#endregion parallelDocs:a"].join("\n");
+    const existing = "<!-- parallelDocs:block id=a -->\n## a\n";
+    const blockZ = "<!-- parallelDocs:block id=z -->\n## z\n";
 
     const next = insertBlockBySourceMarkerOrder({
-      existingSideTrack: existing,
+      existingParallelDocs: existing,
       blockMarkdown: blockZ,
       sourceText: source,
       markerId: "z",
@@ -220,93 +224,97 @@ describe("Inserting a block by source marker order", () => {
 
   it("uses first marker starts for ordering even when a prior region is temporarily unclosed", () => {
     const source = [
-      "<!-- #region sidetrack:running -->",
+      "<!-- #region parallelDocs:running -->",
       "running body",
-      "<!-- #region sidetrack:unit -->",
+      "<!-- #region parallelDocs:unit -->",
       "unit body",
-      "<!-- #endregion sidetrack:unit -->",
+      "<!-- #endregion parallelDocs:unit -->",
     ].join("\n");
-    const existing = ["<!-- sidetrack:block id=unit -->", "## unit", "", "Unit text", ""].join(
+    const existing = ["<!-- parallelDocs:block id=unit -->", "## unit", "", "Unit text", ""].join(
       "\n",
     );
-    const running = ["<!-- sidetrack:block id=running -->", "## running", "", "Run text", ""].join(
-      "\n",
-    );
+    const running = [
+      "<!-- parallelDocs:block id=running -->",
+      "## running",
+      "",
+      "Run text",
+      "",
+    ].join("\n");
 
     const next = insertBlockBySourceMarkerOrder({
-      existingSideTrack: existing,
+      existingParallelDocs: existing,
       blockMarkdown: running,
       sourceText: source,
       markerId: "running",
     });
 
-    const runningPos = next.indexOf("<!-- sidetrack:block id=running -->");
-    const unitPos = next.indexOf("<!-- sidetrack:block id=unit -->");
+    const runningPos = next.indexOf("<!-- parallelDocs:block id=running -->");
+    const unitPos = next.indexOf("<!-- parallelDocs:block id=unit -->");
     expect(runningPos).toBeGreaterThanOrEqual(0);
     expect(unitPos).toBeGreaterThan(runningPos);
   });
 });
 
 describe("Registering a block in the index", () => {
-  const block: SideTrackBlock = { id: "abc123", anchor: "lines:1-3" };
+  const block: ParallelDocsBlock = { id: "abc123", anchor: "lines:1-3" };
 
   it("creates the source entry lazily the first time a block is added", () => {
     const next = addBlockToIndex(emptyIndex(), {
       sourcePath: "src/greet.ts",
-      sidetrackPath: ".sidetrack/source/src/greet.ts.md",
+      parallelDocsPath: ".parallel-docs/source/src/greet.ts.md",
       block,
     });
-    const cr = ".sidetrack/source/src/greet.ts.md";
-    expect(next.bySideTrackPath[cr]).toEqual({
+    const cr = ".parallel-docs/source/src/greet.ts.md";
+    expect(next.byParallelDocsPath[cr]).toEqual({
       sourcePath: "src/greet.ts",
-      sidetrackPath: cr,
+      parallelDocsPath: cr,
       blocks: [block],
     });
   });
 
   it("appends to an existing source entry without mutating the input index", () => {
-    const cr = ".sidetrack/source/src/greet.ts.md";
+    const cr = ".parallel-docs/source/src/greet.ts.md";
     const base = addBlockToIndex(emptyIndex(), {
       sourcePath: "src/greet.ts",
-      sidetrackPath: cr,
+      parallelDocsPath: cr,
       block,
     });
     const next = addBlockToIndex(base, {
       sourcePath: "src/greet.ts",
-      sidetrackPath: cr,
+      parallelDocsPath: cr,
       block: { id: "def456", anchor: "lines:10-20" },
     });
-    expect(next.bySideTrackPath[cr]?.blocks.map((b) => b.id)).toEqual(["abc123", "def456"]);
-    expect(base.bySideTrackPath[cr]?.blocks.map((b) => b.id)).toEqual(["abc123"]);
+    expect(next.byParallelDocsPath[cr]?.blocks.map((b) => b.id)).toEqual(["abc123", "def456"]);
+    expect(base.byParallelDocsPath[cr]?.blocks.map((b) => b.id)).toEqual(["abc123"]);
   });
 
   it("refuses to overwrite a block whose id already exists", () => {
-    const cr = ".sidetrack/source/src/greet.ts.md";
+    const cr = ".parallel-docs/source/src/greet.ts.md";
     const base = addBlockToIndex(emptyIndex(), {
       sourcePath: "src/greet.ts",
-      sidetrackPath: cr,
+      parallelDocsPath: cr,
       block,
     });
     expect(() =>
       addBlockToIndex(base, {
         sourcePath: "src/greet.ts",
-        sidetrackPath: cr,
+        parallelDocsPath: cr,
         block: { id: "abc123", anchor: "lines:5-7" },
       }),
     ).toThrowError(/already exists/);
   });
 
-  it("refuses the same sidetrackPath indexed for a different source file", () => {
-    const cr = ".sidetrack/source/x.md";
+  it("refuses the same parallelDocsPath indexed for a different source file", () => {
+    const cr = ".parallel-docs/source/x.md";
     const base = addBlockToIndex(emptyIndex(), {
       sourcePath: "src/a.ts",
-      sidetrackPath: cr,
+      parallelDocsPath: cr,
       block,
     });
     expect(() =>
       addBlockToIndex(base, {
         sourcePath: "src/other.ts",
-        sidetrackPath: cr,
+        parallelDocsPath: cr,
         block: { id: "def456", anchor: "lines:1-2" },
       }),
     ).toThrow(/already indexed for/);
@@ -322,38 +330,38 @@ describe("Generating stable block identifiers", () => {
 
 describe("Removing a block from companion Markdown", () => {
   it("returns original text when the block ID does not exist", () => {
-    const md = "<!-- sidetrack:block id=abc -->\n## src/x.ts line 1\n\nprose\n";
-    const result = removeBlockFromSideTrack(md, "nonexistent");
+    const md = "<!-- parallelDocs:block id=abc -->\n## src/x.ts line 1\n\nprose\n";
+    const result = removeBlockFromParallelDocs(md, "nonexistent");
     expect(result).toBe(md);
   });
 
   it("removes the only block completely and returns the prelude only", () => {
     const md =
-      "# Prelude Title\nIntro text\n\n<!-- sidetrack:block id=abc -->\n## src/x.ts line 1\n\nprose\n";
-    const result = removeBlockFromSideTrack(md, "abc");
+      "# Prelude Title\nIntro text\n\n<!-- parallelDocs:block id=abc -->\n## src/x.ts line 1\n\nprose\n";
+    const result = removeBlockFromParallelDocs(md, "abc");
     expect(result.trim()).toBe("# Prelude Title\nIntro text");
   });
 
   it("removes a block in the middle of other blocks, joining them cleanly", () => {
     const md = [
-      "<!-- sidetrack:block id=a -->",
+      "<!-- parallelDocs:block id=a -->",
       "## src/x.ts line 1",
       "",
       "prose A",
       "",
-      "<!-- sidetrack:block id=b -->",
+      "<!-- parallelDocs:block id=b -->",
       "## src/x.ts line 2",
       "",
       "prose B",
       "",
-      "<!-- sidetrack:block id=c -->",
+      "<!-- parallelDocs:block id=c -->",
       "## src/x.ts line 3",
       "",
       "prose C",
       "",
     ].join("\n");
 
-    const result = removeBlockFromSideTrack(md, "b");
+    const result = removeBlockFromParallelDocs(md, "b");
 
     expect(result).toContain("id=a");
     expect(result).not.toContain("id=b");
@@ -365,22 +373,22 @@ describe("Removing a block from companion Markdown", () => {
 
   it("removes the last block, preserving the preceding block and its layout", () => {
     const md = [
-      "<!-- sidetrack:block id=a -->",
+      "<!-- parallelDocs:block id=a -->",
       "## src/x.ts line 1",
       "",
       "prose A",
       "",
-      "<!-- sidetrack:block id=b -->",
+      "<!-- parallelDocs:block id=b -->",
       "## src/x.ts line 2",
       "",
       "prose B",
       "",
     ].join("\n");
 
-    const result = removeBlockFromSideTrack(md, "b");
+    const result = removeBlockFromParallelDocs(md, "b");
 
     expect(result.trim()).toBe(
-      ["<!-- sidetrack:block id=a -->", "## src/x.ts line 1", "", "prose A"].join("\n"),
+      ["<!-- parallelDocs:block id=a -->", "## src/x.ts line 1", "", "prose A"].join("\n"),
     );
   });
 });
@@ -395,9 +403,9 @@ describe("Removing source markers from source files", () => {
   it("removes starting and ending marker lines for the given ID", () => {
     const src = [
       "function foo() {",
-      "//#region sidetrack:abc",
+      "//#region parallelDocs:abc",
       "  console.log('hello');",
-      "//#endregion sidetrack:abc",
+      "//#endregion parallelDocs:abc",
       "}",
     ].join("\n");
 
@@ -408,9 +416,9 @@ describe("Removing source markers from source files", () => {
 
   it("supports multiple comment styles", () => {
     const src = [
-      "<!-- #region sidetrack:abc -->",
+      "<!-- #region parallelDocs:abc -->",
       "some markdown",
-      "<!-- #endregion sidetrack:abc -->",
+      "<!-- #endregion parallelDocs:abc -->",
     ].join("\n");
 
     const result = removeSourceMarkersFromText(src, "abc");
@@ -430,41 +438,41 @@ describe("Removing a block from the metadata index", () => {
     const cp = "docs/x.md";
     let idx = addBlockToIndex(emptyIndex(), {
       sourcePath: "src/x.ts",
-      sidetrackPath: cp,
+      parallelDocsPath: cp,
       block: { id: "a", anchor: "marker:a" },
     });
     idx = addBlockToIndex(idx, {
       sourcePath: "src/x.ts",
-      sidetrackPath: cp,
+      parallelDocsPath: cp,
       block: { id: "b", anchor: "marker:b" },
     });
 
     const result = removeBlockFromIndex(idx, cp, "a");
 
-    expect(result.bySideTrackPath[cp]?.blocks.map((b) => b.id)).toEqual(["b"]);
+    expect(result.byParallelDocsPath[cp]?.blocks.map((b) => b.id)).toEqual(["b"]);
   });
 
-  it("removes the entire entry from bySideTrackPath when the last block is deleted", () => {
+  it("removes the entire entry from byParallelDocsPath when the last block is deleted", () => {
     const cp = "docs/x.md";
     const idx = addBlockToIndex(emptyIndex(), {
       sourcePath: "src/x.ts",
-      sidetrackPath: cp,
+      parallelDocsPath: cp,
       block: { id: "a", anchor: "marker:a" },
     });
 
     const result = removeBlockFromIndex(idx, cp, "a");
 
-    expect(result.bySideTrackPath[cp]).toBeUndefined();
+    expect(result.byParallelDocsPath[cp]).toBeUndefined();
   });
 });
 
 function buildAlignIndex(blocks: { id: string; anchor: string }[]) {
   return {
     schemaVersion: 3 as const,
-    bySideTrackPath: {
+    byParallelDocsPath: {
       "docs/main.md": {
         sourcePath: "src/main.ts",
-        sidetrackPath: "docs/main.md",
+        parallelDocsPath: "docs/main.md",
         blocks,
       },
     },
@@ -473,14 +481,14 @@ function buildAlignIndex(blocks: { id: string; anchor: string }[]) {
 
 function runAlign(args: {
   sourceText: string;
-  sidetrackMarkdown: string;
+  parallelDocsMarkdown: string;
   blocks: { id: string; anchor: string }[];
 }) {
   return alignAndCleanRegions({
     sourceText: args.sourceText,
-    sidetrackMarkdown: args.sidetrackMarkdown,
+    parallelDocsMarkdown: args.parallelDocsMarkdown,
     index: buildAlignIndex(args.blocks),
-    sidetrackPath: "docs/main.md",
+    parallelDocsPath: "docs/main.md",
     sourcePath: "src/main.ts",
   });
 }
@@ -488,34 +496,34 @@ function runAlign(args: {
 describe("Aligning and cleaning regions across source, markdown, and index", () => {
   const sourceText = [
     "function main() {",
-    "//#region sidetrack:first",
+    "//#region parallelDocs:first",
     "  console.log(1);",
-    "//#endregion sidetrack:first",
+    "//#endregion parallelDocs:first",
     "  console.log(2);",
-    "//#region sidetrack:second",
+    "//#region parallelDocs:second",
     "  console.log(3);",
-    "//#endregion sidetrack:second",
+    "//#endregion parallelDocs:second",
     "}",
   ].join("\n");
 
   it("reorders markdown block segments and index blocks to match source region order", () => {
     // Markdown has "second" block first, and "first" block second
     const markdown = [
-      "<!-- sidetrack:block id=second -->",
+      "<!-- parallelDocs:block id=second -->",
       "## src/main.ts line 7",
       "",
       "prose second",
       "",
-      "<!-- sidetrack:block id=first -->",
+      "<!-- parallelDocs:block id=first -->",
       "## src/main.ts line 3",
       "",
       "prose first",
       "",
     ].join("\n");
 
-    const { sidetrackMarkdown, index } = runAlign({
+    const { parallelDocsMarkdown, index } = runAlign({
       sourceText,
-      sidetrackMarkdown: markdown,
+      parallelDocsMarkdown: markdown,
       blocks: [
         { id: "second", anchor: "marker:second" },
         { id: "first", anchor: "marker:first" },
@@ -523,14 +531,14 @@ describe("Aligning and cleaning regions across source, markdown, and index", () 
     });
 
     // Verify markdown ordering
-    const firstPos = sidetrackMarkdown.indexOf("id=first");
-    const secondPos = sidetrackMarkdown.indexOf("id=second");
+    const firstPos = parallelDocsMarkdown.indexOf("id=first");
+    const secondPos = parallelDocsMarkdown.indexOf("id=second");
     expect(firstPos).toBeGreaterThan(-1);
     expect(secondPos).toBeGreaterThan(-1);
     expect(firstPos).toBeLessThan(secondPos);
 
     // Verify index ordering
-    const entry = index.bySideTrackPath["docs/main.md"];
+    const entry = index.byParallelDocsPath["docs/main.md"];
     expect(entry?.blocks.map((b) => b.id)).toEqual(["first", "second"]);
   });
 });
@@ -538,37 +546,37 @@ describe("Aligning and cleaning regions across source, markdown, and index", () 
 describe("Aligning and cleaning regions (adding and removing markers)", () => {
   const sourceText = [
     "function main() {",
-    "//#region sidetrack:first",
+    "//#region parallelDocs:first",
     "  console.log(1);",
-    "//#endregion sidetrack:first",
+    "//#endregion parallelDocs:first",
     "  console.log(2);",
-    "//#region sidetrack:second",
+    "//#region parallelDocs:second",
     "  console.log(3);",
-    "//#endregion sidetrack:second",
+    "//#endregion parallelDocs:second",
     "}",
   ].join("\n");
 
   it("creates placeholder blocks when a new region is added in source code", () => {
     // Companion Markdown has only the "first" block, but source has "first" and "second"
     const markdown = [
-      "<!-- sidetrack:block id=first -->",
+      "<!-- parallelDocs:block id=first -->",
       "## src/main.ts line 3",
       "",
       "prose first",
       "",
     ].join("\n");
 
-    const { sidetrackMarkdown, index } = runAlign({
+    const { parallelDocsMarkdown, index } = runAlign({
       sourceText,
-      sidetrackMarkdown: markdown,
+      parallelDocsMarkdown: markdown,
       blocks: [{ id: "first", anchor: "marker:first" }],
     });
 
-    expect(sidetrackMarkdown).toContain("id=first");
-    expect(sidetrackMarkdown).toContain("id=second");
-    expect(sidetrackMarkdown).toContain("_(write sidetrack here)_");
+    expect(parallelDocsMarkdown).toContain("id=first");
+    expect(parallelDocsMarkdown).toContain("id=second");
+    expect(parallelDocsMarkdown).toContain("_(write parallel-docs here)_");
 
-    const entry = index.bySideTrackPath["docs/main.md"];
+    const entry = index.byParallelDocsPath["docs/main.md"];
     expect(entry?.blocks.map((b) => b.id)).toEqual(["first", "second"]);
     expect(entry?.blocks.find((b) => b.id === "second")?.snippet).toContain("console.log(3)");
   });
@@ -577,38 +585,38 @@ describe("Aligning and cleaning regions (adding and removing markers)", () => {
     // Source code has only "first" (we pass a source text with only "first")
     const srcOnlyFirst = [
       "function main() {",
-      "//#region sidetrack:first",
+      "//#region parallelDocs:first",
       "  console.log(1);",
-      "//#endregion sidetrack:first",
+      "//#endregion parallelDocs:first",
       "}",
     ].join("\n");
 
     const markdown = [
-      "<!-- sidetrack:block id=first -->",
+      "<!-- parallelDocs:block id=first -->",
       "## src/main.ts line 3",
       "",
       "prose first",
       "",
-      "<!-- sidetrack:block id=second -->",
+      "<!-- parallelDocs:block id=second -->",
       "## src/main.ts line 7",
       "",
       "prose second",
       "",
     ].join("\n");
 
-    const { sidetrackMarkdown, index } = runAlign({
+    const { parallelDocsMarkdown, index } = runAlign({
       sourceText: srcOnlyFirst,
-      sidetrackMarkdown: markdown,
+      parallelDocsMarkdown: markdown,
       blocks: [
         { id: "first", anchor: "marker:first" },
         { id: "second", anchor: "marker:second" },
       ],
     });
 
-    expect(sidetrackMarkdown).toContain("id=first");
-    expect(sidetrackMarkdown).not.toContain("id=second");
+    expect(parallelDocsMarkdown).toContain("id=first");
+    expect(parallelDocsMarkdown).not.toContain("id=second");
 
-    const entry = index.bySideTrackPath["docs/main.md"];
+    const entry = index.byParallelDocsPath["docs/main.md"];
     expect(entry?.blocks.map((b) => b.id)).toEqual(["first"]);
   });
 });
@@ -619,10 +627,10 @@ describe("Recovering source markers from snippet", () => {
     snippetLines: string[];
     blockId?: string;
   }) {
-    const block: SideTrackBlock = {
+    const block: ParallelDocsBlock = {
       id: args.blockId ?? "sum",
       anchor: `marker:${args.blockId ?? "sum"}`,
-      snippet: buildSideTrackSnippetV1(args.snippetLines),
+      snippet: buildParallelDocsSnippetV1(args.snippetLines),
     };
     return recoverSourceMarkersFromSnippet({
       sourceText: args.sourceText,
@@ -639,7 +647,7 @@ describe("Recovering source markers from snippet", () => {
   }
 
   it("returns healed=false and unchanged sourceText when snippet is missing or empty", () => {
-    const block: SideTrackBlock = { id: "greet", anchor: "marker:greet" };
+    const block: ParallelDocsBlock = { id: "greet", anchor: "marker:greet" };
     const src = "function greet() {\n  return 'hi';\n}";
     const result = recoverSourceMarkersFromSnippet({
       sourceText: src,
@@ -656,10 +664,10 @@ describe("Recovering source markers from snippet", () => {
     expect(result.sourceText).toBe(
       [
         "function sum() {",
-        "  //#region sidetrack:sum",
+        "  //#region parallelDocs:sum",
         "  const x = 1;",
         "  return x;",
-        "  //#endregion sidetrack:sum",
+        "  //#endregion parallelDocs:sum",
         "}",
       ].join("\n"),
     );

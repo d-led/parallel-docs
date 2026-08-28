@@ -4,16 +4,16 @@
 
 ### Breaking
 
-- **Rebrand**: the project is renamed from Commentray to **SideTrack**.
-  - VS Code extension ID: `d-led.commentray-vscode` → `d-led.sidetrack-vscode` (new Marketplace listing)
-  - npm packages: `@commentray/*` → `@sidetrack/*`, CLI binary `commentray` → `sidetrack`
-  - Storage directory `.commentray/` → `.sidetrack/`, config file `.commentray.toml` → `.sidetrack.toml`
-  - Command IDs, configuration namespace, MCP tool names, and Markdown markers now use `sidetrack`
+- **Rebrand**: the project is renamed from Commentray to **ParallelDocs**.
+  - VS Code extension ID: `d-led.commentray-vscode` → `d-led.parallel-docs-vscode` (new Marketplace listing)
+  - npm packages: `@commentray/*` → `@parallel-docs/*`, CLI binary `commentray` → `parallel-docs`
+  - Storage directory `.commentray/` → `.parallel-docs/`, config file `.commentray.toml` → `.parallel-docs.toml`
+  - Command IDs, configuration namespace, MCP tool names, and Markdown markers now use `parallel-docs`
 - Legacy on-disk index field (`commentrayPath`) is still read and migrated so existing workspaces keep working.
 
 ### Added
 
-- New SideTrack icon and favicon — two documents linked by a gutter connector.
+- New ParallelDocs icon and favicon — two documents linked by a gutter connector.
 - Automated third-party license notice generation (`npm run license:notices` → `packages/vscode/ThirdPartyNotices.txt`).
 
 ### Changed
@@ -25,17 +25,17 @@
 ### Added
 
 - **MCP server** (`packages/mcp-server/`) — 16 tools for AI coding assistants:
-  - `sidetrack_init`, `sidetrack_validate`, `sidetrack_paths`, `sidetrack_render`, `sidetrack_doctor`, `sidetrack_migrate`, `sidetrack_migrate_angles`, `sidetrack_angles_add`, `sidetrack_sync_moved_paths`, `sidetrack_convert_source_markers`
-  - `sidetrack_list_pairs`, `sidetrack_read_sidetrack`, `sidetrack_read_source`, `sidetrack_list_orphans`, `sidetrack_find_uncommented`, `sidetrack_get_index`
-- **CLI**: `sidetrack mcp serve` (start MCP server) and `sidetrack mcp install` (write repo-local configs for VS Code, Claude, Antigravity, OpenCode)
-- **VS Code**: `sidetrack.configureMcpServer` command + bundled `dist/mcp-server.js`
+  - `parallel_docs_init`, `parallel_docs_validate`, `parallel_docs_paths`, `parallel_docs_render`, `parallel_docs_doctor`, `parallel_docs_migrate`, `parallel_docs_migrate_angles`, `parallel_docs_angles_add`, `parallel_docs_sync_moved_paths`, `parallel_docs_convert_source_markers`
+  - `parallel_docs_list_pairs`, `parallel_docs_read_parallel_docs`, `parallel_docs_read_source`, `parallel_docs_list_orphans`, `parallel_docs_find_uncommented`, `parallel_docs_get_index`
+- **CLI**: `parallel-docs mcp serve` (start MCP server) and `parallel-docs mcp install` (write repo-local configs for VS Code, Claude, Antigravity, OpenCode)
+- **VS Code**: `parallel-docs.configureMcpServer` command + bundled `dist/mcp-server.js`
 - **Scripts**: `scripts/install-plugin-here.sh` — install extension into running IDE
 - **Docs**: `docs/user/mcp-server.md` — MCP setup and tool reference
 
 ### Changed
 
-- Build order: `mcp-server` built after `code-sidetrack-static`, before `cli` and `vscode`
-- Publish workflow: `@sidetrack/mcp-server` added to `PUBLIC_WORKSPACES`
-- Workspace sync: `@sidetrack/mcp-server` added to `WORKSPACE_NAMES`
+- Build order: `mcp-server` built after `code-parallel-docs-static`, before `cli` and `vscode`
+- Publish workflow: `@parallel-docs/mcp-server` added to `PUBLIC_WORKSPACES`
+- Workspace sync: `@parallel-docs/mcp-server` added to `WORKSPACE_NAMES`
 
 ## [0.3.6] — prior

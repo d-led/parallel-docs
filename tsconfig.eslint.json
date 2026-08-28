@@ -9,9 +9,9 @@
     "sourceMap": false,
     "baseUrl": ".",
     "paths": {
-      "@sidetrack/core": ["packages/core/src/index.ts"],
-      "@sidetrack/render": ["packages/render/src/index.ts"],
-      "@sidetrack/mcp-server": ["packages/mcp-server/src/index.ts"]
+      "@parallel-docs/core": ["packages/core/src/index.ts"],
+      "@parallel-docs/render": ["packages/render/src/index.ts"],
+      "@parallel-docs/mcp-server": ["packages/mcp-server/src/index.ts"]
     },
     "types": ["node", "vscode"],
     "lib": ["ES2022"]
@@ -25,8 +25,8 @@
     "packages/render/src/**/*.ts",
     "packages/cli/src/**/*.ts",
     "packages/vscode/src/**/*.ts",
-    "packages/code-sidetrack-static/src/**/*.ts",
-    "packages/code-sidetrack-static/fixtures/**/*.ts",
+    "packages/code-parallel-docs-static/src/**/*.ts",
+    "packages/code-parallel-docs-static/fixtures/**/*.ts",
     "packages/mcp-server/src/**/*.ts",
     "packages/architecture/**/*.ts",
     "scripts/**/*.mjs"

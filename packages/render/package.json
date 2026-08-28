@@ -1,10 +1,10 @@
 {
-  "name": "@sidetrack/render",
+  "name": "@parallel-docs/render",
   "version": "1.0.0",
   "publishConfig": {
     "access": "public"
   },
-  "description": "Markdown + syntax highlighting rendering for SideTrack",
+  "description": "Markdown + syntax highlighting rendering for ParallelDocs",
   "license": "MPL-2.0",
   "type": "module",
   "sideEffects": false,
@@ -29,7 +29,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@sidetrack/core": "1.0.0",
+    "@parallel-docs/core": "1.0.0",
     "@m31coding/fuzzy-search": "^2.0.0",
     "rehype-highlight": "^7.0.2",
     "rehype-raw": "^7.0.0",

@@ -3,7 +3,7 @@ import { shellA11y } from "../shell-a11y";
 /** Matches `code-browser.ts` / client `DUAL_MOBILE_SINGLE_PANE_MQ` (dual panes from 768px up). */
 const MOBILE_VIEWPORT_WIDTH = 390;
 const MOBILE_VIEWPORT_HEIGHT = 844;
-const WIDE_MODE_INTRO_STORAGE_KEY = "sidetrack.codeSideTrackStatic.wideModeIntro.v1";
+const WIDE_MODE_INTRO_STORAGE_KEY = "parallel-docs.codeParallelDocsStatic.wideModeIntro.v1";
 
 function assertStretchCellVisibility(selector: string, shouldBeHidden: boolean): void {
   cy.get(selector)
@@ -36,7 +36,7 @@ Cypress.Commands.add("PrepareStaticSiteHomeAtMobileViewportWithSourcePaneActive"
   cy.visit("/", {
     onBeforeLoad(win) {
       win.localStorage.setItem(WIDE_MODE_INTRO_STORAGE_KEY, "1");
-      win.localStorage.setItem("sidetrack.codeSideTrackStatic.dualMobilePane", "code");
+      win.localStorage.setItem("parallel-docs.codeParallelDocsStatic.dualMobilePane", "code");
     },
   });
 });
@@ -61,7 +61,7 @@ Cypress.Commands.add("MobileStaticSiteCodeBrowserChromeShouldBeReady", () => {
   });
 });
 
-Cypress.Commands.add("MobileSinglePaneLayoutShouldShowSideTrackColumnOnly", () => {
+Cypress.Commands.add("MobileSinglePaneLayoutShouldShowParallelDocsColumnOnly", () => {
   cy.get(shellA11y.shell).should("have.attr", "data-dual-mobile-pane", "doc");
   cy.get(shellA11y.shell).then(($shell) => {
     if ($shell.attr("data-layout") === "stretch") {
@@ -69,7 +69,7 @@ Cypress.Commands.add("MobileSinglePaneLayoutShouldShowSideTrackColumnOnly", () =
       return;
     }
     cy.get(shellA11y.panes.source).should("not.be.visible");
-    cy.get(shellA11y.panes.sidetrack).should("be.visible");
+    cy.get(shellA11y.panes.parallelDocs).should("be.visible");
   });
 });
 
@@ -81,7 +81,7 @@ Cypress.Commands.add("MobileSinglePaneLayoutShouldShowSourceColumnOnly", () => {
       return;
     }
     cy.get(shellA11y.panes.source).should("be.visible");
-    cy.get(shellA11y.panes.sidetrack).should("not.be.visible");
+    cy.get(shellA11y.panes.parallelDocs).should("not.be.visible");
   });
 });
 

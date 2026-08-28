@@ -16,56 +16,56 @@ import { visit } from "unist-util-visit";
 import { escapeHtml } from "./html-utils.js";
 
 /**
- * When generating static HTML (Pages, `sidetrack render`), rewrites `img[src]` and `a[href]`
+ * When generating static HTML (Pages, `parallel-docs render`), rewrites `img[src]` and `a[href]`
  * so local assets work from the output file location.
  *
- * **URL rules** (same sidetrack file as in the editor):
+ * **URL rules** (same parallel-docs file as in the editor):
  * - **`/path/to/file`** — resolved from the **repository root** (leading slash), POSIX-style,
  *   after `..` normalization; must stay **inside** `repoRootAbs`.
  * - **`./` / `../` / `figures/a.png`** — resolved with `path.resolve(markdownUrlBaseDirAbs, …)`;
  *   must stay **inside** `repoRootAbs`.
  *
- * **Images (`img[src]`)** — resolved path must also lie **inside** `sidetrackStorageRootAbs`
- * (typically `{repo}/.sidetrack`). Raster or SVG assets for sidetrack belong next to the
+ * **Images (`img[src]`)** — resolved path must also lie **inside** `parallelDocsStorageRootAbs`
+ * (typically `{repo}/.parallel-docs`). Raster or SVG assets for parallel-docs belong next to the
  * Markdown under storage; repo-root images are **not** emitted (src removed) so static pages
  * cannot pull arbitrary repo files as image bytes.
  *
  * **Links (`a[href]`)** — any in-repo file under `repoRootAbs` may still be linked (e.g. specs
  * under `docs/`). Only images are restricted to storage.
  *
- * **Static publish (`staticSiteOutDirAbs`)** — GitHub Pages and `sidetrack serve` only deploy
+ * **Static publish (`staticSiteOutDirAbs`)** — GitHub Pages and `parallel-docs serve` only deploy
  * files under the output site root (e.g. `_site/`). Local `img[src]` that would point outside
- * that tree (typically `../.sidetrack/…`) are rewritten to
- * `{@link SIDETRACK_STATIC_COMPANION_ASSETS_SEGMENT}/…` **under the site root**, and the
- * pipeline records copies in {@link SideTrackOutputUrlOptions.companionStaticAssetCopies} for
+ * that tree (typically `../.parallel-docs/…`) are rewritten to
+ * `{@link PARALLEL_DOCS_STATIC_COMPANION_ASSETS_SEGMENT}/…` **under the site root**, and the
+ * pipeline records copies in {@link ParallelDocsOutputUrlOptions.companionStaticAssetCopies} for
  * the build step to materialize on disk.
  */
-export const SIDETRACK_STATIC_COMPANION_ASSETS_SEGMENT = "sidetrack-static-assets";
+export const PARALLEL_DOCS_STATIC_COMPANION_ASSETS_SEGMENT = "parallel-docs-static-assets";
 
-export type SideTrackStaticAssetCopy = { fromAbs: string; toAbs: string };
+export type ParallelDocsStaticAssetCopy = { fromAbs: string; toAbs: string };
 
-export type SideTrackOutputUrlOptions = {
+export type ParallelDocsOutputUrlOptions = {
   repoRootAbs: string;
   htmlOutputFileAbs: string;
   markdownUrlBaseDirAbs: string;
   /**
-   * Absolute path to SideTrack storage (e.g. `{repoRoot}/.sidetrack`). Used to sandbox
+   * Absolute path to ParallelDocs storage (e.g. `{repoRoot}/.parallel-docs`). Used to sandbox
    * **local image** URLs; see package JSDoc above.
    */
-  sidetrackStorageRootAbs: string;
+  parallelDocsStorageRootAbs: string;
   /** When set, `https://github.com/<owner>/<repo>/blob|tree/<branch>/…` becomes a `/…` repo path. */
   githubBlobRepo?: { owner: string; repo: string };
   /**
    * Absolute path to the deployed static site root (e.g. `{repo}/_site`). When set, companion
    * images under storage that are not already inside this directory are emitted as URLs under
-   * {@link SIDETRACK_STATIC_COMPANION_ASSETS_SEGMENT} and listed for copying.
+   * {@link PARALLEL_DOCS_STATIC_COMPANION_ASSETS_SEGMENT} and listed for copying.
    */
   staticSiteOutDirAbs?: string;
   /**
    * When {@link staticSiteOutDirAbs} is set, populated with `{ fromAbs, toAbs }` for each mirrored
    * image so the HTML writer can `copyFile` after render.
    */
-  companionStaticAssetCopies?: SideTrackStaticAssetCopy[];
+  companionStaticAssetCopies?: ParallelDocsStaticAssetCopy[];
   /**
    * Optional prefix for local repo file links when static hosting does not serve the source tree.
    * Supported forms: absolute `http(s)` URL prefix or absolute path prefix (`/...`).
@@ -74,7 +74,7 @@ export type SideTrackOutputUrlOptions = {
 };
 
 export type MarkdownPipelineOptions = {
-  sidetrackOutputUrls?: SideTrackOutputUrlOptions;
+  parallelDocsOutputUrls?: ParallelDocsOutputUrlOptions;
 };
 
 function escapeRegExp(s: string): string {
@@ -213,9 +213,9 @@ function resolveRepoLocalFilesystemTarget(
   return resolved;
 }
 
-type MirrorCopyList = NonNullable<SideTrackOutputUrlOptions["companionStaticAssetCopies"]>;
+type MirrorCopyList = NonNullable<ParallelDocsOutputUrlOptions["companionStaticAssetCopies"]>;
 
-/** When publishing under `siteRootAbs`, storage-only images outside the site tree map into {@link SIDETRACK_STATIC_COMPANION_ASSETS_SEGMENT}. */
+/** When publishing under `siteRootAbs`, storage-only images outside the site tree map into {@link PARALLEL_DOCS_STATIC_COMPANION_ASSETS_SEGMENT}. */
 function mirroredAbsoluteTargetForSitePublish(
   resolved: string,
   storageRoot: string,
@@ -227,7 +227,7 @@ function mirroredAbsoluteTargetForSitePublish(
   const mirrorRel = path.relative(storageRoot, resolved);
   if (mirrorRel.startsWith("..") || path.isAbsolute(mirrorRel)) return "blocked";
   const toAbs = path.normalize(
-    path.join(siteRootAbs, SIDETRACK_STATIC_COMPANION_ASSETS_SEGMENT, mirrorRel),
+    path.join(siteRootAbs, PARALLEL_DOCS_STATIC_COMPANION_ASSETS_SEGMENT, mirrorRel),
   );
   if (!isResolvedPathInsideRoot(toAbs, siteRootAbs)) return "blocked";
   if (!mirroredToAbs.has(toAbs)) {
@@ -237,9 +237,9 @@ function mirroredAbsoluteTargetForSitePublish(
   return toAbs;
 }
 
-function rehypeSideTrackOutputUrls(ctx: SideTrackOutputUrlOptions) {
+function rehypeParallelDocsOutputUrls(ctx: ParallelDocsOutputUrlOptions) {
   const repoRoot = path.resolve(ctx.repoRootAbs);
-  const storageRoot = path.resolve(ctx.sidetrackStorageRootAbs);
+  const storageRoot = path.resolve(ctx.parallelDocsStorageRootAbs);
   const htmlDir = path.dirname(path.resolve(ctx.htmlOutputFileAbs));
   const baseDir = path.resolve(ctx.markdownUrlBaseDirAbs);
   const siteRootAbs = ctx.staticSiteOutDirAbs ? path.resolve(ctx.staticSiteOutDirAbs) : null;
@@ -318,7 +318,7 @@ function remarkMermaidPlaceholders() {
       const html: Html = {
         type: "html",
         /** Diagram text must end up as direct text under `<pre class="mermaid">` (see {@link rehypeMermaidUnwrapInnerCode}). */
-        value: `<div class="sidetrack-mermaid"><pre class="mermaid">${escapeHtml(
+        value: `<div class="parallel-docs-mermaid"><pre class="mermaid">${escapeHtml(
           value,
         )}</pre></div>`,
       };
@@ -365,7 +365,7 @@ function rehypeMermaidUnwrapInnerCode() {
 
 const sanitizeSchema = structuredClone(defaultSchema);
 
-/** Companion Markdown is repo-controlled; keep `id` unprefixed so `sidetrack-block-*` anchors are stable. */
+/** Companion Markdown is repo-controlled; keep `id` unprefixed so `parallel-docs-block-*` anchors are stable. */
 sanitizeSchema.clobber = ["ariaDescribedBy", "ariaLabelledBy", "name"];
 
 sanitizeSchema.attributes = {
@@ -378,11 +378,11 @@ sanitizeSchema.attributes = {
     "className",
     "id",
     "ariaHidden",
-    /** Block scroll sync markers from `injectSideTrackDocAnchors` (hast property names). */
+    /** Block scroll sync markers from `injectParallelDocsDocAnchors` (hast property names). */
     "dataSourceStart",
-    "dataSidetrackLine",
-    "dataSidetrackPageBreak",
-    "dataNextSidetrackLine",
+    "dataParallelDocsLine",
+    "dataParallelDocsPageBreak",
+    "dataNextParallelDocsLine",
     "dataNextSourceViewportLine",
   ],
 };
@@ -391,7 +391,7 @@ export async function renderMarkdownToHtml(
   markdown: string,
   options?: MarkdownPipelineOptions,
 ): Promise<string> {
-  const outUrls = options?.sidetrackOutputUrls;
+  const outUrls = options?.parallelDocsOutputUrls;
   const file = await unified()
     .use(remarkParse)
     /** GFM: autolink literals, footnotes, strikethrough, tables, task lists (see `remark-gfm`). */
@@ -411,7 +411,7 @@ export async function renderMarkdownToHtml(
     .use(function rehypeOutputUrlsMaybe() {
       return (tree: HastRoot) => {
         if (!outUrls) return;
-        rehypeSideTrackOutputUrls(outUrls)(tree);
+        rehypeParallelDocsOutputUrls(outUrls)(tree);
       };
     })
     .use(rehypeHighlight, { plainText: ["mermaid"] })

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Smoke test the built standalone SideTrack binary for this platform.
+ * Smoke test the built standalone ParallelDocs binary for this platform.
  * Exits non-zero with a clear message on the first failure.
  */
 
@@ -18,7 +18,7 @@ const OUT_DIR = join(REPO_ROOT, "packages", "cli", "dist", "bin");
 function binaryName() {
   const platform = process.platform === "win32" ? "windows" : process.platform;
   const ext = process.platform === "win32" ? ".exe" : "";
-  return `sidetrack-${platform}-${process.arch}${ext}`;
+  return `parallel-docs-${platform}-${process.arch}${ext}`;
 }
 
 function expectSuccess(label, args, { expectOutput } = {}) {
@@ -50,8 +50,8 @@ if (!existsSync(binPath)) {
 expectSuccess(`--version prints ${cliVersion}`, ["--version"], { expectOutput: cliVersion });
 expectSuccess("--help lists init", ["--help"], { expectOutput: "init" });
 expectSuccess("init --help shows scm subcommand", ["init", "--help"], { expectOutput: "scm" });
-expectSuccess("paths prints companion sidetrack path for src/foo.ts", ["paths", "src/foo.ts"], {
-  expectOutput: ".sidetrack/source/src/foo.ts",
+expectSuccess("paths prints companion parallel-docs path for src/foo.ts", ["paths", "src/foo.ts"], {
+  expectOutput: ".parallel-docs/source/src/foo.ts",
 });
 
 console.log("binary smoke tests passed");

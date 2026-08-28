@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
  * Injects a locally vendored, self-contained Mermaid build (no CDN) into
  * generated pages. The UMD bundle defines `globalThis.mermaid`; the small
  * bootstrap below initializes it and renders diagrams, dispatching the events
- * the static code browser listens for (see `sidetrack-mermaid-events.ts`).
+ * the static code browser listens for (see `parallel-docs-mermaid-events.ts`).
  */
 
 const MODULE_DIR = fileURLToPath(new URL(".", import.meta.url));
@@ -15,9 +15,9 @@ const BOOTSTRAP_JS = `(function () {
   var mermaid = globalThis.mermaid;
   if (!mermaid) return;
   mermaid.initialize({ startOnLoad: false, securityLevel: "antiscript" });
-  globalThis.sidetrackMermaid = mermaid;
+  globalThis.parallelDocsMermaid = mermaid;
   try {
-    globalThis.dispatchEvent(new CustomEvent("sidetrack-mermaid-module-ready"));
+    globalThis.dispatchEvent(new CustomEvent("parallel-docs-mermaid-module-ready"));
   } catch (_) {}
   var shell = document.getElementById("shell");
   var layout = shell && shell.getAttribute("data-layout");
@@ -31,11 +31,11 @@ const BOOTSTRAP_JS = `(function () {
       .run({ querySelector: "#doc-pane-body pre.mermaid, .stretch-doc-inner pre.mermaid" })
       .then(function () {
         try {
-          globalThis.dispatchEvent(new CustomEvent("sidetrack-mermaid-done"));
+          globalThis.dispatchEvent(new CustomEvent("parallel-docs-mermaid-done"));
         } catch (_) {}
       })
       .catch(function (err) {
-        console.error("SideTrack: mermaid.run failed", err);
+        console.error("ParallelDocs: mermaid.run failed", err);
       });
   }
 })();`;
@@ -82,7 +82,9 @@ function loadVendoredMermaidUmd(): string {
       }
     }
     if (cachedMermaidUmd === undefined) {
-      throw new Error("Missing vendored mermaid.min.js; run `npm run build -w @sidetrack/render`.");
+      throw new Error(
+        "Missing vendored mermaid.min.js; run `npm run build -w @parallel-docs/render`.",
+      );
     }
   }
   return cachedMermaidUmd;

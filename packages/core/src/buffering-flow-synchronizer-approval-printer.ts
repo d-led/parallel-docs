@@ -4,8 +4,8 @@ import type { HeightAdjustable, SyncRegionContinuationKind } from "./height-adju
  * Renders synchronized {@link HeightAdjustable} flows as a fixed-width **two-column ASCII grid** for
  * golden / approval tests. This layer owns grid tokens (`XXXX`, `BBBB`, `R{N}XX`), human-only blank
  * seams, and stagger-collapse rules — not the core synchronizer (see
- * `.sidetrack/source/packages/core/src/buffering-flow-synchronizer.ts/main.md` vs
- * `.sidetrack/source/packages/core/src/buffering-flow-synchronizer-approval-printer.ts/main.md`).
+ * `.parallel-docs/source/packages/core/src/buffering-flow-synchronizer.ts/main.md` vs
+ * `.parallel-docs/source/packages/core/src/buffering-flow-synchronizer-approval-printer.ts/main.md`).
  *
  * `HeightAdjustable.syncRegionContinuationRows` controls whether each sync-region continuation row
  * prints as `XXXX` (`body`) or padded spaces (`stagger`).

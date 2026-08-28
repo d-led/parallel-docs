@@ -6,11 +6,11 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-import { CURRENT_SCHEMA_VERSION } from "@sidetrack/core";
-import { renderCodeBrowserHtml } from "@sidetrack/render";
+import { CURRENT_SCHEMA_VERSION } from "@parallel-docs/core";
+import { renderCodeBrowserHtml } from "@parallel-docs/render";
 
 const LINE_COUNT = 100;
-const crPath = ".sidetrack/source/e2e/mobile-flip-end.ts.md";
+const crPath = ".parallel-docs/source/e2e/mobile-flip-end.ts.md";
 
 /**
  * @param {string} repoRoot
@@ -20,10 +20,10 @@ export async function writeE2eMobileFlipEndFixture(repoRoot) {
   const b2End = 72;
   const index = {
     schemaVersion: CURRENT_SCHEMA_VERSION,
-    bySideTrackPath: {
+    byParallelDocsPath: {
       [crPath]: {
         sourcePath: "e2e/mobile-flip-end.ts",
-        sidetrackPath: crPath,
+        parallelDocsPath: crPath,
         blocks: [
           { id: "b1", anchor: `lines:1-${b1End}` },
           { id: "b2", anchor: `lines:${b1End + 1}-${b2End}` },
@@ -39,25 +39,25 @@ export async function writeE2eMobileFlipEndFixture(repoRoot) {
   const filler = Array.from(
     { length: 40 },
     (_, i) =>
-      `Middle sidetrack paragraph ${String(i + 1)} with enough words to lengthen the doc pane.`,
+      `Middle parallel-docs paragraph ${String(i + 1)} with enough words to lengthen the doc pane.`,
   ).join("\n\n");
   const md =
-    "<!-- sidetrack:block id=b1 -->\n\n## Opening\n\nShort sidetrack for the first source span.\n\n" +
-    "<!-- sidetrack:block id=b2 -->\n\n## Middle\n\n" +
+    "<!-- parallelDocs:block id=b1 -->\n\n## Opening\n\nShort parallel-docs for the first source span.\n\n" +
+    "<!-- parallelDocs:block id=b2 -->\n\n## Middle\n\n" +
     filler +
-    "\n\n<!-- sidetrack:block id=b3 -->\n\n## Tail\n\nE2E_MOBILE_FLIP_TAIL_LBL\n";
+    "\n\n<!-- parallelDocs:block id=b3 -->\n\n## Tail\n\nE2E_MOBILE_FLIP_TAIL_LBL\n";
 
   const html = await renderCodeBrowserHtml({
     title: "E2E mobile flip end",
     filePath: "e2e/mobile-flip-end.ts",
     code,
     language: "ts",
-    sidetrackMarkdown: md,
+    parallelDocsMarkdown: md,
     codeBrowserLayout: "dual",
     blockStretchRows: {
       index,
       sourceRelative: "e2e/mobile-flip-end.ts",
-      sidetrackPathRel: crPath,
+      parallelDocsPathRel: crPath,
     },
   });
 

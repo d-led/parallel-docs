@@ -1,0 +1,8 @@
+{
+  "ParallelDocs: Page break": {
+    "scope": "markdown",
+    "prefix": ["cr-page-break", "parallel-docs-page-break"],
+    "description": "Insert a deliberate ParallelDocs page break marker",
+    "body": ["<!-- parallelDocs:page-break -->", "", "## ${1:Next section}", "", "${0}"],
+  },
+}

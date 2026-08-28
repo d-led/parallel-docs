@@ -1,9 +1,9 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
-import { loadSideTrackConfig } from "./config.js";
+import { loadParallelDocsConfig } from "./config.js";
 import { emptyIndex } from "./metadata.js";
-import { sidetrackAnglesSentinelPath, defaultMetadataIndexPath } from "./paths.js";
+import { parallelDocsAnglesSentinelPath, defaultMetadataIndexPath } from "./paths.js";
 import {
   refreshIndexMigrationsOnDisk,
   validateProject,
@@ -11,13 +11,13 @@ import {
   type ValidationIssue,
 } from "./validate-project.js";
 
-export const DEFAULT_SIDETRACK_TOML = [
-  "# SideTrack configuration (defaults are commented)",
+export const DEFAULT_PARALLEL_DOCS_TOML = [
+  "# ParallelDocs configuration (defaults are commented)",
   "",
   "[storage]",
   "# Repo-relative. Must not live inside .git/ (Git treats that directory as",
   "# opaque metadata and routine operations can wipe it).",
-  '# dir = ".sidetrack"',
+  '# dir = ".parallel-docs"',
   "",
   "[scm]",
   '# provider = "git"',
@@ -27,10 +27,10 @@ export const DEFAULT_SIDETRACK_TOML = [
   '# mermaid_runtime_path = "vendor/mermaid.min.js"',
   '# syntaxTheme = "github-dark"',
   "# When true, GitHub blob/tree links for static_site.github_url rewrite to paths",
-  "# relative to generated HTML (Pages, `sidetrack render`). Needs a repo home URL.",
+  "# relative to generated HTML (Pages, `parallel-docs render`). Needs a repo home URL.",
   "# relative_github_blob_links = false",
-  "# Local images: `/repo/path` = repo root; `./x` or `sub/x` = next to the sidetrack `.md`",
-  "# (see docs/spec/storage.md — Images; vocabulary — SideTrack vs sidetrack).",
+  "# Local images: `/repo/path` = repo root; `./x` or `sub/x` = next to the parallel-docs `.md`",
+  "# (see docs/spec/storage.md — Images; vocabulary — ParallelDocs vs parallel-docs).",
   "",
   "[anchors]",
   "# defaultStrategy = [",
@@ -38,7 +38,7 @@ export const DEFAULT_SIDETRACK_TOML = [
   '#   "lines",',
   "# ]",
   "",
-  "# Named **Angles** — multiple sidetracks per source (Introduction, Architecture, …).",
+  "# Named **Angles** — multiple parallel-docss per source (Introduction, Architecture, …).",
   "# Optional UI list + default selection. On disk, multi-angle layout is enabled only when",
   "# `{storage.dir}/source/.default` exists (file or dir); see docs/spec/storage.md.",
   "# [angles]",
@@ -57,18 +57,18 @@ export const DEFAULT_SIDETRACK_TOML = [
   '# github_url = "https://github.com/you/repo"',
   '# github_blob_branch = "main"',
   '# source_file = "README.md"',
-  '# sidetrack_markdown = ".sidetrack/source/README.md/main.md"',
+  '# parallel_docs_markdown = ".parallel-docs/source/README.md/main.md"',
   "# [[static_site.related_github_files]]",
   '# path = "CONTRIBUTING.md"',
   "",
 ].join("\n");
 
-export type InitializeSideTrackProjectOptions = {
+export type InitializeParallelDocsProjectOptions = {
   ensureSiteGitignore?: boolean;
   runValidation?: boolean;
 };
 
-export type InitializeSideTrackProjectResult = {
+export type InitializeParallelDocsProjectResult = {
   createdIndex: boolean;
   migratedIndex: boolean;
   createdToml: boolean;
@@ -106,15 +106,15 @@ async function ensureSiteIgnoredInGitignore(repoRoot: string): Promise<boolean> 
   return true;
 }
 
-export async function initializeSideTrackProject(
+export async function initializeParallelDocsProject(
   repoRoot: string,
-  opts: InitializeSideTrackProjectOptions = {},
-): Promise<InitializeSideTrackProjectResult> {
-  const cfg = await loadSideTrackConfig(repoRoot);
+  opts: InitializeParallelDocsProjectOptions = {},
+): Promise<InitializeParallelDocsProjectResult> {
+  const cfg = await loadParallelDocsConfig(repoRoot);
   const storage = path.join(repoRoot, cfg.storageDir);
   await fs.mkdir(path.join(storage, "source"), { recursive: true });
   await fs.mkdir(path.join(storage, "metadata"), { recursive: true });
-  const anglesSentinel = path.join(repoRoot, sidetrackAnglesSentinelPath(cfg.storageDir));
+  const anglesSentinel = path.join(repoRoot, parallelDocsAnglesSentinelPath(cfg.storageDir));
   if (!(await pathExists(anglesSentinel))) {
     await fs.writeFile(anglesSentinel, "", "utf8");
   }
@@ -127,12 +127,12 @@ export async function initializeSideTrackProject(
 
   const migration = await refreshIndexMigrationsOnDisk(repoRoot);
 
-  const tomlPath = path.join(repoRoot, ".sidetrack.toml");
+  const tomlPath = path.join(repoRoot, ".parallel-docs.toml");
   let createdToml = false;
   try {
     await fs.stat(tomlPath);
   } catch {
-    await fs.writeFile(tomlPath, DEFAULT_SIDETRACK_TOML, "utf8");
+    await fs.writeFile(tomlPath, DEFAULT_PARALLEL_DOCS_TOML, "utf8");
     createdToml = true;
   }
 
@@ -151,11 +151,11 @@ export async function initializeSideTrackProject(
   };
 }
 
-export async function isSideTrackProjectInitialized(repoRoot: string): Promise<boolean> {
-  const tomlPath = path.join(repoRoot, ".sidetrack.toml");
+export async function isParallelDocsProjectInitialized(repoRoot: string): Promise<boolean> {
+  const tomlPath = path.join(repoRoot, ".parallel-docs.toml");
   if (!(await pathExists(tomlPath))) return false;
 
-  const cfg = await loadSideTrackConfig(repoRoot);
+  const cfg = await loadParallelDocsConfig(repoRoot);
   const storageAbs = path.resolve(repoRoot, cfg.storageDir);
   const sourceAbs = path.join(storageAbs, "source");
   const metadataAbs = path.join(storageAbs, "metadata");

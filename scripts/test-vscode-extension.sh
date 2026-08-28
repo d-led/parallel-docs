@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Run SideTrack VS Code extension integration tests (Microsoft-recommended
+# Run ParallelDocs VS Code extension integration tests (Microsoft-recommended
 # @vscode/test-cli + Extension Development Host). Does not run Cypress or
 # other repo test suites.
 #
@@ -18,10 +18,10 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
-npm run build -w @sidetrack/core
-npm run build -w @sidetrack/render
-npm run build -w @sidetrack/code-sidetrack-static
-npm run build -w @sidetrack/mcp-server
+npm run build -w @parallel-docs/core
+npm run build -w @parallel-docs/render
+npm run build -w @parallel-docs/code-parallel-docs-static
+npm run build -w @parallel-docs/mcp-server
 cd packages/vscode
 npm run build
 

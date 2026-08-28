@@ -2,10 +2,10 @@ import { describe, expect, it } from "vitest";
 import { healSourceFile } from "./self-healing.js";
 import { addBlockToIndex } from "./blocks.js";
 import { emptyIndex } from "./metadata.js";
-import { buildSideTrackSnippetV1 } from "./block-snippet.js";
+import { buildParallelDocsSnippetV1 } from "./block-snippet.js";
 
 const testMarkdown = [
-  "<!-- sidetrack:block id=xyz -->",
+  "<!-- parallelDocs:block id=xyz -->",
   "## src/main.ts line 3",
   "",
   "prose",
@@ -15,11 +15,11 @@ const testMarkdown = [
 function createTestIndexWithBlock(id: string, lines: string[]) {
   return addBlockToIndex(emptyIndex(), {
     sourcePath: "src/main.ts",
-    sidetrackPath: "docs/main.md",
+    parallelDocsPath: "docs/main.md",
     block: {
       id,
       anchor: `marker:${id}`,
-      snippet: buildSideTrackSnippetV1(lines),
+      snippet: buildParallelDocsSnippetV1(lines),
     },
   });
 }
@@ -34,7 +34,7 @@ function runHeal(args: {
     languageId: "typescript",
     companionMarkdown: args.companionMarkdown,
     index: args.index,
-    sidetrackPath: "docs/main.md",
+    parallelDocsPath: "docs/main.md",
   });
 }
 
@@ -52,9 +52,9 @@ describe("Self-healing source file regions", () => {
   it("returns original source text and index when no markers are missing", () => {
     const src = [
       "function main() {",
-      "//#region sidetrack:xyz",
+      "//#region parallelDocs:xyz",
       "  console.log(1);",
-      "//#endregion sidetrack:xyz",
+      "//#endregion parallelDocs:xyz",
       "}",
     ].join("\n");
 
@@ -73,14 +73,14 @@ describe("Self-healing source file regions", () => {
     });
 
     expect(result.healedCount).toBe(1);
-    expect(result.sourceText).toContain("//#region sidetrack:xyz");
+    expect(result.sourceText).toContain("//#region parallelDocs:xyz");
     expect(result.sourceText).toContain("console.log(1);");
-    expect(result.sourceText).toContain("//#endregion sidetrack:xyz");
+    expect(result.sourceText).toContain("//#endregion parallelDocs:xyz");
   });
 
   it("does not heal a block if it is not present in index", () => {
     const src = "console.log(1);";
-    const markdown = "<!-- sidetrack:block id=xyz -->\n## x\n\nprose";
+    const markdown = "<!-- parallelDocs:block id=xyz -->\n## x\n\nprose";
     assertHealNoChange(src, markdown, emptyIndex());
   });
 });

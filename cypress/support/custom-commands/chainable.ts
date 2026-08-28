@@ -58,18 +58,18 @@ declare global {
 
       CurrentPageShouldDisplayMainLandmarkAndSkipLink(): Chainable<void>;
 
-      SideTrackPaneReadmeLinksShouldUseGithubBlobUrls(): Chainable<void>;
-      SideTrackPaneEmphasisShouldRenderAfterBlocks(): Chainable<void>;
+      ParallelDocsPaneReadmeLinksShouldUseGithubBlobUrls(): Chainable<void>;
+      ParallelDocsPaneEmphasisShouldRenderAfterBlocks(): Chainable<void>;
       DocumentationHomeLinkShouldPointToRelativeIndex(): Chainable<void>;
       ShellPairBrowseLinkShouldAdvertiseOnSiteBrowsePage(): Chainable<void>;
-      OpenSideTrackedFilesDisclosure(): Chainable<void>;
-      CloseSideTrackedFilesHubWithEscape(): Chainable<void>;
-      SideTrackedFilesTreeShouldExposeAtLeastOneFileLink(): Chainable<void>;
+      OpenParallelDocsedFilesDisclosure(): Chainable<void>;
+      CloseParallelDocsedFilesHubWithEscape(): Chainable<void>;
+      ParallelDocsedFilesTreeShouldExposeAtLeastOneFileLink(): Chainable<void>;
       FollowFirstBrowseFileLinkInTree(): Chainable<void>;
       ShellPairBrowseLinkShouldAvoidStackedBrowseSegments(): Chainable<void>;
 
       InterceptNavSearchIndexAsUnavailable(): Chainable<void>;
-      SideTrackedFilesTreeShouldContainReadmeLink(): Chainable<void>;
+      ParallelDocsedFilesTreeShouldContainReadmeLink(): Chainable<void>;
 
       TypeTextInSearchField(text: string): Chainable<void>;
       SearchResultsPanelShouldBeVisible(): Chainable<void>;
@@ -88,26 +88,26 @@ declare global {
       PressArrowDownInFocusedElement(): Chainable<void>;
       PressEnterInFocusedSearchField(): Chainable<void>;
 
-      FocusSideTrackedFilesFilter(): Chainable<void>;
-      SideTrackedFilesFilterShouldBeFocused(): Chainable<void>;
-      MoveKeyboardFocusFromSideTrackedFilterToFirstTreeLink(): Chainable<void>;
-      FirstSideTrackedTreeFileLinkShouldBeFocused(): Chainable<void>;
-      SideTrackedTreeFileLinkAtIndexShouldBeFocused(zeroBasedIndex: number): Chainable<void>;
-      SideTrackedFilesTreeFileLinksShouldBeAtLeast(min: number): Chainable<void>;
-      OpenSideTrackedFilesHubWithTreeVisible(): Chainable<void>;
+      FocusParallelDocsedFilesFilter(): Chainable<void>;
+      ParallelDocsedFilesFilterShouldBeFocused(): Chainable<void>;
+      MoveKeyboardFocusFromParallelDocsedFilterToFirstTreeLink(): Chainable<void>;
+      FirstParallelDocsedTreeFileLinkShouldBeFocused(): Chainable<void>;
+      ParallelDocsedTreeFileLinkAtIndexShouldBeFocused(zeroBasedIndex: number): Chainable<void>;
+      ParallelDocsedFilesTreeFileLinksShouldBeAtLeast(min: number): Chainable<void>;
+      OpenParallelDocsedFilesHubWithTreeVisible(): Chainable<void>;
       ConstrainSearchResultsPanelHeightForScrollCoverage(): Chainable<void>;
       SearchKeyboardNavigateFromFirstHitToLastHit(): Chainable<void>;
       SearchResultsPanelScrollTopShouldBeGreaterThan(pixels: number): Chainable<void>;
-      ConstrainSideTrackedFilesTreeHeightForScrollCoverage(): Chainable<void>;
+      ConstrainParallelDocsedFilesTreeHeightForScrollCoverage(): Chainable<void>;
       TreeKeyboardNavigateFromFirstLinkToLastLink(): Chainable<void>;
-      SideTrackedFilesTreeScrollTopShouldBeGreaterThan(pixels: number): Chainable<void>;
-      ClickPageFooterToDismissSideTrackedFilesHub(): Chainable<void>;
-      SideTrackedFilesHubOpenPropShouldBe(open: boolean): Chainable<void>;
+      ParallelDocsedFilesTreeScrollTopShouldBeGreaterThan(pixels: number): Chainable<void>;
+      ClickPageFooterToDismissParallelDocsedFilesHub(): Chainable<void>;
+      ParallelDocsedFilesHubOpenPropShouldBe(open: boolean): Chainable<void>;
 
       OptionsOfAngleSelectShouldIncludeMainAndArchitecture(): Chainable<void>;
       DisplayedValueOfAngleSelectShouldBe(value: string): Chainable<void>;
       ChooseValueOfAngleSelect(value: string): Chainable<void>;
-      SideTrackPaneShouldContainText(text: string): Chainable<void>;
+      ParallelDocsPaneShouldContainText(text: string): Chainable<void>;
       ShellPairBrowseLinkShouldMatchRelativeBrowseHtml(): Chainable<void>;
       ShellPairBrowseLinkShouldNotPointAtGithubHost(): Chainable<void>;
 
@@ -117,7 +117,7 @@ declare global {
       PrepareStaticSiteHomeAtMobileViewport(): Chainable<void>;
       PrepareStaticSiteHomeAtMobileViewportWithSourcePaneActive(): Chainable<void>;
       MobileStaticSiteCodeBrowserChromeShouldBeReady(): Chainable<void>;
-      MobileSinglePaneLayoutShouldShowSideTrackColumnOnly(): Chainable<void>;
+      MobileSinglePaneLayoutShouldShowParallelDocsColumnOnly(): Chainable<void>;
       MobileSinglePaneLayoutShouldShowSourceColumnOnly(): Chainable<void>;
       MobileViewportShouldHaveScrollableDocument(minPixels?: number): Chainable<void>;
       ScrollMobileDocumentToFraction(fraction: number): Chainable<void>;

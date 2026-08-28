@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-// Keep intra-monorepo dependency pins in lockstep with the current SideTrack
+// Keep intra-monorepo dependency pins in lockstep with the current ParallelDocs
 // version (as recorded in packages/core/package.json).
 //
-// Rewrites every first-party workspace package entry (@sidetrack/* and the
-// unscoped `sidetrack` CLI) found in
+// Rewrites every first-party workspace package entry (@parallel-docs/* and the
+// unscoped `parallel-docs` CLI) found in
 // `dependencies`, `devDependencies`, `peerDependencies`, or `optionalDependencies`
 // across all workspace packages (and the monorepo root) to that version.
 //
@@ -22,11 +22,11 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = dirname(HERE);
 
 const WORKSPACE_NAMES = new Set([
-  "@sidetrack/core",
-  "@sidetrack/render",
-  "sidetrack",
-  "@sidetrack/code-sidetrack-static",
-  "@sidetrack/mcp-server",
+  "@parallel-docs/core",
+  "@parallel-docs/render",
+  "@parallel-docs/cli",
+  "@parallel-docs/code-parallel-docs-static",
+  "@parallel-docs/mcp-server",
 ]);
 
 const DEP_FIELDS = ["dependencies", "devDependencies", "peerDependencies", "optionalDependencies"];
@@ -65,7 +65,7 @@ const files = [
   "packages/core/package.json",
   "packages/render/package.json",
   "packages/cli/package.json",
-  "packages/code-sidetrack-static/package.json",
+  "packages/code-parallel-docs-static/package.json",
   "packages/mcp-server/package.json",
   "packages/vscode/package.json",
 ].map((p) => join(REPO_ROOT, p));

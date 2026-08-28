@@ -4,31 +4,31 @@ import path, { join } from "node:path";
 import {
   buildBlockScrollLinks,
   type BlockScrollLink,
-  type SideTrackIndex,
+  type ParallelDocsIndex,
   CURRENT_SCHEMA_VERSION,
   DEFAULT_STRETCH_BUFFER_SYNC,
   findMonorepoPackagesDir,
   monorepoLayoutStartDir,
   normalizeRepoRelativePath,
-} from "@sidetrack/core";
+} from "@parallel-docs/core";
 
 import {
   tryBuildBlockStretchTableHtml,
   type StretchBufferSyncStrategy,
 } from "./block-stretch-layout.js";
-import { formatSideTrackBuiltAtLocal } from "./build-stamp.js";
+import { formatParallelDocsBuiltAtLocal } from "./build-stamp.js";
 import { escapeHtml } from "./html-utils.js";
-import { sidetrackColorThemeHeadBoot } from "./code-browser-color-theme.js";
+import { parallelDocsColorThemeHeadBoot } from "./code-browser-color-theme.js";
 import { hljsThemeCss } from "./hljs-theme-css.js";
 import { hljsStylesheetThemes } from "./hljs-stylesheet-themes.js";
 import { renderHighlightedCodeLineRows } from "./highlighted-code-lines.js";
-import { SIDETRACK_FAVICON_LINK_HTML } from "./inline-favicon.js";
+import { PARALLEL_DOCS_FAVICON_LINK_HTML } from "./inline-favicon.js";
 import { mermaidRuntimeScriptHtml } from "./mermaid-runtime-html.js";
-import { type SideTrackOutputUrlOptions, renderMarkdownToHtml } from "./markdown-pipeline.js";
-import { sidetrackRenderVersion } from "./package-version.js";
+import { type ParallelDocsOutputUrlOptions, renderMarkdownToHtml } from "./markdown-pipeline.js";
+import { parallelDocsRenderVersion } from "./package-version.js";
 import { normPosixPath } from "./code-browser-pair-nav.js";
 import {
-  injectSideTrackDocAnchors,
+  injectParallelDocsDocAnchors,
   injectSourceMarkdownAnchors,
 } from "./inject-md-line-anchors.js";
 import {
@@ -36,20 +36,20 @@ import {
   type DualPaneScrollSyncStrategyId,
 } from "./code-browser-scroll-sync-strategy.js";
 
-/** One angle tab; field semantics: `code-browser.ts` sidetrack. */
+/** One angle tab; field semantics: `code-browser.ts` parallel-docs. */
 export type CodeBrowserMultiAngleSpec = {
   id: string;
   title?: string;
   markdown: string;
-  sidetrackPathRel: string;
-  sidetrackOnGithubUrl?: string;
+  parallelDocsPathRel: string;
+  parallelDocsOnGithubUrl?: string;
   /** Same-tab Doc toolbar target for static `./browse/…` pages (vs GitHub blob). */
   staticBrowseUrl?: string;
   /** Must match this angle’s paths + primary `filePath` or scroll links are dropped. */
   blockStretchRows?: {
-    index: SideTrackIndex;
+    index: ParallelDocsIndex;
     sourceRelative: string;
-    sidetrackPathRel: string;
+    parallelDocsPathRel: string;
   };
 };
 
@@ -64,7 +64,7 @@ export type CodeBrowserPageOptions = {
   filePath?: string;
   code: string;
   language: string;
-  sidetrackMarkdown: string;
+  parallelDocsMarkdown: string;
   includeMermaidRuntime?: boolean;
   /** Absolute path to a local Mermaid UMD build, used instead of the vendored one. */
   mermaidRuntimePath?: string;
@@ -81,11 +81,11 @@ export type CodeBrowserPageOptions = {
    * Same-site URL for the static documentation hub (e.g. `./` on `index.html`, or a
    * depth-correct relative path to the hub from nested `browse/…` pages — see static export).
    * When set, the first toolbar control is a **home** link here instead of
-   * {@link githubRepoUrl}. Uses the same path safety rules as {@link sidetrackStaticBrowseUrl}.
+   * {@link githubRepoUrl}. Uses the same path safety rules as {@link parallelDocsStaticBrowseUrl}.
    */
   siteHubUrl?: string;
   /**
-   * Home URL for the SideTrack project (footer shows "Rendered with SideTrack" plus semver
+   * Home URL for the ParallelDocs project (footer shows "Rendered with ParallelDocs" plus semver
    * and build date/time, linking here).
    * Only `http:` / `https:` URLs are emitted.
    */
@@ -94,7 +94,7 @@ export type CodeBrowserPageOptions = {
    * When set, local `img`/`a` URLs and optional GitHub blob/tree rewrites resolve to paths
    * relative to the generated HTML file.
    */
-  sidetrackOutputUrls?: SideTrackOutputUrlOptions;
+  parallelDocsOutputUrls?: ParallelDocsOutputUrlOptions;
   /**
    * Optional “Also on GitHub …” toolbar links (other repo files). Used when only a single
    * `index.html` is published so in-repo Markdown links cannot target sibling paths on Pages.
@@ -114,26 +114,26 @@ export type CodeBrowserPageOptions = {
    */
   builtAt?: Date;
   /**
-   * When set and index blocks align with `<!-- sidetrack:block id=… -->` markers,
+   * When set and index blocks align with `<!-- parallelDocs:block id=… -->` markers,
    * emits a two-column **blame-style** table: **one row per block** (plus gap rows for
-   * unmapped lines). Code and sidetrack cells share the **same row height** (the taller
+   * unmapped lines). Code and parallel-docs cells share the **same row height** (the taller
    * side wins; the shorter side is top-aligned with natural padding below). One shell
    * scroll keeps both columns aligned.
    */
   blockStretchRows?: {
-    index: SideTrackIndex;
+    index: ParallelDocsIndex;
     sourceRelative: string;
-    sidetrackPathRel: string;
+    parallelDocsPathRel: string;
   };
   /**
    * `auto` (default): when `blockStretchRows` is set and a block-stretch table can be built,
    * use the stretch layout; otherwise dual panes.
    * `dual`: always use side-by-side panes (skips stretch), so block markers + index can drive
-   * **block-aware** scroll sync and separator lines in the sidetrack pane.
+   * **block-aware** scroll sync and separator lines in the parallel-docs pane.
    */
   codeBrowserLayout?: "auto" | "dual";
   /**
-   * Stretch layout only. Omitted uses `DEFAULT_STRETCH_BUFFER_SYNC` from `@sidetrack/core`
+   * Stretch layout only. Omitted uses `DEFAULT_STRETCH_BUFFER_SYNC` from `@parallel-docs/core`
    * (`flow-synchronizer`: sync ids + measure wrappers + client `BufferingFlowSynchronizer`).
    * `table`: legacy row height only, no shell flag / client padding pass.
    */
@@ -145,28 +145,28 @@ export type CodeBrowserPageOptions = {
    */
   dualPaneScrollSyncStrategy?: DualPaneScrollSyncStrategyId;
   /**
-   * `full` (default): in-page search indexes every source line and every sidetrack line.
-   * `sidetrack-and-paths`: search only **toolbar path labels** plus sidetrack Markdown (no code-body line corpus).
+   * `full` (default): in-page search indexes every source line and every parallel-docs line.
+   * `parallel-docs-and-paths`: search only **toolbar path labels** plus parallel-docs Markdown (no code-body line corpus).
    */
-  staticSearchScope?: "full" | "sidetrack-and-paths";
-  /** Repo-relative companion Markdown path; used with `staticSearchScope: "sidetrack-and-paths"` for path labels. */
-  sidetrackPathForSearch?: string;
+  staticSearchScope?: "full" | "parallel-docs-and-paths";
+  /** Repo-relative companion Markdown path; used with `staticSearchScope: "parallel-docs-and-paths"` for path labels. */
+  parallelDocsPathForSearch?: string;
   /**
    * GitHub **blob** URL for the primary `filePath` (static hub). Shown in the toolbar when set
    * (`http`/`https` only).
    */
   sourceOnGithubUrl?: string;
   /**
-   * GitHub **blob** URL for the companion sidetrack Markdown (same constraints as `sourceOnGithubUrl`).
+   * GitHub **blob** URL for the companion parallel-docs Markdown (same constraints as `sourceOnGithubUrl`).
    */
-  sidetrackOnGithubUrl?: string;
+  parallelDocsOnGithubUrl?: string;
   /**
    * When set (e.g. `./browse/…/index.html`, `/browse/…/index.html`, or `./browse/<hash>.html` from
    * the static Pages build), the Doc toolbar icon opens this URL on the **same origin** instead of GitHub.
    */
-  sidetrackStaticBrowseUrl?: string;
+  parallelDocsStaticBrowseUrl?: string;
   /**
-   * Relative URL to a nav JSON document (e.g. `./sidetrack-nav-search.json`) that includes
+   * Relative URL to a nav JSON document (e.g. `./parallel-docs-nav-search.json`) that includes
    * `documentedPairs` — enables the **Side-tracked files** tree in the toolbar.
    */
   documentedNavJsonUrl?: string;
@@ -215,7 +215,7 @@ const META_DESCRIPTION_MAX_LEN = 320;
 function codeBrowserMetaDescription(opts: CodeBrowserPageOptions, title: string): string {
   const custom = opts.metaDescription?.trim();
   if (custom) return custom.slice(0, META_DESCRIPTION_MAX_LEN);
-  const fallback = `${title} — Side-by-side source and sidetrack documentation.`;
+  const fallback = `${title} — Side-by-side source and parallel-docs documentation.`;
   return fallback.slice(0, META_DESCRIPTION_MAX_LEN);
 }
 
@@ -331,21 +331,21 @@ function buildToolbarEndHtml(
 function renderPageFooterHtml(input: {
   builtAt: Date;
   toolHomeUrl: string | undefined;
-  sidetrackRenderSemver: string;
+  parallelDocsRenderSemver: string;
   pagesBuildCommitSha: string | undefined;
 }): string {
-  const { builtAt, toolHomeUrl, sidetrackRenderSemver, pagesBuildCommitSha } = input;
+  const { builtAt, toolHomeUrl, parallelDocsRenderSemver, pagesBuildCommitSha } = input;
   const iso = builtAt.toISOString();
-  const human = formatSideTrackBuiltAtLocal(builtAt);
+  const human = formatParallelDocsBuiltAtLocal(builtAt);
   const commitSuffix = pagesBuildCommitSha ? footerCommitSuffixHtml(pagesBuildCommitSha) : "";
   const tool = safeExternalHttpUrl(toolHomeUrl);
   if (tool) {
     const te = escapeHtml(tool);
-    const ver = escapeHtml(sidetrackRenderSemver);
+    const ver = escapeHtml(parallelDocsRenderSemver);
     return (
       `<footer class="app__footer" role="contentinfo">` +
       `<p class="app__footer-line app__footer-attribution" role="note">` +
-      `Rendered with <a href="${te}" target="_blank" rel="noopener noreferrer">SideTrack</a> ` +
+      `Rendered with <a href="${te}" target="_blank" rel="noopener noreferrer">ParallelDocs</a> ` +
       `<span class="app__footer-attribution__version" translate="no">v${ver}</span>: ` +
       `<time datetime="${escapeHtml(iso)}">${escapeHtml(human)}</time>` +
       commitSuffix +
@@ -395,7 +395,7 @@ function renderToolbarDocHubHtml(opts: {
 
 function dualPanePanesInnerHtml(
   codeHtml: string,
-  sidetrackHtml: string,
+  parallelDocsHtml: string,
   sourceMarkdownRenderedHtml?: string,
 ): string {
   const sourceRenderedPaneHtml =
@@ -408,9 +408,9 @@ function dualPanePanesInnerHtml(
     sourceRenderedPaneHtml +
     `        </section>\n` +
     `        <div class="gutter" id="gutter" role="separator" aria-orientation="vertical" aria-label="Resize panes"></div>\n` +
-    `        <section class="pane--doc sidetrack" id="doc-pane" aria-label="SideTrack">\n` +
+    `        <section class="pane--doc parallel-docs" id="doc-pane" aria-label="ParallelDocs">\n` +
     `          <div id="doc-pane-body" class="doc-pane-body">\n` +
-    `          ${sidetrackHtml}\n` +
+    `          ${parallelDocsHtml}\n` +
     `          </div>\n` +
     `        </section>\n`
   );
@@ -442,8 +442,10 @@ function isMarkdownLikeSource(opts: CodeBrowserPageOptions): boolean {
 }
 
 /** For source-pane Markdown, resolve local links from the source file directory (repo tree), not companion storage. */
-function sourcePaneOutputUrls(opts: CodeBrowserPageOptions): SideTrackOutputUrlOptions | undefined {
-  const out = opts.sidetrackOutputUrls;
+function sourcePaneOutputUrls(
+  opts: CodeBrowserPageOptions,
+): ParallelDocsOutputUrlOptions | undefined {
+  const out = opts.parallelDocsOutputUrls;
   if (!out) return undefined;
   const srcRel = (opts.filePath ?? "").trim();
   if (srcRel.length === 0) return out;
@@ -457,10 +459,10 @@ function sourcePaneOutputUrls(opts: CodeBrowserPageOptions): SideTrackOutputUrlO
 /** Pair paths above the panes; column widths track the resizable split via `--split-pct`. */
 function renderShellPairContextHtml(
   filePath: string | undefined,
-  sidetrackPath: string | undefined,
+  parallelDocsPath: string | undefined,
 ): string {
   const fpRaw = (filePath ?? "").trim();
-  const crRaw = (sidetrackPath ?? "").trim();
+  const crRaw = (parallelDocsPath ?? "").trim();
   if (fpRaw.length === 0 && crRaw.length === 0) return "";
   const fp = escapeHtml(fpRaw);
   const cr = escapeHtml(crRaw);
@@ -486,13 +488,13 @@ function shellPairSourcePath(
   return (sourceRelative ?? "").trim();
 }
 
-function shellPairSideTrackPath(
-  sidetrackPath: string | undefined,
-  fallbackSideTrackPath: string | undefined,
+function shellPairParallelDocsPath(
+  parallelDocsPath: string | undefined,
+  fallbackParallelDocsPath: string | undefined,
 ): string {
-  const sidetrackPathTrimmed = (sidetrackPath ?? "").trim();
-  if (sidetrackPathTrimmed.length > 0) return sidetrackPathTrimmed;
-  return (fallbackSideTrackPath ?? "").trim();
+  const parallelDocsPathTrimmed = (parallelDocsPath ?? "").trim();
+  if (parallelDocsPathTrimmed.length > 0) return parallelDocsPathTrimmed;
+  return (fallbackParallelDocsPath ?? "").trim();
 }
 
 function wrapShellInnerWithPairContext(pairContextHtml: string, mainHtml: string): string {
@@ -507,7 +509,7 @@ function wrapDualShellInner(pairContextHtml: string, panesHtml: string): string 
   );
 }
 
-/** IIFE produced by `npm run build -w @sidetrack/render` (esbuild of `code-browser-client.ts`). */
+/** IIFE produced by `npm run build -w @parallel-docs/render` (esbuild of `code-browser-client.ts`). */
 function loadCodeBrowserClientBundle(): string {
   const packagesDir = findMonorepoPackagesDir(monorepoLayoutStartDir(import.meta.url));
   const renderDistDir = join(packagesDir, "render", "dist");
@@ -519,7 +521,7 @@ function loadCodeBrowserClientBundle(): string {
     }
   }
   throw new Error(
-    "Missing code-browser-client.bundle.js. Run `npm run build -w @sidetrack/render` to bundle the browser client.",
+    "Missing code-browser-client.bundle.js. Run `npm run build -w @parallel-docs/render` to bundle the browser client.",
   );
 }
 
@@ -544,28 +546,28 @@ function loadCodeBrowserIntroStyles(): string {
  * system → light → dark. Paired with {@link ./code-browser-color-theme.ts} and the client bundle.
  */
 const TOOLBAR_COLOR_THEME_HTML = `          <div class="toolbar-theme">
-            <button type="button" id="sidetrack-theme-trigger" class="toolbar-theme__trigger" data-sidetrack-trigger-mode="system" aria-haspopup="menu" aria-expanded="false" aria-label="Color theme" title="Appearance: left-click opens the theme menu. Right-click cycles System, Light, and Dark.">
+            <button type="button" id="parallel-docs-theme-trigger" class="toolbar-theme__trigger" data-parallel-docs-trigger-mode="system" aria-haspopup="menu" aria-expanded="false" aria-label="Color theme" title="Appearance: left-click opens the theme menu. Right-click cycles System, Light, and Dark.">
               <span class="toolbar-theme__icon toolbar-theme__icon--system" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/></svg></span>
               <span class="toolbar-theme__icon toolbar-theme__icon--light" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 6.34L4.93 4.93m12.02 12.02l1.41 1.41M17.66 6.34l1.41-1.41M6.34 17.66l-1.41 1.41"/></svg></span>
               <span class="toolbar-theme__icon toolbar-theme__icon--dark" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></span>
             </button>
-            <div id="sidetrack-theme-menu" class="toolbar-theme__menu" role="menu" hidden aria-labelledby="sidetrack-theme-trigger">
-              <button type="button" role="menuitemradio" class="toolbar-theme__menuitem" data-sidetrack-theme-value="system" aria-checked="true">System</button>
-              <button type="button" role="menuitemradio" class="toolbar-theme__menuitem" data-sidetrack-theme-value="light" aria-checked="false">Light</button>
-              <button type="button" role="menuitemradio" class="toolbar-theme__menuitem" data-sidetrack-theme-value="dark" aria-checked="false">Dark</button>
+            <div id="parallel-docs-theme-menu" class="toolbar-theme__menu" role="menu" hidden aria-labelledby="parallel-docs-theme-trigger">
+              <button type="button" role="menuitemradio" class="toolbar-theme__menuitem" data-parallel-docs-theme-value="system" aria-checked="true">System</button>
+              <button type="button" role="menuitemradio" class="toolbar-theme__menuitem" data-parallel-docs-theme-value="light" aria-checked="false">Light</button>
+              <button type="button" role="menuitemradio" class="toolbar-theme__menuitem" data-parallel-docs-theme-value="dark" aria-checked="false">Dark</button>
             </div>
           </div>
 `;
 
-const TOOLBAR_SHARE_LINK_HTML = `          <button type="button" id="sidetrack-share-link" class="toolbar-theme__trigger toolbar-share-link-btn" aria-label="Copy shareable permalink" title="Copy shareable permalink">${TOOLBAR_ICON_SHARE_LINK_SVG}</button>
+const TOOLBAR_SHARE_LINK_HTML = `          <button type="button" id="parallel-docs-share-link" class="toolbar-theme__trigger toolbar-share-link-btn" aria-label="Copy shareable permalink" title="Copy shareable permalink">${TOOLBAR_ICON_SHARE_LINK_SVG}</button>
 `;
 
-const TOOLBAR_HELP_TOUR_HTML = `          <button type="button" id="sidetrack-help-tour" class="toolbar-theme__trigger toolbar-help-tour-btn" aria-label="Restart onboarding walkthrough" title="Restart onboarding walkthrough">${TOOLBAR_ICON_HELP_TOUR_SVG}</button>
+const TOOLBAR_HELP_TOUR_HTML = `          <button type="button" id="parallel-docs-help-tour" class="toolbar-theme__trigger toolbar-help-tour-btn" aria-label="Restart onboarding walkthrough" title="Restart onboarding walkthrough">${TOOLBAR_ICON_HELP_TOUR_SVG}</button>
 `;
 
 const CODE_BROWSER_INTRO_STYLES = loadCodeBrowserIntroStyles();
 
-const SIDETRACK_SHELL_INTRO_PLACEHOLDER = "/* __SIDETRACK_INTRO_CSS__ */";
+const PARALLEL_DOCS_SHELL_INTRO_PLACEHOLDER = "/* __PARALLEL_DOCS_INTRO_CSS__ */";
 
 /** Code browser chrome + panes; intro tour rules are spliced from {@link ./code-browser-intro.css}. */
 function loadCodeBrowserShellStylesFile(): string {
@@ -579,7 +581,7 @@ function loadCodeBrowserShellStylesFile(): string {
     }
   }
   throw new Error(
-    "Missing code-browser-shell.css. Run `npm run build -w @sidetrack/render` or ensure the file exists under render/src.",
+    "Missing code-browser-shell.css. Run `npm run build -w @parallel-docs/render` or ensure the file exists under render/src.",
   );
 }
 
@@ -587,7 +589,7 @@ let cachedCodeBrowserShellCss: string | undefined;
 function getCodeBrowserShellCss(): string {
   if (cachedCodeBrowserShellCss === undefined) {
     cachedCodeBrowserShellCss = loadCodeBrowserShellStylesFile();
-    if (!cachedCodeBrowserShellCss.includes(SIDETRACK_SHELL_INTRO_PLACEHOLDER)) {
+    if (!cachedCodeBrowserShellCss.includes(PARALLEL_DOCS_SHELL_INTRO_PLACEHOLDER)) {
       throw new Error("code-browser-shell.css is missing the intro splice placeholder.");
     }
   }
@@ -595,7 +597,7 @@ function getCodeBrowserShellCss(): string {
 }
 
 const CODE_BROWSER_STYLES = getCodeBrowserShellCss().replace(
-  SIDETRACK_SHELL_INTRO_PLACEHOLDER,
+  PARALLEL_DOCS_SHELL_INTRO_PLACEHOLDER,
   CODE_BROWSER_INTRO_STYLES,
 );
 
@@ -623,7 +625,7 @@ function loadNavRailDocHubTemplate(): string {
 
 /** Native tooltip on #search-q (short hint is visible under the search row). */
 const CODE_BROWSER_SEARCH_INPUT_TITLE =
-  "Filename, path, or words. Matches this pair (source + sidetrack lines) first; merges sidetrack-nav-search.json when the export includes it (indexed paths + sidetrack lines).";
+  "Filename, path, or words. Matches this pair (source + parallel-docs lines) first; merges parallel-docs-nav-search.json when the export includes it (indexed paths + parallel-docs lines).";
 
 type CodeBrowserPageParts = {
   title: string;
@@ -632,11 +634,11 @@ type CodeBrowserPageParts = {
   /** Same-site hub control; first in `toolbar__primary-main` when present. */
   toolbarSiteHubHtml: string;
   /**
-   * When non-empty, ` data-sidetrack-pair-source-path="…" data-sidetrack-pair-sidetrack-path="…"` on `#shell`
+   * When non-empty, ` data-parallel-docs-pair-source-path="…" data-parallel-docs-pair-parallel-docs-path="…"` on `#shell`
    * so the documented-files tree can mark the active pair (incl. multi-angle updates on the client).
    */
   shellPairIdentityDataAttrs: string;
-  /** When non-empty, ` data-sidetrack-pair-browse-href="…"` on `#shell` (same-site browse or GitHub blob). */
+  /** When non-empty, ` data-parallel-docs-pair-browse-href="…"` on `#shell` (same-site browse or GitHub blob). */
   shellPairDocDataAttr: string;
   angleSelectHtml: string;
   toolbarDocHubHtml: string;
@@ -674,23 +676,23 @@ function buildCodeBrowserPageHtml(p: CodeBrowserPageParts): string {
   const shellClass = p.layout === "stretch" ? "shell shell--stretch-rows" : "shell";
   const dualFlipControlHtml =
     p.layout === "dual" || p.layout === "stretch"
-      ? `<button type="button" id="mobile-pane-flip" class="toolbar-icon-btn toolbar-icon-btn--flip-only-narrow" aria-label="Switch between source code and sidetrack" title="Switch between source code and sidetrack">${TOOLBAR_ICON_FLIP_PANES_SVG}</button>`
+      ? `<button type="button" id="mobile-pane-flip" class="toolbar-icon-btn toolbar-icon-btn--flip-only-narrow" aria-label="Switch between source code and parallel-docs" title="Switch between source code and parallel-docs">${TOOLBAR_ICON_FLIP_PANES_SVG}</button>`
       : "";
   const dualFlipScrollAffordanceHtml =
     p.layout === "dual" || p.layout === "stretch"
-      ? `<button type="button" id="mobile-pane-flip-scroll" class="toolbar-icon-btn toolbar-icon-btn--flip-scroll-narrow" hidden aria-label="Switch between source code and sidetrack" title="Switch between source code and sidetrack">${TOOLBAR_ICON_FLIP_PANES_SVG}</button>`
+      ? `<button type="button" id="mobile-pane-flip-scroll" class="toolbar-icon-btn toolbar-icon-btn--flip-scroll-narrow" hidden aria-label="Switch between source code and parallel-docs" title="Switch between source code and parallel-docs">${TOOLBAR_ICON_FLIP_PANES_SVG}</button>`
       : "";
   return `<!doctype html>
-<html lang="en" data-sidetrack-theme="system">
+<html lang="en" data-parallel-docs-theme="system">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    ${SIDETRACK_FAVICON_LINK_HTML}
+    ${PARALLEL_DOCS_FAVICON_LINK_HTML}
     ${p.metaDescriptionHtml}${p.generatorMetaHtml}<title>${escapeHtml(p.title)}</title>
-    <style id="sidetrack-hljs-light" media="(prefers-color-scheme: light)">${p.hljsLightCss}</style>
-    <style id="sidetrack-hljs-dark" media="(prefers-color-scheme: dark)">${p.hljsDarkCss}</style>
+    <style id="parallel-docs-hljs-light" media="(prefers-color-scheme: light)">${p.hljsLightCss}</style>
+    <style id="parallel-docs-hljs-dark" media="(prefers-color-scheme: dark)">${p.hljsDarkCss}</style>
     <script>
-${sidetrackColorThemeHeadBoot()}
+${parallelDocsColorThemeHeadBoot()}
     </script>
     <style>
 ${CODE_BROWSER_STYLES}
@@ -707,7 +709,7 @@ ${CODE_BROWSER_STYLES}
           ${p.navRailDocumentedHtml}
           ${p.angleSelectHtml}
           ${dualFlipControlHtml}
-          <label class="toolbar-wrap-lines" title="Wrap long lines in the source pane; in sidetrack, wrap long words and fenced code when on (wide tables and diagrams scroll horizontally).">
+          <label class="toolbar-wrap-lines" title="Wrap long lines in the source pane; in parallel-docs, wrap long words and fenced code when on (wide tables and diagrams scroll horizontally).">
             <input type="checkbox" id="wrap-lines" class="toolbar-wrap-lines__input" />
             <span class="toolbar-wrap-lines__box" aria-hidden="true"></span>
             <span class="toolbar-wrap-lines__face" aria-hidden="true">${TOOLBAR_ICON_WRAP_SVG}</span>
@@ -742,7 +744,7 @@ ${p.shellInner}
       </main>
       ${p.pageFooterHtml}
     </div>
-    <script type="text/plain" id="sidetrack-multi-angle-b64">${p.multiAngleScriptBlock}</script>
+    <script type="text/plain" id="parallel-docs-multi-angle-b64">${p.multiAngleScriptBlock}</script>
     ${p.mermaidScript}
     <script>
 ${loadCodeBrowserClientBundle()}
@@ -765,9 +767,9 @@ type CodeBrowserShell = {
   multiShell?: {
     rawMdB64: string;
     scrollBlockLinksB64: string;
-    sidetrackPathForSearch: string;
-    sidetrackOnGithubUrl?: string;
-    sidetrackStaticBrowseUrl?: string;
+    parallelDocsPathForSearch: string;
+    parallelDocsOnGithubUrl?: string;
+    parallelDocsStaticBrowseUrl?: string;
   };
 };
 
@@ -777,8 +779,8 @@ type MultiAngleJsonRow = {
   docInnerHtmlB64: string;
   rawMdB64: string;
   scrollBlockLinksB64: string;
-  sidetrackPathForSearch: string;
-  sidetrackOnGithubUrl?: string;
+  parallelDocsPathForSearch: string;
+  parallelDocsOnGithubUrl?: string;
   staticBrowseUrl?: string;
   /** Multi-angle stretch: base64 UTF-8 of `#shell` inner HTML for this angle (table row “arithmetics”). */
   stretchSwapInnerB64?: string;
@@ -807,10 +809,10 @@ function angleBlockStretchRowsPathOk(
 ): boolean {
   const rows = spec.blockStretchRows;
   if (rows === undefined) return false;
-  const angleCrNorm = normalizeRepoRelativePath(spec.sidetrackPathRel.replaceAll("\\", "/"));
+  const angleCrNorm = normalizeRepoRelativePath(spec.parallelDocsPathRel.replaceAll("\\", "/"));
   const primaryNorm = normalizeRepoRelativePath((opts.filePath ?? "").replaceAll("\\", "/"));
   return (
-    normalizeRepoRelativePath(rows.sidetrackPathRel.replaceAll("\\", "/")) === angleCrNorm &&
+    normalizeRepoRelativePath(rows.parallelDocsPathRel.replaceAll("\\", "/")) === angleCrNorm &&
     normalizeRepoRelativePath(rows.sourceRelative.replaceAll("\\", "/")) === primaryNorm
   );
 }
@@ -825,7 +827,7 @@ function multiAngleToolbarAngleSelectHtml(
       return `<option value="${escapeHtml(a.id)}"${a.id === defaultId ? " selected" : ""}>${lab}</option>`;
     })
     .join("");
-  return `<span class="toolbar-angle-picker"><label class="toolbar-angle-picker__lab nav-rail__search-label" for="angle-select">Angle</label><select id="angle-select" aria-label="SideTrack angle">${selOpts}</select></span>`;
+  return `<span class="toolbar-angle-picker"><label class="toolbar-angle-picker__lab nav-rail__search-label" for="angle-select">Angle</label><select id="angle-select" aria-label="ParallelDocs angle">${selOpts}</select></span>`;
 }
 
 function resolveMultiAngleDefaultSelection(args: {
@@ -834,25 +836,25 @@ function resolveMultiAngleDefaultSelection(args: {
   opts: CodeBrowserPageOptions;
   builtAngles: Array<{
     spec: CodeBrowserMultiAngleSpec;
-    sidetrackHtml: string;
+    parallelDocsHtml: string;
     scrollB64: string;
   }>;
 }): MultiAngleDefaultSelection {
   const { multi, defaultId, opts, builtAngles } = args;
-  let defaultMarkdown = opts.sidetrackMarkdown;
+  let defaultMarkdown = opts.parallelDocsMarkdown;
   let defaultScrollB64 = "";
-  let defaultPathSearch = (opts.sidetrackPathForSearch ?? "").trim();
-  let defaultGh = opts.sidetrackOnGithubUrl;
-  let defaultStaticBrowse = (opts.sidetrackStaticBrowseUrl ?? "").trim();
+  let defaultPathSearch = (opts.parallelDocsPathForSearch ?? "").trim();
+  let defaultGh = opts.parallelDocsOnGithubUrl;
+  let defaultStaticBrowse = (opts.parallelDocsStaticBrowseUrl ?? "").trim();
   let defaultPaneHtml = "";
   for (const b of builtAngles) {
     if (b.spec.id !== defaultId) continue;
     defaultMarkdown = b.spec.markdown;
     defaultScrollB64 = b.scrollB64;
-    defaultPathSearch = b.spec.sidetrackPathRel.trim();
-    defaultGh = b.spec.sidetrackOnGithubUrl;
+    defaultPathSearch = b.spec.parallelDocsPathRel.trim();
+    defaultGh = b.spec.parallelDocsOnGithubUrl;
     defaultStaticBrowse = (b.spec.staticBrowseUrl ?? "").trim();
-    defaultPaneHtml = b.sidetrackHtml;
+    defaultPaneHtml = b.parallelDocsHtml;
     break;
   }
   if (defaultStaticBrowse.length === 0) {
@@ -860,7 +862,7 @@ function resolveMultiAngleDefaultSelection(args: {
       firstNonEmpty(multi.angles.map((a) => (a.staticBrowseUrl ?? "").trim())) ?? "";
   }
   if ((defaultGh ?? "").trim().length === 0) {
-    defaultGh = firstNonEmpty(multi.angles.map((a) => (a.sidetrackOnGithubUrl ?? "").trim()));
+    defaultGh = firstNonEmpty(multi.angles.map((a) => (a.parallelDocsOnGithubUrl ?? "").trim()));
   }
   return {
     defaultMarkdown,
@@ -875,10 +877,10 @@ function resolveMultiAngleDefaultSelection(args: {
 async function multiAngleJsonRowAndDocHtml(
   opts: CodeBrowserPageOptions,
   spec: CodeBrowserMultiAngleSpec,
-): Promise<{ jsonRow: MultiAngleJsonRow; sidetrackHtml: string; scrollB64: string }> {
+): Promise<{ jsonRow: MultiAngleJsonRow; parallelDocsHtml: string; scrollB64: string }> {
   const rows = spec.blockStretchRows;
   const rowsPathOk = angleBlockStretchRowsPathOk(spec, opts);
-  const angleCrNorm = normalizeRepoRelativePath(spec.sidetrackPathRel.replaceAll("\\", "/"));
+  const angleCrNorm = normalizeRepoRelativePath(spec.parallelDocsPathRel.replaceAll("\\", "/"));
   const links =
     rows !== undefined && rowsPathOk
       ? buildBlockScrollLinks(
@@ -889,24 +891,27 @@ async function multiAngleJsonRowAndDocHtml(
           opts.code,
         )
       : [];
-  const mdForDoc = injectSideTrackDocAnchors(spec.markdown, links.length > 0 ? links : undefined);
+  const mdForDoc = injectParallelDocsDocAnchors(
+    spec.markdown,
+    links.length > 0 ? links : undefined,
+  );
   const scrollB64 =
     links.length > 0 ? Buffer.from(JSON.stringify(links), "utf8").toString("base64") : "";
-  const sidetrackHtml = await renderMarkdownToHtml(mdForDoc, {
-    sidetrackOutputUrls: opts.sidetrackOutputUrls,
+  const parallelDocsHtml = await renderMarkdownToHtml(mdForDoc, {
+    parallelDocsOutputUrls: opts.parallelDocsOutputUrls,
   });
   return {
     jsonRow: {
       id: spec.id,
       title: spec.title?.trim() || spec.id,
-      docInnerHtmlB64: Buffer.from(sidetrackHtml, "utf8").toString("base64"),
+      docInnerHtmlB64: Buffer.from(parallelDocsHtml, "utf8").toString("base64"),
       rawMdB64: Buffer.from(spec.markdown, "utf8").toString("base64"),
       scrollBlockLinksB64: scrollB64,
-      sidetrackPathForSearch: spec.sidetrackPathRel.trim(),
-      sidetrackOnGithubUrl: spec.sidetrackOnGithubUrl,
+      parallelDocsPathForSearch: spec.parallelDocsPathRel.trim(),
+      parallelDocsOnGithubUrl: spec.parallelDocsOnGithubUrl,
       staticBrowseUrl: spec.staticBrowseUrl,
     },
-    sidetrackHtml,
+    parallelDocsHtml,
     scrollB64,
   };
 }
@@ -929,7 +934,7 @@ async function buildMultiAngleBlockStretchShell(
     spec: CodeBrowserMultiAngleSpec;
     stretched: { preambleHtml: string; tableInnerHtml: string };
     jsonRow: MultiAngleJsonRow;
-    sidetrackHtml: string;
+    parallelDocsHtml: string;
     scrollB64: string;
   }> = [];
 
@@ -940,19 +945,19 @@ async function buildMultiAngleBlockStretchShell(
     const stretched = await tryBuildBlockStretchTableHtml({
       code: opts.code,
       language: opts.language,
-      sidetrackMarkdown: spec.markdown,
+      parallelDocsMarkdown: spec.markdown,
       index: rows.index,
       sourceRelative: rows.sourceRelative,
-      sidetrackPathRel: rows.sidetrackPathRel,
-      sidetrackOutputUrls: opts.sidetrackOutputUrls,
+      parallelDocsPathRel: rows.parallelDocsPathRel,
+      parallelDocsOutputUrls: opts.parallelDocsOutputUrls,
       sourceMarkdownOutputUrls: sourceMarkdownUrls,
       stretchBufferSync: stretchBufferSyncFromOpts(opts),
     });
     if (stretched === null) return null;
-    const { jsonRow, sidetrackHtml, scrollB64 } = await multiAngleJsonRowAndDocHtml(opts, spec);
+    const { jsonRow, parallelDocsHtml, scrollB64 } = await multiAngleJsonRowAndDocHtml(opts, spec);
     const stretchPairHtml = renderShellPairContextHtml(
       shellPairSourcePath(opts.filePath, rows.sourceRelative),
-      jsonRow.sidetrackPathForSearch,
+      jsonRow.parallelDocsPathForSearch,
     );
     const stretchSwapInner = wrapShellInnerWithPairContext(
       stretchPairHtml,
@@ -965,14 +970,14 @@ async function buildMultiAngleBlockStretchShell(
         ...jsonRow,
         stretchSwapInnerB64: Buffer.from(stretchSwapInner, "utf8").toString("base64"),
       },
-      sidetrackHtml,
+      parallelDocsHtml,
       scrollB64,
     });
   }
 
   const builtAngles = perAngle.map((p) => ({
     spec: p.spec,
-    sidetrackHtml: p.sidetrackHtml,
+    parallelDocsHtml: p.parallelDocsHtml,
     scrollB64: p.scrollB64,
   }));
   const { defaultMarkdown, defaultScrollB64, defaultPathSearch, defaultGh, defaultStaticBrowse } =
@@ -1009,9 +1014,11 @@ async function buildMultiAngleBlockStretchShell(
     multiShell: {
       rawMdB64: Buffer.from(defaultMarkdown, "utf8").toString("base64"),
       scrollBlockLinksB64: defaultScrollB64,
-      sidetrackPathForSearch: defaultPathSearch,
-      sidetrackOnGithubUrl: defaultGh,
-      ...(defaultStaticBrowse.length > 0 ? { sidetrackStaticBrowseUrl: defaultStaticBrowse } : {}),
+      parallelDocsPathForSearch: defaultPathSearch,
+      parallelDocsOnGithubUrl: defaultGh,
+      ...(defaultStaticBrowse.length > 0
+        ? { parallelDocsStaticBrowseUrl: defaultStaticBrowse }
+        : {}),
     },
   };
 }
@@ -1033,7 +1040,7 @@ async function buildMultiAngleDualPaneShell(
   const jsonAngles: MultiAngleJsonRow[] = [];
   const builtAngles: Array<{
     spec: CodeBrowserMultiAngleSpec;
-    sidetrackHtml: string;
+    parallelDocsHtml: string;
     scrollB64: string;
   }> = [];
 
@@ -1044,14 +1051,14 @@ async function buildMultiAngleDualPaneShell(
     renderHighlightedCodeLineRows(opts.code, opts.language),
     sourceMarkdownEnabled
       ? renderMarkdownToHtml(sourceMdForPane, {
-          sidetrackOutputUrls: sourcePaneUrls,
+          parallelDocsOutputUrls: sourcePaneUrls,
         })
       : Promise.resolve(""),
   ]);
 
   for (const spec of multi.angles) {
-    const { jsonRow, sidetrackHtml, scrollB64 } = await multiAngleJsonRowAndDocHtml(opts, spec);
-    builtAngles.push({ spec, sidetrackHtml, scrollB64 });
+    const { jsonRow, parallelDocsHtml, scrollB64 } = await multiAngleJsonRowAndDocHtml(opts, spec);
+    builtAngles.push({ spec, parallelDocsHtml, scrollB64 });
     jsonAngles.push(jsonRow);
   }
   const {
@@ -1082,9 +1089,11 @@ async function buildMultiAngleDualPaneShell(
     multiShell: {
       rawMdB64: Buffer.from(defaultMarkdown, "utf8").toString("base64"),
       scrollBlockLinksB64: defaultScrollB64,
-      sidetrackPathForSearch: defaultPathSearch,
-      sidetrackOnGithubUrl: defaultGh,
-      ...(defaultStaticBrowse.length > 0 ? { sidetrackStaticBrowseUrl: defaultStaticBrowse } : {}),
+      parallelDocsPathForSearch: defaultPathSearch,
+      parallelDocsOnGithubUrl: defaultGh,
+      ...(defaultStaticBrowse.length > 0
+        ? { parallelDocsStaticBrowseUrl: defaultStaticBrowse }
+        : {}),
     },
     angleSelectHtml,
     multiAnglePayloadB64,
@@ -1102,13 +1111,13 @@ async function buildDualPaneSingleAngleShell(
       ? buildBlockScrollLinks(
           rows.index,
           rows.sourceRelative,
-          rows.sidetrackPathRel,
-          opts.sidetrackMarkdown,
+          rows.parallelDocsPathRel,
+          opts.parallelDocsMarkdown,
           opts.code,
         )
       : [];
-  const mdForDoc = injectSideTrackDocAnchors(
-    opts.sidetrackMarkdown,
+  const mdForDoc = injectParallelDocsDocAnchors(
+    opts.parallelDocsMarkdown,
     links.length > 0 ? links : undefined,
   );
   let scrollBlockLinksB64 = "";
@@ -1118,24 +1127,27 @@ async function buildDualPaneSingleAngleShell(
   const sourceMarkdownEnabled = isMarkdownLikeSource(opts);
   const sourceMdForPane = sourceMarkdownEnabled ? injectSourceMarkdownAnchors(opts.code) : "";
   const sourcePaneUrls = sourcePaneOutputUrls(opts);
-  const [codeHtml, sidetrackHtml, sourceMarkdownPaneHtml] = await Promise.all([
+  const [codeHtml, parallelDocsHtml, sourceMarkdownPaneHtml] = await Promise.all([
     renderHighlightedCodeLineRows(opts.code, opts.language),
     renderMarkdownToHtml(mdForDoc, {
-      sidetrackOutputUrls: opts.sidetrackOutputUrls,
+      parallelDocsOutputUrls: opts.parallelDocsOutputUrls,
     }),
     sourceMarkdownEnabled
       ? renderMarkdownToHtml(sourceMdForPane, {
-          sidetrackOutputUrls: sourcePaneUrls,
+          parallelDocsOutputUrls: sourcePaneUrls,
         })
       : Promise.resolve(""),
   ]);
   const pairHtml = renderShellPairContextHtml(
     shellPairSourcePath(opts.filePath, opts.blockStretchRows?.sourceRelative),
-    shellPairSideTrackPath(opts.sidetrackPathForSearch, opts.blockStretchRows?.sidetrackPathRel),
+    shellPairParallelDocsPath(
+      opts.parallelDocsPathForSearch,
+      opts.blockStretchRows?.parallelDocsPathRel,
+    ),
   );
   const shellInner = wrapDualShellInner(
     pairHtml,
-    dualPanePanesInnerHtml(codeHtml, sidetrackHtml, sourceMarkdownPaneHtml),
+    dualPanePanesInnerHtml(codeHtml, parallelDocsHtml, sourceMarkdownPaneHtml),
   );
   return {
     layout: "dual",
@@ -1160,42 +1172,42 @@ async function buildSingleAngleCodeBrowserShell(
   if (layoutPref !== "dual") {
     const fallbackSourceRelative =
       (opts.filePath ?? "").trim().length > 0 ? (opts.filePath ?? "").trim() : "source";
-    const fallbackSideTrackPathRel =
-      (opts.sidetrackPathForSearch ?? "").trim().length > 0
-        ? (opts.sidetrackPathForSearch ?? "").trim()
-        : "sidetrack.md";
+    const fallbackParallelDocsPathRel =
+      (opts.parallelDocsPathForSearch ?? "").trim().length > 0
+        ? (opts.parallelDocsPathForSearch ?? "").trim()
+        : "parallel-docs.md";
     const fallbackSourceLineCount = Math.max(1, opts.code.split("\n").length);
-    const fallbackBlockId = "sidetrack-full";
+    const fallbackBlockId = "parallel-docs-full";
     const fallbackStretchMarkdown =
       opts.blockStretchRows === undefined
-        ? `<!-- sidetrack:block id=${fallbackBlockId} -->\n${opts.sidetrackMarkdown}`
-        : opts.sidetrackMarkdown;
+        ? `<!-- parallelDocs:block id=${fallbackBlockId} -->\n${opts.parallelDocsMarkdown}`
+        : opts.parallelDocsMarkdown;
     const stretchRows =
       opts.blockStretchRows ??
       ({
         index: {
           schemaVersion: CURRENT_SCHEMA_VERSION,
-          bySideTrackPath: {
-            [fallbackSideTrackPathRel]: {
+          byParallelDocsPath: {
+            [fallbackParallelDocsPathRel]: {
               sourcePath: fallbackSourceRelative,
-              sidetrackPath: fallbackSideTrackPathRel,
+              parallelDocsPath: fallbackParallelDocsPathRel,
               blocks: [
                 { id: fallbackBlockId, anchor: `lines:1-${String(fallbackSourceLineCount)}` },
               ],
             },
           },
-        } satisfies SideTrackIndex,
+        } satisfies ParallelDocsIndex,
         sourceRelative: fallbackSourceRelative,
-        sidetrackPathRel: fallbackSideTrackPathRel,
+        parallelDocsPathRel: fallbackParallelDocsPathRel,
       } as const);
     const stretched = await tryBuildBlockStretchTableHtml({
       code: opts.code,
       language: opts.language,
-      sidetrackMarkdown: fallbackStretchMarkdown,
+      parallelDocsMarkdown: fallbackStretchMarkdown,
       index: stretchRows.index,
       sourceRelative: stretchRows.sourceRelative,
-      sidetrackPathRel: stretchRows.sidetrackPathRel,
-      sidetrackOutputUrls: opts.sidetrackOutputUrls,
+      parallelDocsPathRel: stretchRows.parallelDocsPathRel,
+      parallelDocsOutputUrls: opts.parallelDocsOutputUrls,
       sourceMarkdownOutputUrls: sourceMarkdownUrls,
       stretchBufferSync: stretchBufferSyncFromOpts(opts),
     });
@@ -1204,7 +1216,10 @@ async function buildSingleAngleCodeBrowserShell(
       shellInner = wrapShellInnerWithPairContext(
         renderShellPairContextHtml(
           shellPairSourcePath(opts.filePath, stretchRows.sourceRelative),
-          shellPairSideTrackPath(opts.sidetrackPathForSearch, stretchRows.sidetrackPathRel),
+          shellPairParallelDocsPath(
+            opts.parallelDocsPathForSearch,
+            stretchRows.parallelDocsPathRel,
+          ),
         ),
         `        ${stretched.preambleHtml}\n` + `        ${stretched.tableInnerHtml}\n`,
       );
@@ -1221,8 +1236,8 @@ async function buildSingleAngleCodeBrowserShell(
       ? buildBlockScrollLinks(
           rows.index,
           rows.sourceRelative,
-          rows.sidetrackPathRel,
-          opts.sidetrackMarkdown,
+          rows.parallelDocsPathRel,
+          opts.parallelDocsMarkdown,
           opts.code,
         )
       : [];
@@ -1274,18 +1289,18 @@ async function buildCodeBrowserShell(
 
 function searchChromeFromOptions(
   opts: CodeBrowserPageOptions,
-  sidetrackPathOverride?: string,
+  parallelDocsPathOverride?: string,
 ): {
   searchPlaceholder: string;
   shellSearchAttrs: string;
 } {
-  const crPath = (sidetrackPathOverride ?? opts.sidetrackPathForSearch ?? "").trim();
-  if (opts.staticSearchScope === "sidetrack-and-paths") {
+  const crPath = (parallelDocsPathOverride ?? opts.parallelDocsPathForSearch ?? "").trim();
+  if (opts.staticSearchScope === "parallel-docs-and-paths") {
     return {
       searchPlaceholder: "Filename, path, or keywords…",
-      shellSearchAttrs: ` data-search-scope="sidetrack-and-paths" data-search-file-path="${escapeHtml(
+      shellSearchAttrs: ` data-search-scope="parallel-docs-and-paths" data-search-file-path="${escapeHtml(
         opts.filePath ?? "",
-      )}" data-search-sidetrack-path="${escapeHtml(crPath)}"`,
+      )}" data-search-parallel-docs-path="${escapeHtml(crPath)}"`,
     };
   }
   return {
@@ -1301,30 +1316,30 @@ function shellDocumentedPairsAttrFromOptions(opts: CodeBrowserPageOptions): stri
 }
 
 function codeBrowserPageTitle(opts: CodeBrowserPageOptions): string {
-  return opts.title ?? opts.filePath ?? "SideTrack";
+  return opts.title ?? opts.filePath ?? "ParallelDocs";
 }
 
-function toolbarSideTrackGithubFromShell(
+function toolbarParallelDocsGithubFromShell(
   shell: CodeBrowserShell,
   opts: CodeBrowserPageOptions,
 ): string | undefined {
-  return shell.multiShell?.sidetrackOnGithubUrl ?? opts.sidetrackOnGithubUrl;
+  return shell.multiShell?.parallelDocsOnGithubUrl ?? opts.parallelDocsOnGithubUrl;
 }
 
 function rawMdB64FromShell(shell: CodeBrowserShell, opts: CodeBrowserPageOptions): string {
   return (
-    shell.multiShell?.rawMdB64 ?? Buffer.from(opts.sidetrackMarkdown, "utf8").toString("base64")
+    shell.multiShell?.rawMdB64 ?? Buffer.from(opts.parallelDocsMarkdown, "utf8").toString("base64")
   );
 }
 
-function currentPairSideTrackPathRel(
+function currentPairParallelDocsPathRel(
   shell: CodeBrowserShell,
   opts: CodeBrowserPageOptions,
 ): string {
   return (
-    shell.multiShell?.sidetrackPathForSearch ??
-    opts.sidetrackPathForSearch ??
-    opts.blockStretchRows?.sidetrackPathRel ??
+    shell.multiShell?.parallelDocsPathForSearch ??
+    opts.parallelDocsPathForSearch ??
+    opts.blockStretchRows?.parallelDocsPathRel ??
     ""
   ).trim();
 }
@@ -1334,27 +1349,27 @@ function currentPairSideTrackPathRel(
  */
 function shellPairIdentityDataAttrs(shell: CodeBrowserShell, opts: CodeBrowserPageOptions): string {
   const src = normPosixPath(opts.filePath ?? "");
-  const cr = normPosixPath(currentPairSideTrackPathRel(shell, opts));
+  const cr = normPosixPath(currentPairParallelDocsPathRel(shell, opts));
   if (src.length === 0 || cr.length === 0) return "";
-  return ` data-sidetrack-pair-source-path="${escapeHtml(src)}" data-sidetrack-pair-sidetrack-path="${escapeHtml(cr)}"`;
+  return ` data-parallel-docs-pair-source-path="${escapeHtml(src)}" data-parallel-docs-pair-parallel-docs-path="${escapeHtml(cr)}"`;
 }
 
 /** Canonical doc target for static validation: same-site `./browse/…` when present, else GitHub blob. */
 function shellPairDocDataAttr(shell: CodeBrowserShell, opts: CodeBrowserPageOptions): string {
   const browseRaw = (
-    shell.multiShell?.sidetrackStaticBrowseUrl ??
-    opts.sidetrackStaticBrowseUrl ??
+    shell.multiShell?.parallelDocsStaticBrowseUrl ??
+    opts.parallelDocsStaticBrowseUrl ??
     ""
   ).trim();
   if (browseRaw.length > 0) {
     const href = safeToolbarNavigationHref(browseRaw);
     if (href !== null) {
-      return ` data-sidetrack-pair-browse-href="${escapeHtml(href)}"`;
+      return ` data-parallel-docs-pair-browse-href="${escapeHtml(href)}"`;
     }
   }
-  const gh = safeExternalHttpUrl(toolbarSideTrackGithubFromShell(shell, opts));
+  const gh = safeExternalHttpUrl(toolbarParallelDocsGithubFromShell(shell, opts));
   if (gh !== null) {
-    return ` data-sidetrack-pair-browse-href="${escapeHtml(gh)}"`;
+    return ` data-parallel-docs-pair-browse-href="${escapeHtml(gh)}"`;
   }
   return "";
 }
@@ -1369,7 +1384,7 @@ function shellSearchAttrsWithNavJson(
 }
 
 /**
- * Static HTML shell for a minimal “code browser”: code + rendered sidetrack,
+ * Static HTML shell for a minimal “code browser”: code + rendered parallel-docs,
  * draggable vertical splitter, togglable line wrap for the code pane, and
  * token-in-line quick search (all non-whitespace tokens must appear on the same line).
  */
@@ -1379,13 +1394,13 @@ export async function renderCodeBrowserHtml(opts: CodeBrowserPageOptions): Promi
   const title = codeBrowserPageTitle(opts);
   const metaDescriptionHtml = renderMetaDescriptionHtml(opts, title);
   const builtAt = opts.builtAt ?? new Date();
-  const renderSemver = sidetrackRenderVersion();
+  const renderSemver = parallelDocsRenderVersion();
   const toolbarSiteHubHtml = buildToolbarSiteHubHtml(opts.siteHubUrl);
   const toolbarEndHtml = buildToolbarEndHtml(opts.githubRepoUrl, opts.siteHubUrl);
   const pageFooterHtml = renderPageFooterHtml({
     builtAt,
     toolHomeUrl: opts.toolHomeUrl,
-    sidetrackRenderSemver: renderSemver,
+    parallelDocsRenderSemver: renderSemver,
     pagesBuildCommitSha: normalizePagesBuildCommitSha(opts.pagesBuildCommitSha),
   });
   const { hljsLight, hljsDark } = hljsStylesheetThemes(opts.hljsTheme);
@@ -1413,7 +1428,7 @@ export async function renderCodeBrowserHtml(opts: CodeBrowserPageOptions): Promi
 
   const { searchPlaceholder, shellSearchAttrs: shellSearchAttrsBase } = searchChromeFromOptions(
     opts,
-    shell.multiShell?.sidetrackPathForSearch,
+    shell.multiShell?.parallelDocsPathForSearch,
   );
   const shellDocumentedPairsAttr = shellDocumentedPairsAttrFromOptions(opts);
   const shellSearchAttrs = shellSearchAttrsWithNavJson(

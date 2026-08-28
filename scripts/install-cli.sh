@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Install the SideTrack CLI globally by symlinking the local workspace
+# Install the ParallelDocs CLI globally by symlinking the local workspace
 # build via `npm link`. Fastest path for local use and dogfooding:
-# subsequent `npm run build -w sidetrack` updates are picked up
+# subsequent `npm run build -w parallel-docs` updates are picked up
 # without reinstalling.
 #
-# For the published CLI without linking, use: npx sidetrack …
-# (npx sidetrack --help → "Usage: sidetrack [options] [command]").
+# For the published CLI without linking, use: npx parallel-docs …
+# (npx parallel-docs --help → "Usage: parallel-docs [options] [command]").
 #
 # Usage:
 #   bash scripts/install-cli.sh            # link
@@ -20,31 +20,31 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
 if [[ "${1:-}" == "--unlink" ]]; then
-  npm rm -g sidetrack
-  echo "Unlinked sidetrack (global)."
+  npm rm -g parallel-docs
+  echo "Unlinked parallel-docs (global)."
   exit 0
 fi
 
-echo "Building @sidetrack/core, @sidetrack/render, sidetrack..."
-npm run build -w @sidetrack/core
-npm run build -w @sidetrack/render
-npm run build -w sidetrack
+echo "Building @parallel-docs/core, @parallel-docs/render, parallel-docs..."
+npm run build -w @parallel-docs/core
+npm run build -w @parallel-docs/render
+npm run build -w parallel-docs
 
 chmod +x packages/cli/dist/cli.js
 
-echo "Linking sidetrack globally..."
+echo "Linking parallel-docs globally..."
 (cd packages/cli && npm link)
 
-if ! command -v sidetrack >/dev/null 2>&1; then
+if ! command -v parallel-docs >/dev/null 2>&1; then
   cat >&2 <<EOF
-'sidetrack' is not on PATH. Add npm's global bin directory:
+'parallel-docs' is not on PATH. Add npm's global bin directory:
   export PATH="\$(npm config get prefix)/bin:\$PATH"
-Then rerun: sidetrack --version
+Then rerun: parallel-docs --version
 EOF
   exit 1
 fi
 
-bin_path="$(command -v sidetrack)"
-version="$(sidetrack --version)"
+bin_path="$(command -v parallel-docs)"
+version="$(parallel-docs --version)"
 echo "Installed: ${bin_path}  (${version})"
 echo "Remove later with: bash scripts/install-cli.sh --unlink"

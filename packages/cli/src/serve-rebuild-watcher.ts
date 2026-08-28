@@ -1,6 +1,6 @@
 import path from "node:path";
 
-import { loadSideTrackConfig, normalizeRepoRelativePath } from "@sidetrack/core";
+import { loadParallelDocsConfig, normalizeRepoRelativePath } from "@parallel-docs/core";
 import chokidar from "chokidar";
 
 import { createServeRepoWatchIgnored } from "./serve-repo-watch-ignore.js";
@@ -28,7 +28,7 @@ export async function startServeRebuildWatcher(
   rebuild: (notifyBrowser: boolean) => Promise<void>,
 ): Promise<ServeRebuildWatcherHandle> {
   const repoRoot = path.resolve(repoRootAbs);
-  const cfg = await loadSideTrackConfig(repoRoot);
+  const cfg = await loadParallelDocsConfig(repoRoot);
   const storageDirRepoRelative = normalizeRepoRelativePath(cfg.storageDir.replaceAll("\\", "/"));
   const ignored = createServeRepoWatchIgnored(repoRoot, { storageDirRepoRelative });
 
@@ -53,7 +53,9 @@ export async function startServeRebuildWatcher(
     try {
       await rebuild(true);
     } catch (e: unknown) {
-      process.stderr.write(`[sidetrack serve] rebuild failed: ${formatWatcherRebuildFailure(e)}\n`);
+      process.stderr.write(
+        `[parallel-docs serve] rebuild failed: ${formatWatcherRebuildFailure(e)}\n`,
+      );
     } finally {
       rebuildInFlight = false;
       if (pendingWhileRebuild) {

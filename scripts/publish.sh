@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Publish every public SideTrack package to npm, in dependency order.
+# Publish every public ParallelDocs package to npm, in dependency order.
 #
 # Preconditions (checked):
 #   - clean working tree
@@ -14,10 +14,10 @@ set -euo pipefail
 #   - unit tests       (scripts/test.sh)
 #   - npm publish      for each public workspace
 #
-# Skips the private 'sidetrack-vscode' package.
+# Skips the private 'parallel-docs-vscode' package.
 #
-# After a successful publish, consumers can run the CLI with npx, e.g. npx sidetrack
-# --help (prints "Usage: sidetrack [options] [command]") without a global npm install.
+# After a successful publish, consumers can run the CLI with npx, e.g. npx parallel-docs
+# --help (prints "Usage: parallel-docs [options] [command]") without a global npm install.
 #
 # Usage:
 #   bash scripts/publish.sh                    # real publish to npm
@@ -49,18 +49,18 @@ for a in "$@"; do
 done
 
 # Public workspaces, in dependency order (core -> render -> static site -> cli;
-# the CLI depends on @sidetrack/code-sidetrack-static).
+# the CLI depends on @parallel-docs/code-parallel-docs-static).
 PUBLIC_WORKSPACES=(
-  "@sidetrack/core"
-  "@sidetrack/render"
-  "@sidetrack/code-sidetrack-static"
-  "@sidetrack/mcp-server"
-  "sidetrack"
+  "@parallel-docs/core"
+  "@parallel-docs/render"
+  "@parallel-docs/code-parallel-docs-static"
+  "@parallel-docs/mcp-server"
+  "@parallel-docs/cli"
 )
 
 version=$(node -e "process.stdout.write(require('./packages/core/package.json').version)")
 expected_tag="v$version"
-echo "Publishing SideTrack $version"
+echo "Publishing ParallelDocs $version"
 
 if ! git rev-parse --git-dir >/dev/null 2>&1; then
   log_error "Not inside a git repository."

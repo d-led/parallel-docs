@@ -4,39 +4,39 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { CURRENT_SCHEMA_VERSION } from "./model.js";
-import { initializeSideTrackProject, isSideTrackProjectInitialized } from "./init-project.js";
+import { initializeParallelDocsProject, isParallelDocsProjectInitialized } from "./init-project.js";
 
-describe("initializeSideTrackProject", () => {
+describe("initializeParallelDocsProject", () => {
   it("creates config and storage metadata by default", async () => {
-    const dir = await mkdtemp(path.join(tmpdir(), "sidetrack-core-init-"));
+    const dir = await mkdtemp(path.join(tmpdir(), "parallel-docs-core-init-"));
     try {
-      const init = await initializeSideTrackProject(dir);
+      const init = await initializeParallelDocsProject(dir);
       expect(init.createdIndex).toBe(true);
       expect(init.createdToml).toBe(true);
       expect(init.addedSiteGitignore).toBe(true);
 
       const indexRaw = await readFile(
-        path.join(dir, ".sidetrack", "metadata", "index.json"),
+        path.join(dir, ".parallel-docs", "metadata", "index.json"),
         "utf8",
       );
       const index = JSON.parse(indexRaw) as { schemaVersion: number };
       expect(index.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
       const sentinelRaw = await readFile(
-        path.join(dir, ".sidetrack", "source", ".default"),
+        path.join(dir, ".parallel-docs", "source", ".default"),
         "utf8",
       );
       expect(sentinelRaw).toBe("");
-      expect(await isSideTrackProjectInitialized(dir)).toBe(true);
+      expect(await isParallelDocsProjectInitialized(dir)).toBe(true);
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
   });
 
   it("does not duplicate _site in .gitignore", async () => {
-    const dir = await mkdtemp(path.join(tmpdir(), "sidetrack-core-init-ignore-"));
+    const dir = await mkdtemp(path.join(tmpdir(), "parallel-docs-core-init-ignore-"));
     try {
       await writeFile(path.join(dir, ".gitignore"), "node_modules\n_site\n", "utf8");
-      const init = await initializeSideTrackProject(dir);
+      const init = await initializeParallelDocsProject(dir);
       expect(init.addedSiteGitignore).toBe(false);
 
       const gitignore = await readFile(path.join(dir, ".gitignore"), "utf8");

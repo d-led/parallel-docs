@@ -14,7 +14,7 @@ import {
 } from "./code-browser-wide-intro-ui.js";
 import { readWebStorageItem, writeWebStorageItem } from "./code-browser-web-storage.js";
 
-const STORAGE_WIDE_MODE_INTRO_DONE = "sidetrack.codeSideTrackStatic.wideModeIntro.v1";
+const STORAGE_WIDE_MODE_INTRO_DONE = "parallel-docs.codeParallelDocsStatic.wideModeIntro.v1";
 
 type WideIntroRuntime = {
   shell: HTMLElement;
@@ -92,9 +92,9 @@ function renderWideIntro(runtime: WideIntroRuntime, closeTour: () => void): void
   const step = runtime.steps[runtime.current];
   if (!step) return;
   const targets = wideIntroVisibleTargetsForCurrentStep(runtime.steps, runtime.current);
-  for (const el of runtime.highlighted) el.classList.remove("sidetrack-wide-intro-target");
+  for (const el of runtime.highlighted) el.classList.remove("parallel-docs-wide-intro-target");
   runtime.highlighted = targets;
-  for (const el of runtime.highlighted) el.classList.add("sidetrack-wide-intro-target");
+  for (const el of runtime.highlighted) el.classList.add("parallel-docs-wide-intro-target");
   titleEl.textContent = step.title;
   bodyEl.textContent = step.body;
   syncWideIntroStepActionUi(runtime, step, targets);
@@ -127,7 +127,7 @@ export function wireWideModeIntroTour(
   const { bubble, arrowLayer, stepActionBtn, backBtn, nextBtn, skipBtn } = runtime.elements;
 
   const closeTour = (): void => {
-    for (const el of runtime.highlighted) el.classList.remove("sidetrack-wide-intro-target");
+    for (const el of runtime.highlighted) el.classList.remove("parallel-docs-wide-intro-target");
     runtime.highlighted = [];
     arrowLayer.remove();
     bubble.remove();

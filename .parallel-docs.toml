@@ -1,0 +1,55 @@
+# parallelDocs:start id=toml-lede
+[storage]
+dir = ".parallel-docs"
+# parallelDocs:end id=toml-lede
+
+# parallelDocs:start id=toml-scm
+[scm]
+provider = "git"
+# parallelDocs:end id=toml-scm
+
+# parallelDocs:start id=toml-render
+[render]
+mermaid = true
+syntaxTheme = "github-dark"
+relative_github_blob_links = true
+# parallelDocs:end id=toml-render
+
+# parallelDocs:start id=toml-anchors
+[anchors]
+defaultStrategy = [ "symbol", "lines" ]
+# parallelDocs:end id=toml-anchors
+
+# parallelDocs:start id=toml-static-site
+[static_site]
+title = "ParallelDocs"
+github_url = "https://github.com/d-led/parallel-docs"
+# Stretch (when layout is stretch): default is flow-synchronizer (BufferingFlowSynchronizer). Opt out:
+# stretch_buffer_sync = "table"
+# Optional source-link base when _site/ doesn't host repo files:
+# source_link_prefix = "https://github.com/d-led/parallel-docs/blob/main"
+default_source_file = "README.md"
+default_angle = "main"
+github_blob_branch = "main"
+# parallelDocs:end id=toml-static-site
+
+# parallelDocs:start id=toml-angles
+[angles]
+default_angle = "main"
+
+  [[angles.definitions]]
+  id = "main"
+  title = "Main"
+
+  [[angles.definitions]]
+  id = "architecture"
+  title = "Architecture"
+# parallelDocs:end id=toml-angles
+
+# parallelDocs:start id=toml-pointers
+# (Normative block text lives in companion Markdown — "Pointers" section.)
+# parallelDocs:end id=toml-pointers
+
+# parallelDocs:start id=toml-buffering-flow-sync
+# (Normative sketch lives in companion Markdown — same id, “BufferingFlowSynchronizer” section.)
+# parallelDocs:end id=toml-buffering-flow-sync

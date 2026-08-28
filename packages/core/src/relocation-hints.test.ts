@@ -1,18 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { buildSideTrackSnippetV1 } from "./block-snippet.js";
-import { CURRENT_SCHEMA_VERSION, type SideTrackIndex } from "./model.js";
+import { buildParallelDocsSnippetV1 } from "./block-snippet.js";
+import { CURRENT_SCHEMA_VERSION, type ParallelDocsIndex } from "./model.js";
 import { relocationHintMessages } from "./relocation-hints.js";
 
-function idx(by: SideTrackIndex["bySideTrackPath"]): SideTrackIndex {
-  return { schemaVersion: CURRENT_SCHEMA_VERSION, bySideTrackPath: by };
+function idx(by: ParallelDocsIndex["byParallelDocsPath"]): ParallelDocsIndex {
+  return { schemaVersion: CURRENT_SCHEMA_VERSION, byParallelDocsPath: by };
 }
 
 describe("Relocation guidance when a primary file is missing — renames and markers", () => {
   it("should name the Git rename target and suggest sync-moved-paths when the index still references the old path", () => {
     const index = idx({
-      ".sidetrack/source/src/old.ts.md": {
+      ".parallel-docs/source/src/old.ts.md": {
         sourcePath: "src/old.ts",
-        sidetrackPath: ".sidetrack/source/src/old.ts.md",
+        parallelDocsPath: ".parallel-docs/source/src/old.ts.md",
         blocks: [],
       },
     });
@@ -23,18 +23,18 @@ describe("Relocation guidance when a primary file is missing — renames and mar
       indexedSourceTextsByPath: new Map([["src/new.ts", "export const x = 1;\n"]]),
     });
     expect(hints.some((h) => h.includes('rename to "src/new.ts"'))).toBe(true);
-    expect(hints.some((h) => h.includes("sidetrack sync-moved-paths"))).toBe(true);
+    expect(hints.some((h) => h.includes("parallel-docs sync-moved-paths"))).toBe(true);
   });
 
   it("should point at another indexed file when that file alone carries the marker id", () => {
     const index = idx({
-      ".sidetrack/source/src/old.ts.md": {
+      ".parallel-docs/source/src/old.ts.md": {
         sourcePath: "src/old.ts",
-        sidetrackPath: ".sidetrack/source/src/old.ts.md",
+        parallelDocsPath: ".parallel-docs/source/src/old.ts.md",
         blocks: [{ id: "b1", anchor: "marker:auth" }],
       },
     });
-    const other = `//#region sidetrack:auth\n// body\n//#endregion sidetrack:auth\n`;
+    const other = `//#region parallelDocs:auth\n// body\n//#endregion parallelDocs:auth\n`;
     const hints = relocationHintMessages({
       index,
       missingSourcePathsNorm: new Set(["src/old.ts"]),
@@ -46,13 +46,13 @@ describe("Relocation guidance when a primary file is missing — renames and mar
 
   it("should call the marker match ambiguous when several indexed files share the same id", () => {
     const index = idx({
-      ".sidetrack/source/src/old.ts.md": {
+      ".parallel-docs/source/src/old.ts.md": {
         sourcePath: "src/old.ts",
-        sidetrackPath: ".sidetrack/source/src/old.ts.md",
+        parallelDocsPath: ".parallel-docs/source/src/old.ts.md",
         blocks: [{ id: "b1", anchor: "marker:dup" }],
       },
     });
-    const region = `//#region sidetrack:dup\n// x\n//#endregion sidetrack:dup\n`;
+    const region = `//#region parallelDocs:dup\n// x\n//#endregion parallelDocs:dup\n`;
     const hints = relocationHintMessages({
       index,
       missingSourcePathsNorm: new Set(["src/old.ts"]),
@@ -68,11 +68,15 @@ describe("Relocation guidance when a primary file is missing — renames and mar
 
 describe("Relocation guidance when a primary file is missing — snippets and fallbacks", () => {
   it("should name the unique file that still contains a stored line-snippet when the primary is gone", () => {
-    const snippet = buildSideTrackSnippetV1(["function relocatedHandler() {", "  return 42;", "}"]);
+    const snippet = buildParallelDocsSnippetV1([
+      "function relocatedHandler() {",
+      "  return 42;",
+      "}",
+    ]);
     const index = idx({
-      ".sidetrack/source/src/old.ts.md": {
+      ".parallel-docs/source/src/old.ts.md": {
         sourcePath: "src/old.ts",
-        sidetrackPath: ".sidetrack/source/src/old.ts.md",
+        parallelDocsPath: ".parallel-docs/source/src/old.ts.md",
         blocks: [{ id: "intro", anchor: "lines:1-3", snippet }],
       },
     });
@@ -88,9 +92,9 @@ describe("Relocation guidance when a primary file is missing — snippets and fa
 
   it("should explain that symbol anchors are not auto-resolved across files", () => {
     const index = idx({
-      ".sidetrack/source/src/gone.ts.md": {
+      ".parallel-docs/source/src/gone.ts.md": {
         sourcePath: "src/gone.ts",
-        sidetrackPath: ".sidetrack/source/src/gone.ts.md",
+        parallelDocsPath: ".parallel-docs/source/src/gone.ts.md",
         blocks: [{ id: "s1", anchor: "symbol:ImportantType" }],
       },
     });
@@ -105,9 +109,9 @@ describe("Relocation guidance when a primary file is missing — snippets and fa
 
   it("should steer the user toward stale index cleanup or fixing sourcePath when no rename or heuristic applies", () => {
     const index = idx({
-      ".sidetrack/source/src/missing.ts.md": {
+      ".parallel-docs/source/src/missing.ts.md": {
         sourcePath: "src/missing.ts",
-        sidetrackPath: ".sidetrack/source/src/missing.ts.md",
+        parallelDocsPath: ".parallel-docs/source/src/missing.ts.md",
         blocks: [{ id: "onlyLines", anchor: "lines:1-2" }],
       },
     });

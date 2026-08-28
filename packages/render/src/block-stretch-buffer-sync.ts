@@ -1,7 +1,7 @@
 import {
   BufferingFlowSynchronizer,
   type HeightAdjustable,
-} from "@sidetrack/core/buffering-flow-synchronizer";
+} from "@parallel-docs/core/buffering-flow-synchronizer";
 
 /**
  * Stretch layout uses **one** vertical scroll (`#shell.shell--stretch-rows`). Per logical row we
@@ -10,8 +10,8 @@ import {
  * both columns share the same row height and scroll as a single surface (see
  * `buffering-flow-synchronizer.approvals/`).
  */
-const STRETCH_ROW_SELECTOR = "tbody tr.stretch-row[data-sidetrack-stretch-sync-id]";
-const MERMAID_DONE_EVENT = "sidetrack-mermaid-done";
+const STRETCH_ROW_SELECTOR = "tbody tr.stretch-row[data-parallel-docs-stretch-sync-id]";
+const MERMAID_DONE_EVENT = "parallel-docs-mermaid-done";
 
 const synchronizer = new BufferingFlowSynchronizer();
 
@@ -98,7 +98,7 @@ function readCellIntrinsicHeightPx(cell: HTMLTableCellElement): number {
 
 function stretchRowsWithSyncId(table: HTMLTableElement): HTMLTableRowElement[] {
   return Array.from(table.querySelectorAll<HTMLTableRowElement>(STRETCH_ROW_SELECTOR)).filter(
-    (row) => (row.dataset.sidetrackStretchSyncId?.trim() ?? "").length > 0,
+    (row) => (row.dataset.parallelDocsStretchSyncId?.trim() ?? "").length > 0,
   );
 }
 
@@ -167,7 +167,7 @@ function collectStretchRowHeights(rows: HTMLTableRowElement[]): {
   for (const row of rows) {
     const pair = stretchRowCells(row);
     if (pair === null) continue;
-    const id = row.dataset.sidetrackStretchSyncId?.trim() ?? "";
+    const id = row.dataset.parallelDocsStretchSyncId?.trim() ?? "";
     left.push({
       id,
       height: readCellIntrinsicHeightPx(pair.codeTd),
@@ -226,7 +226,7 @@ export function applyBlockStretchRowBuffers(table: HTMLTableElement): void {
   clearTerminalBottomSlack(rows);
 }
 
-export function dispatchSideTrackMermaidDone(): void {
+export function dispatchParallelDocsMermaidDone(): void {
   globalThis.dispatchEvent(new CustomEvent(MERMAID_DONE_EVENT));
 }
 
@@ -236,7 +236,7 @@ export type BlockStretchBufferSyncHandle = {
 
 /**
  * Schedules `applyBlockStretchRowBuffers` on viewport changes, table geometry changes, and after
- * Mermaid finishes (see `dispatchSideTrackMermaidDone` / inline mermaid module).
+ * Mermaid finishes (see `dispatchParallelDocsMermaidDone` / inline mermaid module).
  */
 export function wireBlockStretchBufferSync(table: HTMLTableElement): BlockStretchBufferSyncHandle {
   let raf = 0;
