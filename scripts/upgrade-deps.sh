@@ -50,7 +50,13 @@ log_step "Running taze (${mode}, recursive) across all workspaces"
 # Also block typescript >= 6.1: typescript-eslint declares a peer range of
 # `>=4.8.4 <6.1.0`, and taze in `major` mode would otherwise bump typescript
 # to the `latest` dist-tag (7.x, the native compiler) and break resolution.
-taze_exclude="@parallel-docs/*,parallel-docs,typescript@>=6.1"
+#
+# Also pin @types/vscode: taze's VS Code addon syncs packages/vscode's
+# `engines.vscode` up to the @types/vscode version, which silently raises the
+# extension's minimum VS Code floor. The floor (^1.95.0) is intentional — see
+# docs/development.md — and only moves via the documented bump checklist,
+# never via deps:upgrade.
+taze_exclude="@parallel-docs/*,parallel-docs,typescript@>=6.1,@types/vscode"
 taze_args=("$mode" --recursive --include-locked --force --exclude "$taze_exclude")
 if [[ "$check" == true ]]; then
   echo "(check mode — no files will be modified)"
