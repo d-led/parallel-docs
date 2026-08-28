@@ -7,7 +7,7 @@
 [![npm: @parallel-docs/code-parallel-docs-static](https://img.shields.io/npm/v/@parallel-docs/code-parallel-docs-static?label=@parallel-docs/code-parallel-docs-static)](https://www.npmjs.com/package/@parallel-docs/code-parallel-docs-static)
 [![npm: @parallel-docs/mcp-server](https://img.shields.io/npm/v/@parallel-docs/mcp-server?label=@parallel-docs/mcp-server)](https://www.npmjs.com/package/@parallel-docs/mcp-server)
 [![npm: @parallel-docs/cli](https://img.shields.io/npm/v/@parallel-docs/cli?label=@parallel-docs/cli)](https://www.npmjs.com/package/@parallel-docs/cli)
-[![VS Code Marketplace](https://vsmarketplacebadges.dev/version-short/d-led.parallel-docs.png?label=VS%20Code)](https://marketplace.visualstudio.com/items?itemName=d-led.parallel-docs)
+[![VS Marketplace](https://vsmarketplacebadges.dev/version/d-led.parallel-docs.svg)](https://marketplace.visualstudio.com/items?itemName=d-led.parallel-docs)
 
 Have you ever wished a “side track” for code the way DVD extras let filmmakers talk over a film without changing the picture? When looking at code, that might answer the whys, reveal the intent besides the code itself.
 
