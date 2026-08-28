@@ -15,7 +15,7 @@ unset VSCODE_INSPECTOR_OPTIONS
 echo "Formatting..." >&2
 npx prettier --write . >/dev/null 2>&1
 
-mode="${COMMENTRAY_TEST_MODE:-unit}"
+mode="${SIDETRACK_TEST_MODE:-unit}"
 case "$mode" in
   # Unit Vitest suite includes `packages/architecture/architecture.test.ts`
   # (ArchUnitTS rules vs `tsconfig.archunit.json`).
@@ -25,5 +25,5 @@ case "$mode" in
   all)
     npm run test:unit && npm run test:integration && npm run test:expensive
     ;;
-  *) echo "Unknown COMMENTRAY_TEST_MODE=$mode (use unit|integration|expensive|all)" >&2; exit 1 ;;
+  *) echo "Unknown SIDETRACK_TEST_MODE=$mode (use unit|integration|expensive|all)" >&2; exit 1 ;;
 esac

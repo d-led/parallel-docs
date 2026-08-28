@@ -1,16 +1,16 @@
-/** One block as needed for scroll correlation (0-based commentray line, 1-based source range). */
+/** One block as needed for scroll correlation (0-based sidetrack line, 1-based source range). */
 export type BlockScrollLink = {
-  /** Same id as `<!-- commentray:block id=… -->` and `index.json` blocks[]. */
+  /** Same id as `<!-- sidetrack:block id=… -->` and `index.json` blocks[]. */
   id: string;
-  commentrayLine: number;
+  sidetrackLine: number;
   /** 1-based inclusive inner lines between paired region markers (unchanged semantics). */
   sourceStart: number;
   sourceEnd: number;
-  /** 1-based half-open span; see block-scroll-pickers commentray. */
+  /** 1-based half-open span; see block-scroll-pickers sidetrack. */
   markerViewportHalfOpen1Based: { lo: number; hiExclusive: number };
 };
 
-/** Strict `[lo, hi)` contain; `null` in gaps. See commentray for geometry. */
+/** Strict `[lo, hi)` contain; `null` in gaps. See sidetrack for geometry. */
 export function blockStrictlyContainingSourceViewportLine(
   blocks: BlockScrollLink[],
   topSourceLine1Based: number,
@@ -26,7 +26,7 @@ export function blockStrictlyContainingSourceViewportLine(
   return null;
 }
 
-/** Prelude above every span; see commentray. */
+/** Prelude above every span; see sidetrack. */
 export function sourceTopLineStrictlyBeforeFirstIndexLine(
   blocks: BlockScrollLink[],
   topSourceLine1Based: number,
@@ -39,34 +39,31 @@ export function sourceTopLineStrictlyBeforeFirstIndexLine(
   return topSourceLine1Based < minLo;
 }
 
-/** True when probe sits strictly between two `commentray:block` lines (interstitial prose). */
-export function commentrayProbeInStrictInterMarkerGap(
+/** True when probe sits strictly between two `sidetrack:block` lines (interstitial prose). */
+export function sidetrackProbeInStrictInterMarkerGap(
   blocks: BlockScrollLink[],
-  topCommentrayLine0Based: number,
+  topSideTrackLine0Based: number,
 ): boolean {
   if (blocks.length === 0) return false;
-  const s = [...blocks].sort((a, b) => a.commentrayLine - b.commentrayLine);
+  const s = [...blocks].sort((a, b) => a.sidetrackLine - b.sidetrackLine);
   const head = s[0];
   if (head === undefined) return false;
-  if (topCommentrayLine0Based < head.commentrayLine) return false;
+  if (topSideTrackLine0Based < head.sidetrackLine) return false;
   for (let i = 0; i < s.length; i++) {
     const cur = s[i];
     if (!cur) continue;
     const next = s[i + 1];
     if (next === undefined) {
-      return topCommentrayLine0Based > cur.commentrayLine;
+      return topSideTrackLine0Based > cur.sidetrackLine;
     }
-    if (
-      cur.commentrayLine < topCommentrayLine0Based &&
-      topCommentrayLine0Based < next.commentrayLine
-    ) {
+    if (cur.sidetrackLine < topSideTrackLine0Based && topSideTrackLine0Based < next.sidetrackLine) {
       return true;
     }
   }
   return false;
 }
 
-/** Naive source viewport pick (inside span / gap / prelude); see commentray. */
+/** Naive source viewport pick (inside span / gap / prelude); see sidetrack. */
 export function pickBlockScrollLinkForSourceViewportTop(
   blocks: BlockScrollLink[],
   topSourceLine1Based: number,
@@ -97,7 +94,7 @@ export function pickBlockScrollLinkForSourceViewportTop(
   return best;
 }
 
-/** Mutable lock for {@link pickBlockScrollLinkForSourceViewportWithHysteresis} / commentray twin. */
+/** Mutable lock for {@link pickBlockScrollLinkForSourceViewportWithHysteresis} / sidetrack twin. */
 export type BlockScrollStickyState = {
   lockedId: string | null;
 };
@@ -105,15 +102,15 @@ export type BlockScrollStickyState = {
 /** Default: require this many **source** lines into the naive winner before leaving the locked block. */
 export const DEFAULT_SOURCE_VIEWPORT_HYSTERESIS_LINES = 2;
 
-/** Default: require this many **commentray markdown** lines into the naive winner before leaving the lock. */
-export const DEFAULT_COMMENTRAY_VIEWPORT_HYSTERESIS_LINES = 4;
+/** Default: require this many **side-track markdown** lines into the naive winner before leaving the lock. */
+export const DEFAULT_SIDETRACK_VIEWPORT_HYSTERESIS_LINES = 4;
 
 type StickyHysteresisLockResolution =
   | { outcome: "clear" }
   | { outcome: "return"; link: BlockScrollLink }
   | { outcome: "hysteresis"; naive: BlockScrollLink; locked: BlockScrollLink };
 
-/** Hysteresis lock resolution; diagram in commentray. */
+/** Hysteresis lock resolution; diagram in sidetrack. */
 function resolveStickyHysteresisLock(
   naive: BlockScrollLink | null,
   blocks: BlockScrollLink[],
@@ -138,7 +135,7 @@ function resolveStickyHysteresisLock(
   return { outcome: "hysteresis", naive, locked };
 }
 
-/** Source→commentray hysteresis; see commentray. */
+/** Source→sidetrack hysteresis; see sidetrack. */
 export function pickBlockScrollLinkForSourceViewportWithHysteresis(
   blocks: BlockScrollLink[],
   topSourceLine1Based: number,
@@ -175,27 +172,27 @@ export function pickBlockScrollLinkForSourceViewportWithHysteresis(
   return locked;
 }
 
-/** Maps source viewport top → commentray line (naive pick); see commentray. */
-export function pickCommentrayLineForSourceScroll(
+/** Maps source viewport top → sidetrack line (naive pick); see sidetrack. */
+export function pickSideTrackLineForSourceScroll(
   blocks: BlockScrollLink[],
   topSourceLine1Based: number,
 ): number | null {
   const b = pickBlockScrollLinkForSourceViewportTop(blocks, topSourceLine1Based);
-  return b ? b.commentrayLine : null;
+  return b ? b.sidetrackLine : null;
 }
 
 /**
  * Source viewport → companion markdown line for **dual-pane** hosts (VS Code, rendered preview):
  * when the source probe sits **strictly inside** a block’s indexed viewport span, map linearly from
- * `sourceStart`…`sourceEnd` onto markdown lines **after** that block’s `<!-- commentray:block` line
+ * `sourceStart`…`sourceEnd` onto markdown lines **after** that block’s `<!-- sidetrack:block` line
  * up to (but not including) the next block marker (or end of file). Otherwise (prelude, gaps, after
  * the last span) call `gapFallback()` — typically a proportional mirror, matching
  * `docs/spec/dual-pane-scroll-sync.md` source-gap behaviour.
  */
-export function pickCommentrayLineForSourceDualPane(
+export function pickSideTrackLineForSourceDualPane(
   blocks: BlockScrollLink[],
   topSourceLine1Based: number,
-  commentrayMdLineCount: number,
+  sidetrackMdLineCount: number,
   gapFallback: () => number,
 ): number {
   if (blocks.length === 0) {
@@ -205,28 +202,28 @@ export function pickCommentrayLineForSourceDualPane(
   if (inside === null) {
     return gapFallback();
   }
-  return commentrayBodyLineWithinBlockFromSourceTop(
+  return sidetrackBodyLineWithinBlockFromSourceTop(
     blocks,
     inside,
     topSourceLine1Based,
-    commentrayMdLineCount,
+    sidetrackMdLineCount,
   );
 }
 
-function commentrayBodyLineWithinBlockFromSourceTop(
+function sidetrackBodyLineWithinBlockFromSourceTop(
   blocks: BlockScrollLink[],
   block: BlockScrollLink,
   topSourceLine1Based: number,
-  commentrayMdLineCount: number,
+  sidetrackMdLineCount: number,
 ): number {
-  const sorted = [...blocks].sort((a, b) => a.commentrayLine - b.commentrayLine);
+  const sorted = [...blocks].sort((a, b) => a.sidetrackLine - b.sidetrackLine);
   const idx = sorted.findIndex((b) => b.id === block.id);
   const next = idx >= 0 ? sorted[idx + 1] : undefined;
-  const mdCeilExclusive = next !== undefined ? next.commentrayLine : commentrayMdLineCount;
-  const mdBodyFirst = block.commentrayLine + 1;
+  const mdCeilExclusive = next !== undefined ? next.sidetrackLine : sidetrackMdLineCount;
+  const mdBodyFirst = block.sidetrackLine + 1;
   const mdBodyLastInclusive = mdCeilExclusive - 1;
   if (mdBodyLastInclusive < mdBodyFirst) {
-    return block.commentrayLine;
+    return block.sidetrackLine;
   }
   const srcLo = block.sourceStart;
   const srcHi = block.sourceEnd;
@@ -237,21 +234,21 @@ function commentrayBodyLineWithinBlockFromSourceTop(
   return Math.min(mdBodyLastInclusive, Math.max(mdBodyFirst, mdLine));
 }
 
-/** Commentray→source hysteresis twin; see commentray. */
-export function pickBlockScrollLinkForCommentrayViewportWithHysteresis(
+/** SideTrack→source hysteresis twin; see sidetrack. */
+export function pickBlockScrollLinkForSideTrackViewportWithHysteresis(
   blocks: BlockScrollLink[],
-  topCommentrayLine0Based: number,
+  topSideTrackLine0Based: number,
   state: BlockScrollStickyState,
-  hysteresisMdLines: number = DEFAULT_COMMENTRAY_VIEWPORT_HYSTERESIS_LINES,
+  hysteresisMdLines: number = DEFAULT_SIDETRACK_VIEWPORT_HYSTERESIS_LINES,
 ): BlockScrollLink | null {
   const HYST = Math.max(1, Math.floor(hysteresisMdLines));
-  const naive = pickBlockScrollLinkForCommentrayScroll(blocks, topCommentrayLine0Based);
+  const naive = pickBlockScrollLinkForSideTrackScroll(blocks, topSideTrackLine0Based);
   const res = resolveStickyHysteresisLock(naive, blocks, state);
   if (res.outcome === "clear") return null;
   if (res.outcome === "return") return res.link;
   const { naive: n, locked } = res;
-  const lL = locked.commentrayLine;
-  const lC = n.commentrayLine;
+  const lL = locked.sidetrackLine;
+  const lC = n.sidetrackLine;
   const separatedBelow = lC > lL;
   const separatedAbove = lC < lL;
   if (!separatedBelow && !separatedAbove) {
@@ -259,13 +256,13 @@ export function pickBlockScrollLinkForCommentrayViewportWithHysteresis(
     return n;
   }
   if (separatedBelow) {
-    if (topCommentrayLine0Based >= lC + HYST) {
+    if (topSideTrackLine0Based >= lC + HYST) {
       state.lockedId = n.id;
       return n;
     }
     return locked;
   }
-  if (topCommentrayLine0Based <= lL - HYST) {
+  if (topSideTrackLine0Based <= lL - HYST) {
     state.lockedId = n.id;
     return n;
   }
@@ -273,26 +270,26 @@ export function pickBlockScrollLinkForCommentrayViewportWithHysteresis(
 }
 
 /** Naive pick: last block whose marker line ≤ viewport top (0-based MD lines). */
-export function pickBlockScrollLinkForCommentrayScroll(
+export function pickBlockScrollLinkForSideTrackScroll(
   blocks: BlockScrollLink[],
-  topCommentrayLine0Based: number,
+  topSideTrackLine0Based: number,
 ): BlockScrollLink | null {
   if (blocks.length === 0) return null;
-  const sorted = [...blocks].sort((a, b) => a.commentrayLine - b.commentrayLine);
+  const sorted = [...blocks].sort((a, b) => a.sidetrackLine - b.sidetrackLine);
   const head = sorted[0];
   if (head === undefined) return null;
   let best = head;
   for (const b of sorted) {
-    if (b.commentrayLine <= topCommentrayLine0Based) best = b;
+    if (b.sidetrackLine <= topSideTrackLine0Based) best = b;
   }
   return best;
 }
 
-/** Commentray viewport top → 0-based source line (`lo - 1` of winning block). */
-export function pickSourceLine0ForCommentrayScroll(
+/** SideTrack viewport top → 0-based source line (`lo - 1` of winning block). */
+export function pickSourceLine0ForSideTrackScroll(
   blocks: BlockScrollLink[],
-  topCommentrayLine0Based: number,
+  topSideTrackLine0Based: number,
 ): number | null {
-  const link = pickBlockScrollLinkForCommentrayScroll(blocks, topCommentrayLine0Based);
+  const link = pickBlockScrollLinkForSideTrackScroll(blocks, topSideTrackLine0Based);
   return link ? link.markerViewportHalfOpen1Based.lo - 1 : null;
 }

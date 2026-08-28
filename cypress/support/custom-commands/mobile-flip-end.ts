@@ -3,7 +3,7 @@ import { shellA11y } from "../shell-a11y";
 /** Matches `code-browser.ts` / client narrow single-pane breakpoint. */
 const MOBILE_VIEWPORT_WIDTH = 390;
 const MOBILE_VIEWPORT_HEIGHT = 844;
-const WIDE_MODE_INTRO_STORAGE_KEY = "commentray.codeCommentrayStatic.wideModeIntro.v1";
+const WIDE_MODE_INTRO_STORAGE_KEY = "sidetrack.codeSideTrackStatic.wideModeIntro.v1";
 const MOBILE_TAIL_MARKER = "E2E_MOBILE_FLIP_TAIL_LBL";
 
 /** Visit `/` at the narrow mobile breakpoint with wide-mode intro dismissed; shell must be dual + mobile flip chrome. */
@@ -55,7 +55,7 @@ Cypress.Commands.add("MobilePaneShouldShowTailFlipMarkerText", () => {
   cy.get(shellA11y.shell).should("have.attr", "data-dual-mobile-pane", "doc");
   cy.get(shellA11y.shell).then(($shell) => {
     if ($shell.attr("data-layout") === "stretch") {
-      cy.contains(shellA11y.panes.commentray, MOBILE_TAIL_MARKER).should("be.visible");
+      cy.contains(shellA11y.panes.sidetrack, MOBILE_TAIL_MARKER).should("be.visible");
       return;
     }
     cy.contains(shellA11y.docPaneBody, MOBILE_TAIL_MARKER).should("be.visible");

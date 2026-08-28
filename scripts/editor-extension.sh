@@ -16,7 +16,7 @@ set -euo pipefail
 # Convenience (opens this repo without `--`):
 #   npm run extension:dogfood:repo
 #
-# Editor CLI: $COMMENTRAY_EDITOR, else `cursor`, else `code`.
+# Editor CLI: $SIDETRACK_EDITOR, else `cursor`, else `code`.
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
@@ -34,7 +34,7 @@ warn_if_folder_collides_with_main() {
 }
 
 # Open folder in a fresh window when the CLI supports it; otherwise open normally.
-commentray_editor_open_folder_new_window() {
+sidetrack_editor_open_folder_new_window() {
   local editor_cli="$1" target="$2"
   shift 2
   if "$editor_cli" -n "$target" "$@" 2>/dev/null; then
@@ -57,13 +57,13 @@ cmd_dogfood() {
 
   warn_if_folder_collides_with_main "$target"
 
-  echo "Dogfood: building, packaging, and installing Commentray from this repo (same as install-extension.sh)..." >&2
+  echo "Dogfood: building, packaging, and installing SideTrack from this repo (same as install-extension.sh)..." >&2
   bash "$REPO_ROOT/scripts/install-extension.sh"
 
   local editor_cli
-  editor_cli="$(commentray_pick_editor_cli)"
+  editor_cli="$(sidetrack_pick_editor_cli)"
   echo "Opening new editor window on: ${target}" >&2
-  commentray_editor_open_folder_new_window "$editor_cli" "$target" "$@"
+  sidetrack_editor_open_folder_new_window "$editor_cli" "$target" "$@"
   echo "Reload the window if this workspace was already open." >&2
 }
 

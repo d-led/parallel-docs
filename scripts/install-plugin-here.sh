@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Build, package, and install the Commentray VS Code extension into the
+# Build, package, and install the SideTrack VS Code extension into the
 # IDE that is currently running (the one whose integrated terminal we're in).
 #
 # Detects the running IDE through the environment it sets. Unlike
@@ -11,7 +11,7 @@ set -euo pipefail
 # Detection order for the running IDE:
 #   1. $VSCODE_IPC_HOOK_CLI  — set by VS Code / Cursor integrated terminal
 #   2. $ANTIGRAVITY_EDITOR_APP_ROOT — set by Antigravity
-#   3. $COMMENTRAY_EDITOR     — user override (path or command name)
+#   3. $SIDETRACK_EDITOR     — user override (path or command name)
 #   4. scripts/lib/pick-editor-cli.sh fallback
 #
 # Usage:
@@ -19,18 +19,18 @@ set -euo pipefail
 #   bash scripts/install-plugin-here.sh --package-only   # just produce the .vsix
 #   bash scripts/install-plugin-here.sh --uninstall      # remove from running IDE
 #
-# Honors $COMMENTRAY_EDITOR (path or command) to override.
+# Honors $SIDETRACK_EDITOR (path or command) to override.
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
 # shellcheck source=lib/pick-editor-cli.sh
 source "$REPO_ROOT/scripts/lib/pick-editor-cli.sh"
-# shellcheck source=lib/commentray-vscode-ext.sh
-source "$REPO_ROOT/scripts/lib/commentray-vscode-ext.sh"
+# shellcheck source=lib/sidetrack-vscode-ext.sh
+source "$REPO_ROOT/scripts/lib/sidetrack-vscode-ext.sh"
 
 EXT_DIR="$REPO_ROOT/packages/vscode"
-EXT_ID="$COMMENTRAY_VSCODE_EXTENSION_ID"
+EXT_ID="$SIDETRACK_VSCODE_EXTENSION_ID"
 
 # ---- detect running IDE ------------------------------------------------
 
@@ -84,8 +84,8 @@ detect_running_editor_cli() {
     return 0
   fi
 
-  # Fall back to the library detection (respects $COMMENTRAY_EDITOR).
-  commentray_pick_editor_cli
+  # Fall back to the library detection (respects $SIDETRACK_EDITOR).
+  sidetrack_pick_editor_cli
 }
 
 # ---- main ---------------------------------------------------------------
@@ -112,21 +112,21 @@ echo "Rendering Marketplace icon from canonical SVG..." >&2
 bash "$REPO_ROOT/scripts/build-vscode-icon.sh"
 
 echo "Cleaning extension dependency workspaces (fresh dist + TS incremental state)..." >&2
-npm run clean -w @commentray/core -w @commentray/render -w commentray-vscode 2>/dev/null || true
+npm run clean -w @sidetrack/core -w @sidetrack/render -w sidetrack-vscode 2>/dev/null || true
 rm -f \
   "$REPO_ROOT/packages/core"/tsconfig*.tsbuildinfo \
   "$REPO_ROOT/packages/render"/tsconfig*.tsbuildinfo \
   "$REPO_ROOT/packages/vscode"/tsconfig*.tsbuildinfo
 
 echo "Building workspace packages the extension depends on, then bundling..." >&2
-npm run build -w @commentray/core -w @commentray/render -w @commentray/mcp-server -w commentray-vscode
+npm run build -w @sidetrack/core -w @sidetrack/render -w @sidetrack/mcp-server -w sidetrack-vscode
 
 echo "Packaging extension..." >&2
 pushd "$EXT_DIR" >/dev/null
-npx vsce package --no-dependencies --out dist/commentray.vsix
+npx vsce package --no-dependencies --out dist/sidetrack.vsix
 popd >/dev/null
 
-vsix="$EXT_DIR/dist/commentray.vsix"
+vsix="$EXT_DIR/dist/sidetrack.vsix"
 
 if [[ "$mode" == "package" ]]; then
   echo "VSIX packaged: $vsix" >&2
@@ -134,12 +134,12 @@ if [[ "$mode" == "package" ]]; then
 fi
 
 # Uninstall any previously installed copy first (avoids Marketplace vs local conflicts).
-commentray_uninstall_packaged_commentray_if_present "$editor_cli"
+sidetrack_uninstall_packaged_sidetrack_if_present "$editor_cli"
 
 echo "Installing $vsix into $editor_cli..." >&2
 "$editor_cli" --install-extension "$vsix" --force
 
-echo "Done. Commentray $(node -e "process.stdout.write(require('$EXT_DIR/package.json').version)") installed into $editor_cli." >&2
+echo "Done. SideTrack $(node -e "process.stdout.write(require('$EXT_DIR/package.json').version)") installed into $editor_cli." >&2
 
 # Install MCP server config for this repo so AI assistants can use it.
 # Points directly at the locally built mcp-server.js — no CLI needed on PATH.
@@ -154,7 +154,7 @@ write_mcp_config() {
   cat > "$file" <<JSONEOF
 {
   "servers": {
-    "commentray": {
+    "sidetrack": {
       "type": "stdio",
       "command": "node",
       "cwd": "\${workspaceFolder}",
@@ -172,4 +172,4 @@ write_mcp_config "$REPO_ROOT/.antigravity/mcp.json"
 write_mcp_config "$REPO_ROOT/.opencode/mcp.json"
 
 echo "" >&2
-echo "MCP server ready. Open the MCP panel (Cmd+Shift+P → 'MCP: List Servers') and restart 'commentray' to pick up the new config." >&2
+echo "MCP server ready. Open the MCP panel (Cmd+Shift+P → 'MCP: List Servers') and restart 'sidetrack' to pick up the new config." >&2

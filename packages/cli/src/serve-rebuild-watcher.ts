@@ -1,6 +1,6 @@
 import path from "node:path";
 
-import { loadCommentrayConfig, normalizeRepoRelativePath } from "@commentray/core";
+import { loadSideTrackConfig, normalizeRepoRelativePath } from "@sidetrack/core";
 import chokidar from "chokidar";
 
 import { createServeRepoWatchIgnored } from "./serve-repo-watch-ignore.js";
@@ -28,7 +28,7 @@ export async function startServeRebuildWatcher(
   rebuild: (notifyBrowser: boolean) => Promise<void>,
 ): Promise<ServeRebuildWatcherHandle> {
   const repoRoot = path.resolve(repoRootAbs);
-  const cfg = await loadCommentrayConfig(repoRoot);
+  const cfg = await loadSideTrackConfig(repoRoot);
   const storageDirRepoRelative = normalizeRepoRelativePath(cfg.storageDir.replaceAll("\\", "/"));
   const ignored = createServeRepoWatchIgnored(repoRoot, { storageDirRepoRelative });
 
@@ -53,9 +53,7 @@ export async function startServeRebuildWatcher(
     try {
       await rebuild(true);
     } catch (e: unknown) {
-      process.stderr.write(
-        `[commentray serve] rebuild failed: ${formatWatcherRebuildFailure(e)}\n`,
-      );
+      process.stderr.write(`[sidetrack serve] rebuild failed: ${formatWatcherRebuildFailure(e)}\n`);
     } finally {
       rebuildInFlight = false;
       if (pendingWhileRebuild) {

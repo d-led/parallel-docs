@@ -6,21 +6,21 @@
 import { mkdir, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-import { CURRENT_SCHEMA_VERSION } from "@commentray/core";
-import { renderCodeBrowserHtml } from "@commentray/render";
+import { CURRENT_SCHEMA_VERSION } from "@sidetrack/core";
+import { renderCodeBrowserHtml } from "@sidetrack/render";
 
 /**
  * @param {string} repoRoot
  */
 export async function writeE2eDualScrollFixture(repoRoot) {
   const outDir = path.join(repoRoot, "_site");
-  const crPath = ".commentray/source/e2e/dual-scroll.ts.md";
+  const crPath = ".sidetrack/source/e2e/dual-scroll.ts.md";
   const index = {
     schemaVersion: CURRENT_SCHEMA_VERSION,
-    byCommentrayPath: {
+    bySideTrackPath: {
       [crPath]: {
         sourcePath: "e2e/dual-scroll.ts",
-        commentrayPath: crPath,
+        sidetrackPath: crPath,
         blocks: [
           { id: "b1", anchor: "lines:1-12" },
           { id: "b2", anchor: "lines:13-30" },
@@ -34,13 +34,13 @@ export async function writeE2eDualScrollFixture(repoRoot) {
   ).join("\n");
   const secondBlockBody = Array.from(
     { length: 45 },
-    (_, i) => `Second-block commentary line ${String(i + 1)}.`,
+    (_, i) => `Second-block sidetrack line ${String(i + 1)}.`,
   ).join("\n\n");
   const md =
-    "<!-- commentray:block id=b1 -->\n\n" +
+    "<!-- sidetrack:block id=b1 -->\n\n" +
     "## First range\n\n" +
-    "Commentary aligned to source lines 1–12.\n\n" +
-    "<!-- commentray:block id=b2 -->\n\n" +
+    "SideTrack aligned to source lines 1–12.\n\n" +
+    "<!-- sidetrack:block id=b2 -->\n\n" +
     "## Second range\n\n" +
     secondBlockBody +
     "\n";
@@ -50,12 +50,12 @@ export async function writeE2eDualScrollFixture(repoRoot) {
     filePath: "e2e/dual-scroll.ts",
     code,
     language: "ts",
-    commentrayMarkdown: md,
+    sidetrackMarkdown: md,
     codeBrowserLayout: "dual",
     blockStretchRows: {
       index,
       sourceRelative: "e2e/dual-scroll.ts",
-      commentrayPathRel: crPath,
+      sidetrackPathRel: crPath,
     },
   });
 

@@ -1,10 +1,10 @@
 {
-  "name": "@commentray/mcp-server",
-  "version": "0.4.2",
+  "name": "@sidetrack/mcp-server",
+  "version": "1.0.0",
   "publishConfig": {
     "access": "public"
   },
-  "description": "MCP (Model Context Protocol) server for Commentray — exposes CLI commands as AI coding assistant tools",
+  "description": "MCP (Model Context Protocol) server for SideTrack — exposes CLI commands as AI coding assistant tools",
   "license": "MPL-2.0",
   "type": "module",
   "sideEffects": false,
@@ -25,9 +25,9 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@commentray/code-commentray-static": "0.4.2",
-    "@commentray/core": "0.4.2",
-    "@commentray/render": "0.4.2",
+    "@sidetrack/code-sidetrack-static": "1.0.0",
+    "@sidetrack/core": "1.0.0",
+    "@sidetrack/render": "1.0.0",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "serve-handler": "^6.1.7",
     "zod": "^4.4.3"

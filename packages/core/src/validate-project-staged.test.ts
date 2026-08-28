@@ -9,23 +9,23 @@ import { validateProject } from "./validate-project.js";
 describe("validateProject — staged scope", () => {
   it("narrows marker checks to index entries touched by staged paths", async () => {
     const dir = await mkdtemp(path.join(tmpdir(), "cr-val-staged-"));
-    await mkdir(path.join(dir, ".commentray", "metadata"), { recursive: true });
-    await mkdir(path.join(dir, ".commentray", "source", "src"), { recursive: true });
+    await mkdir(path.join(dir, ".sidetrack", "metadata"), { recursive: true });
+    await mkdir(path.join(dir, ".sidetrack", "source", "src"), { recursive: true });
     await mkdir(path.join(dir, "src"), { recursive: true });
     await writeFile(
-      path.join(dir, ".commentray", "metadata", "index.json"),
+      path.join(dir, ".sidetrack", "metadata", "index.json"),
       JSON.stringify(
         {
           schemaVersion: CURRENT_SCHEMA_VERSION,
-          byCommentrayPath: {
-            ".commentray/source/src/a.ts.md": {
+          bySideTrackPath: {
+            ".sidetrack/source/src/a.ts.md": {
               sourcePath: "src/a.ts",
-              commentrayPath: ".commentray/source/src/a.ts.md",
+              sidetrackPath: ".sidetrack/source/src/a.ts.md",
               blocks: [],
             },
-            ".commentray/source/src/b.ts.md": {
+            ".sidetrack/source/src/b.ts.md": {
               sourcePath: "src/b.ts",
-              commentrayPath: ".commentray/source/src/b.ts.md",
+              sidetrackPath: ".sidetrack/source/src/b.ts.md",
               blocks: [],
             },
           },
@@ -36,10 +36,10 @@ describe("validateProject — staged scope", () => {
       "utf8",
     );
     await writeFile(
-      path.join(dir, ".commentray.toml"),
+      path.join(dir, ".sidetrack.toml"),
       [
         "[storage]",
-        'dir = ".commentray"',
+        'dir = ".sidetrack"',
         "",
         "[static_site]",
         'title = "Fixture"',
@@ -50,16 +50,16 @@ describe("validateProject — staged scope", () => {
     );
     await writeFile(
       path.join(dir, "src", "a.ts"),
-      ["// commentray:start id=ok", "1", "// commentray:end id=ok", ""].join("\n"),
+      ["// sidetrack:start id=ok", "1", "// sidetrack:end id=ok", ""].join("\n"),
       "utf8",
     );
     await writeFile(
       path.join(dir, "src", "b.ts"),
-      ["// commentray:start id=bad", "broken", ""].join("\n"),
+      ["// sidetrack:start id=bad", "broken", ""].join("\n"),
       "utf8",
     );
-    await writeFile(path.join(dir, ".commentray", "source", "src", "a.ts.md"), "# A\n", "utf8");
-    await writeFile(path.join(dir, ".commentray", "source", "src", "b.ts.md"), "# B\n", "utf8");
+    await writeFile(path.join(dir, ".sidetrack", "source", "src", "a.ts.md"), "# A\n", "utf8");
+    await writeFile(path.join(dir, ".sidetrack", "source", "src", "b.ts.md"), "# B\n", "utf8");
 
     const full = await validateProject(dir);
     expect(full.issues.some((i) => i.message.includes("no matching end"))).toBe(true);

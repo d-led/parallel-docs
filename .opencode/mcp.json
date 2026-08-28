@@ -1,10 +1,10 @@
 {
   "servers": {
-    "commentray": {
+    "sidetrack": {
       "type": "stdio",
       "command": "node",
       "cwd": "${workspaceFolder}",
-      "args": ["/Users/dmitryledentsov/src/commentary/packages/vscode/dist/mcp-server.js"]
+      "args": ["/Users/dmitryledentsov/src/sidetrack/packages/vscode/dist/mcp-server.js"]
     }
   }
 }

@@ -1,9 +1,0 @@
-# Fixture Commentray config for the VS Code extension dogfood folder.
-# Keeping defaults explicit so the project-root resolver locks onto this
-# directory when the Extension Development Host opens it.
-
-[storage]
-# dir = ".commentray"
-
-[render]
-# mermaid = true

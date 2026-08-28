@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ALL_TOOLS, type McpToolDef } from "../mcp-tools.js";
-import { setupTempCommentrayProject } from "./test-helpers.js";
+import { setupTempSideTrackProject } from "./test-helpers.js";
 
 function tool(name: string): McpToolDef {
   const t = ALL_TOOLS.find((x) => x.name === name);
@@ -31,11 +31,11 @@ describe("MCP tool definitions", () => {
   });
 });
 
-describe("commentray_init", () => {
+describe("sidetrack_init", () => {
   it("initializes a fresh project", async () => {
-    const { repoRoot, cleanup } = await setupTempCommentrayProject();
+    const { repoRoot, cleanup } = await setupTempSideTrackProject();
     try {
-      const result = await tool("commentray_init").handler(repoRoot, {});
+      const result = await tool("sidetrack_init").handler(repoRoot, {});
       expect(result.isError).toBeFalsy();
       expect(result.content[0].text.length).toBeGreaterThan(0);
     } finally {
@@ -44,12 +44,12 @@ describe("commentray_init", () => {
   });
 });
 
-describe("commentray_validate", () => {
+describe("sidetrack_validate", () => {
   it("validates a fresh project with no issues", async () => {
-    const { repoRoot, cleanup } = await setupTempCommentrayProject();
+    const { repoRoot, cleanup } = await setupTempSideTrackProject();
     try {
-      await tool("commentray_init").handler(repoRoot, {});
-      const result = await tool("commentray_validate").handler(repoRoot, {});
+      await tool("sidetrack_init").handler(repoRoot, {});
+      const result = await tool("sidetrack_validate").handler(repoRoot, {});
       expect(result.isError).toBeFalsy();
       expect(result.content[0].text).toContain("OK");
     } finally {
@@ -58,14 +58,14 @@ describe("commentray_validate", () => {
   });
 });
 
-describe("commentray_paths", () => {
+describe("sidetrack_paths", () => {
   it("resolves a source file path to its companion .md path", async () => {
-    const { repoRoot, sourceRel, cleanup } = await setupTempCommentrayProject();
+    const { repoRoot, sourceRel, cleanup } = await setupTempSideTrackProject();
     try {
-      await tool("commentray_init").handler(repoRoot, {});
-      const result = await tool("commentray_paths").handler(repoRoot, { file: sourceRel });
+      await tool("sidetrack_init").handler(repoRoot, {});
+      const result = await tool("sidetrack_paths").handler(repoRoot, { file: sourceRel });
       expect(result.isError).toBeFalsy();
-      expect(result.content[0].text).toContain(".commentray/source/");
+      expect(result.content[0].text).toContain(".sidetrack/source/");
       expect(result.content[0].text).toContain(".md");
     } finally {
       await cleanup();
@@ -73,11 +73,11 @@ describe("commentray_paths", () => {
   });
 });
 
-describe("commentray_read_source", () => {
+describe("sidetrack_read_source", () => {
   it("reads a source file", async () => {
-    const { repoRoot, sourceRel, cleanup } = await setupTempCommentrayProject();
+    const { repoRoot, sourceRel, cleanup } = await setupTempSideTrackProject();
     try {
-      const result = await tool("commentray_read_source").handler(repoRoot, { file: sourceRel });
+      const result = await tool("sidetrack_read_source").handler(repoRoot, { file: sourceRel });
       expect(result.isError).toBeFalsy();
       expect(result.content[0].text).toContain("hello");
     } finally {
@@ -86,9 +86,9 @@ describe("commentray_read_source", () => {
   });
 
   it("errors for missing file", async () => {
-    const { repoRoot, cleanup } = await setupTempCommentrayProject();
+    const { repoRoot, cleanup } = await setupTempSideTrackProject();
     try {
-      const result = await tool("commentray_read_source").handler(repoRoot, {
+      const result = await tool("sidetrack_read_source").handler(repoRoot, {
         file: "nonexistent.ts",
       });
       expect(result.isError).toBe(true);
@@ -98,24 +98,24 @@ describe("commentray_read_source", () => {
   });
 });
 
-describe("commentray_list_pairs", () => {
+describe("sidetrack_list_pairs", () => {
   it("returns empty for uninitialized project", async () => {
-    const { repoRoot, cleanup } = await setupTempCommentrayProject();
+    const { repoRoot, cleanup } = await setupTempSideTrackProject();
     try {
-      const result = await tool("commentray_list_pairs").handler(repoRoot, {});
+      const result = await tool("sidetrack_list_pairs").handler(repoRoot, {});
       expect(result.isError).toBeFalsy();
-      expect(result.content[0].text).toContain("No commentray pairs found");
+      expect(result.content[0].text).toContain("No sidetrack pairs found");
     } finally {
       await cleanup();
     }
   });
 });
 
-describe("commentray_list_orphans", () => {
+describe("sidetrack_list_orphans", () => {
   it("returns empty for fresh project", async () => {
-    const { repoRoot, cleanup } = await setupTempCommentrayProject();
+    const { repoRoot, cleanup } = await setupTempSideTrackProject();
     try {
-      const result = await tool("commentray_list_orphans").handler(repoRoot, {});
+      const result = await tool("sidetrack_list_orphans").handler(repoRoot, {});
       expect(result.isError).toBeFalsy();
       expect(result.content[0].text).toContain("No orphan companions found");
     } finally {
@@ -124,12 +124,12 @@ describe("commentray_list_orphans", () => {
   });
 });
 
-describe("commentray_get_index", () => {
+describe("sidetrack_get_index", () => {
   it("returns empty index for fresh project", async () => {
-    const { repoRoot, cleanup } = await setupTempCommentrayProject();
+    const { repoRoot, cleanup } = await setupTempSideTrackProject();
     try {
-      await tool("commentray_init").handler(repoRoot, {});
-      const result = await tool("commentray_get_index").handler(repoRoot, {});
+      await tool("sidetrack_init").handler(repoRoot, {});
+      const result = await tool("sidetrack_get_index").handler(repoRoot, {});
       expect(result.isError).toBeFalsy();
       const parsed = JSON.parse(result.content[0].text);
       expect(parsed.pairCount).toBe(0);
@@ -139,12 +139,12 @@ describe("commentray_get_index", () => {
   });
 });
 
-describe("commentray_migrate", () => {
+describe("sidetrack_migrate", () => {
   it("reports no migration needed for fresh project", async () => {
-    const { repoRoot, cleanup } = await setupTempCommentrayProject();
+    const { repoRoot, cleanup } = await setupTempSideTrackProject();
     try {
-      await tool("commentray_init").handler(repoRoot, {});
-      const result = await tool("commentray_migrate").handler(repoRoot, {});
+      await tool("sidetrack_init").handler(repoRoot, {});
+      const result = await tool("sidetrack_migrate").handler(repoRoot, {});
       expect(result.isError).toBeFalsy();
       expect(result.content[0].text).toContain("no migration needed");
     } finally {
@@ -153,12 +153,12 @@ describe("commentray_migrate", () => {
   });
 });
 
-describe("commentray_angles_add", () => {
+describe("sidetrack_angles_add", () => {
   it("registers a new angle", async () => {
-    const { repoRoot, cleanup } = await setupTempCommentrayProject();
+    const { repoRoot, cleanup } = await setupTempSideTrackProject();
     try {
-      await tool("commentray_init").handler(repoRoot, {});
-      const result = await tool("commentray_angles_add").handler(repoRoot, {
+      await tool("sidetrack_init").handler(repoRoot, {});
+      const result = await tool("sidetrack_angles_add").handler(repoRoot, {
         angleId: "architecture",
         title: "Architecture",
       });
@@ -170,10 +170,10 @@ describe("commentray_angles_add", () => {
   });
 
   it("rejects invalid angle IDs", async () => {
-    const { repoRoot, cleanup } = await setupTempCommentrayProject();
+    const { repoRoot, cleanup } = await setupTempSideTrackProject();
     try {
       await expect(
-        tool("commentray_angles_add").handler(repoRoot, { angleId: "invalid%id" }),
+        tool("sidetrack_angles_add").handler(repoRoot, { angleId: "invalid%id" }),
       ).rejects.toThrow();
     } finally {
       await cleanup();
@@ -181,30 +181,30 @@ describe("commentray_angles_add", () => {
   });
 });
 
-describe("commentray_serve", () => {
+describe("sidetrack_serve", () => {
   it("has port schema with default 4173", () => {
-    const t = tool("commentray_serve");
+    const t = tool("sidetrack_serve");
     expect(t.schema).toHaveProperty("port");
   });
 
   it("errors when project is not initialized with static_site config", async () => {
-    const { repoRoot, cleanup } = await setupTempCommentrayProject();
+    const { repoRoot, cleanup } = await setupTempSideTrackProject();
     try {
-      // No [static_site] in .commentray.toml — buildGithubPagesStaticSite will throw
-      const result = await tool("commentray_serve").handler(repoRoot, { port: 14173 });
+      // No [static_site] in .sidetrack.toml — buildGithubPagesStaticSite will throw
+      const result = await tool("sidetrack_serve").handler(repoRoot, { port: 14173 });
       expect(result.isError).toBe(true);
     } finally {
       // Ensure server is stopped even on error
-      await tool("commentray_stop_serve").handler("", {});
+      await tool("sidetrack_stop_serve").handler("", {});
       await cleanup();
     }
   });
 });
 
-describe("commentray_stop_serve", () => {
+describe("sidetrack_stop_serve", () => {
   it("reports no server running when idle", async () => {
     // First make sure no server is running
-    const result = await tool("commentray_stop_serve").handler("", {});
+    const result = await tool("sidetrack_stop_serve").handler("", {});
     expect(result.isError).toBeFalsy();
     expect(result.content[0].text).toContain("No server running");
   });

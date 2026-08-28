@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 
 /**
- * Generate ThirdPartyNotices.txt for the Commentray VS Code extension.
+ * Generate ThirdPartyNotices.txt for the SideTrack VS Code extension.
  *
  * Walks the workspace dependency tree from packages/vscode/package.json,
  * collects the direct (non-workspace) dependencies of every bundled
- * @commentray/* package, groups them by license, and writes the notice file.
+ * @sidetrack/* package, groups them by license, and writes the notice file.
  *
  * Usage:
  *   node scripts/generate-third-party-notices.mjs
@@ -39,7 +39,7 @@ function resolvePkg(name) {
 // ── discover bundled workspace packages ───────────────────────────────────
 
 /**
- * Recursively collect all @commentray/* workspace packages that the vscode
+ * Recursively collect all @sidetrack/* workspace packages that the vscode
  * extension transitively depends on. Returns unique package directory names
  * (e.g. "core", "render", "mcp-server").
  */
@@ -47,7 +47,7 @@ function collectBundledWorkspaceDeps() {
   const vscodePkg = readJson(join(VSCODE_DIR, "package.json"));
   const seen = new Set();
   const queue = Object.keys(vscodePkg.dependencies ?? {}).filter((d) =>
-    d.startsWith("@commentray/"),
+    d.startsWith("@sidetrack/"),
   );
 
   while (queue.length > 0) {
@@ -59,14 +59,14 @@ function collectBundledWorkspaceDeps() {
     if (!pkg) continue;
 
     for (const dep of Object.keys(pkg.dependencies ?? {})) {
-      if (dep.startsWith("@commentray/") && !seen.has(dep)) {
+      if (dep.startsWith("@sidetrack/") && !seen.has(dep)) {
         queue.push(dep);
       }
     }
   }
 
-  // Map to short names: "@commentray/core" → "core"
-  return [...seen].map((n) => n.replace(/^@commentray\//, ""));
+  // Map to short names: "@sidetrack/core" → "core"
+  return [...seen].map((n) => n.replace(/^@sidetrack\//, ""));
 }
 
 // ── collect third-party deps ─────────────────────────────────────────────
@@ -82,10 +82,10 @@ function collectThirdPartyDeps(workspaceDirs) {
   for (const ws of workspaceDirs.sort()) {
     const pkgPath = join(REPO_ROOT, "packages", ws, "package.json");
     const pkg = readJson(pkgPath);
-    const wsName = `@commentray/${ws}`;
+    const wsName = `@sidetrack/${ws}`;
 
     for (const [name, _range] of Object.entries(pkg.dependencies ?? {})) {
-      if (name.startsWith("@commentray/")) continue;
+      if (name.startsWith("@sidetrack/")) continue;
 
       const resolved = resolvePkg(name);
       if (!resolved) continue;
@@ -203,14 +203,14 @@ const VENDORED_COMPONENTS = [
     version: "11.17.0",
     license: "MIT",
     copyright: "Copyright (c) 2014 - 2022 Knut Sveidqvist",
-    note: "Vendored as mermaid.min.js in @commentray/render (Mermaid diagram runtime).",
+    note: "Vendored as mermaid.min.js in @sidetrack/render (Mermaid diagram runtime).",
   },
   {
     name: "highlight.js",
     version: "11.11.1",
     license: "BSD-3-Clause",
     copyright: "Copyright (c) 2006, Ivan Sagalaev. All rights reserved.",
-    note: "Vendored theme CSS (github, github-dark) in @commentray/render.",
+    note: "Vendored theme CSS (github, github-dark) in @sidetrack/render.",
   },
 ];
 
@@ -244,9 +244,9 @@ function generate() {
   const lines = [];
   lines.push("THIRD-PARTY SOFTWARE NOTICES");
   lines.push("");
-  lines.push('This VS Code extension ("Commentray") distributes the following third-party');
+  lines.push('This VS Code extension ("SideTrack") distributes the following third-party');
   lines.push("open-source software components as direct dependencies of the bundled");
-  lines.push("@commentray/* workspace packages. Each component is governed by its");
+  lines.push("@sidetrack/* workspace packages. Each component is governed by its");
   lines.push("own license. Transitive dependencies of these components carry compatible");
   lines.push("licenses; refer to each package's documentation for details.");
   lines.push("");

@@ -1,70 +1,70 @@
 import {
   type BlockRange,
   type BlockScrollLink,
-  type CommentrayIndex,
+  type SideTrackIndex,
   addBlockToIndex,
   alignAndCleanRegions,
-  applyPathRenamesToCommentrayIndex,
+  applyPathRenamesToSideTrackIndex,
   assertValidAngleId,
   assertValidMarkerId,
   buildBlockScrollLinks,
-  commentrayActiveEditorUiFlags,
-  commentrayAnglesLayoutEnabled,
-  commentrayAnglesSentinelPath,
-  commentrayMarkdownPath,
-  commentrayMarkdownPathForAngle,
-  commentrayStorageSourcePrefix,
+  sidetrackActiveEditorUiFlags,
+  sidetrackAnglesLayoutEnabled,
+  sidetrackAnglesSentinelPath,
+  sidetrackMarkdownPath,
+  sidetrackMarkdownPathForAngle,
+  sidetrackStorageSourcePrefix,
   createBlockForRange,
   defaultMetadataIndexPath,
   defaultRegionMarkerNamingStrategy,
   emptyIndex,
   ensureAnglesSentinelFile,
-  extractCommentrayBlockIdsFromMarkdown,
-  findCommentrayMarkerPairs,
+  extractSideTrackBlockIdsFromMarkdown,
+  findSideTrackMarkerPairs,
   healSourceFile,
-  inferAngleIdFromCommentrayPath,
-  initializeCommentrayProject,
+  inferAngleIdFromSideTrackPath,
+  initializeSideTrackProject,
   insertBlockBySourceMarkerOrder,
-  isCommentrayProjectInitialized,
-  loadCommentrayConfig,
+  isSideTrackProjectInitialized,
+  loadSideTrackConfig,
   normalizeRepoRelativePath,
-  parseCommentrayRegionBoundary,
-  pickCommentrayLineForSourceDualPane,
-  pickSourceLine0ForCommentrayScroll,
-  pairFromCommentraySourceRel,
+  parseSideTrackRegionBoundary,
+  pickSideTrackLineForSourceDualPane,
+  pickSourceLine0ForSideTrackScroll,
+  pairFromSideTrackSourceRel,
   readIndex,
-  removeBlockFromCommentray,
+  removeBlockFromSideTrack,
   removeBlockFromIndex,
   removeSourceMarkersFromText,
-  resolveCommentrayMarkdownPath,
+  resolveSideTrackMarkdownPath,
   sourceLineRangeForMarkerId,
-  upsertAngleDefinitionInCommentrayToml,
+  upsertAngleDefinitionInSideTrackToml,
   validateProject,
-  wrapSourceLineRangeWithCommentrayMarkers,
+  wrapSourceLineRangeWithSideTrackMarkers,
   writeIndex,
   type SourceFileIndexEntry,
-} from "@commentray/core";
+} from "@sidetrack/core";
 import * as path from "node:path";
 import * as vscode from "vscode";
 
-import { CommentrayRenderedPreviewPanel } from "./commentray-rendered-preview.js";
+import { SideTrackRenderedPreviewPanel } from "./sidetrack-rendered-preview.js";
 
 type ScrollPair = {
   code: vscode.TextEditor;
-  commentray: vscode.TextEditor;
+  sidetrack: vscode.TextEditor;
   /** Block anchors sorted ascending by `sourceStart`; empty when no blocks exist yet. */
   blocks: BlockScrollLink[];
   repoRoot: string;
   sourceRelative: string;
-  /** Repo-relative path to the open commentray `.md` (flat or per-angle). */
-  commentrayPathRel: string;
+  /** Repo-relative path to the open sidetrack `.md` (flat or per-angle). */
+  sidetrackPathRel: string;
 };
 
 type PairedPaths = {
   repoRoot: string;
   sourceRelative: string;
-  commentrayUri: vscode.Uri;
-  commentrayPathRel: string;
+  sidetrackUri: vscode.Uri;
+  sidetrackPathRel: string;
   angleId: string | null;
 };
 
@@ -74,16 +74,16 @@ let lastBoundScrollPair: ScrollPair | undefined;
 let scrollSyncDisposable: vscode.Disposable | undefined;
 let ignoreScrollPairEvents = false;
 let blockRefreshTimer: ReturnType<typeof setTimeout> | undefined;
-let commentrayOutput: vscode.OutputChannel | undefined;
+let sidetrackOutput: vscode.OutputChannel | undefined;
 
-function logCommentray(line: string): void {
-  commentrayOutput?.appendLine(line);
+function logSideTrack(line: string): void {
+  sidetrackOutput?.appendLine(line);
 }
 
 function scrollPairEditorsReachable(pair: ScrollPair): boolean {
   return (
     vscode.window.visibleTextEditors.some((e) => e.document === pair.code.document) &&
-    vscode.window.visibleTextEditors.some((e) => e.document === pair.commentray.document)
+    vscode.window.visibleTextEditors.some((e) => e.document === pair.sidetrack.document)
   );
 }
 
@@ -98,15 +98,15 @@ function applyScrollSyncSettingFromConfig(): void {
 }
 
 const CTX_ACTIVE_EDITOR_UNDER_COMPANION_SOURCE_TREE =
-  "commentray.activeEditorUnderCompanionSourceTree";
+  "sidetrack.activeEditorUnderCompanionSourceTree";
 const CTX_ACTIVE_EDITOR_IS_RESOLVABLE_COMPANION_MD =
-  "commentray.activeEditorIsResolvableCompanionMarkdown";
-const CTX_WORKSPACE_INITIALIZED = "commentray.workspaceInitialized";
+  "sidetrack.activeEditorIsResolvableCompanionMarkdown";
+const CTX_WORKSPACE_INITIALIZED = "sidetrack.workspaceInitialized";
 
 /**
  * Drives `when` / `enablement` clauses so editor-only commands match companion vs primary files.
  */
-async function applyCommentrayActiveEditorUiContexts(uri: vscode.Uri | undefined): Promise<void> {
+async function applySideTrackActiveEditorUiContexts(uri: vscode.Uri | undefined): Promise<void> {
   const folderFromUri = uri ? vscode.workspace.getWorkspaceFolder(uri) : undefined;
   const fallbackFolder = vscode.workspace.workspaceFolders?.[0];
   const contextFolder = folderFromUri ?? fallbackFolder;
@@ -114,7 +114,7 @@ async function applyCommentrayActiveEditorUiContexts(uri: vscode.Uri | undefined
   let workspaceInitialized = false;
   if (contextFolder) {
     try {
-      workspaceInitialized = await isCommentrayProjectInitialized(contextFolder.uri.fsPath);
+      workspaceInitialized = await isSideTrackProjectInitialized(contextFolder.uri.fsPath);
     } catch {
       workspaceInitialized = false;
     }
@@ -158,12 +158,12 @@ async function applyCommentrayActiveEditorUiContexts(uri: vscode.Uri | undefined
       return;
     }
     const normalized = normalizeRepoRelativePath(relative.replaceAll("\\", "/"));
-    const cfg = await loadCommentrayConfig(folder.uri.fsPath);
-    const flags = commentrayActiveEditorUiFlags({
+    const cfg = await loadSideTrackConfig(folder.uri.fsPath);
+    const flags = sidetrackActiveEditorUiFlags({
       normalizedRepoRelativePath: normalized,
       storageDir: cfg.storageDir,
       repoRoot: folder.uri.fsPath,
-      staticSiteCommentrayMarkdownFile: cfg.staticSite.commentrayMarkdownFile,
+      staticSiteSideTrackMarkdownFile: cfg.staticSite.sidetrackMarkdownFile,
     });
     await setContexts(flags.underCompanionSourceTree, flags.isResolvableCompanionMarkdown);
   } catch {
@@ -194,18 +194,18 @@ function withIgnoredScrollPairEvents(fn: () => void): void {
 
 async function refreshActivePairBlocks(): Promise<void> {
   if (!activePair) return;
-  let index: CommentrayIndex | null = null;
+  let index: SideTrackIndex | null = null;
   try {
     index = await readIndex(activePair.repoRoot);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    logCommentray(`[commentray] readIndex (refresh blocks): ${msg}`);
+    logSideTrack(`[sidetrack] readIndex (refresh blocks): ${msg}`);
   }
   activePair.blocks = buildBlockScrollLinks(
     index,
     activePair.sourceRelative,
-    activePair.commentrayPathRel,
-    activePair.commentray.document.getText(),
+    activePair.sidetrackPathRel,
+    activePair.sidetrack.document.getText(),
     activePair.code.document.getText(),
   );
 }
@@ -219,43 +219,43 @@ function scheduleRefreshActivePairBlocks(): void {
   }, 120);
 }
 
-function syncCommentrayForVisibleSourceRange(pair: ScrollPair, range: vscode.Range): void {
+function syncSideTrackForVisibleSourceRange(pair: ScrollPair, range: vscode.Range): void {
   const topSourceLine = range.start.line + 1;
-  const targetLine = pickCommentrayLineForSourceDualPane(
+  const targetLine = pickSideTrackLineForSourceDualPane(
     pair.blocks,
     topSourceLine,
-    pair.commentray.document.lineCount,
-    () => ratioCommentrayLineFromSourceScroll(pair, range),
+    pair.sidetrack.document.lineCount,
+    () => ratioSideTrackLineFromSourceScroll(pair, range),
   );
   const reveal = new vscode.Range(targetLine, 0, targetLine, 0);
   withIgnoredScrollPairEvents(() =>
-    pair.commentray.revealRange(reveal, vscode.TextEditorRevealType.InCenterIfOutsideViewport),
+    pair.sidetrack.revealRange(reveal, vscode.TextEditorRevealType.InCenterIfOutsideViewport),
   );
 }
 
-function syncCodeForVisibleCommentrayRange(pair: ScrollPair, range: vscode.Range): void {
-  const topCommentrayLine = range.start.line;
-  const sourceLine0 = pickSourceLine0ForCommentrayScroll(pair.blocks, topCommentrayLine);
-  const targetLine = sourceLine0 ?? ratioSourceLine0FromCommentrayScroll(pair, range);
+function syncCodeForVisibleSideTrackRange(pair: ScrollPair, range: vscode.Range): void {
+  const topSideTrackLine = range.start.line;
+  const sourceLine0 = pickSourceLine0ForSideTrackScroll(pair.blocks, topSideTrackLine);
+  const targetLine = sourceLine0 ?? ratioSourceLine0FromSideTrackScroll(pair, range);
   const reveal = new vscode.Range(targetLine, 0, targetLine, 0);
   withIgnoredScrollPairEvents(() =>
     pair.code.revealRange(reveal, vscode.TextEditorRevealType.InCenterIfOutsideViewport),
   );
 }
 
-function ratioCommentrayLineFromSourceScroll(pair: ScrollPair, range: vscode.Range): number {
+function ratioSideTrackLineFromSourceScroll(pair: ScrollPair, range: vscode.Range): number {
   const codeLines = Math.max(1, pair.code.document.lineCount);
-  const commentrayLines = Math.max(1, pair.commentray.document.lineCount);
+  const sidetrackLines = Math.max(1, pair.sidetrack.document.lineCount);
   const center = (range.start.line + range.end.line) / 2;
   const fraction = center / Math.max(1, codeLines - 1);
-  return Math.min(commentrayLines - 1, Math.max(0, Math.round(fraction * (commentrayLines - 1))));
+  return Math.min(sidetrackLines - 1, Math.max(0, Math.round(fraction * (sidetrackLines - 1))));
 }
 
-function ratioSourceLine0FromCommentrayScroll(pair: ScrollPair, range: vscode.Range): number {
-  const commentrayLines = Math.max(1, pair.commentray.document.lineCount);
+function ratioSourceLine0FromSideTrackScroll(pair: ScrollPair, range: vscode.Range): number {
+  const sidetrackLines = Math.max(1, pair.sidetrack.document.lineCount);
   const codeLines = Math.max(1, pair.code.document.lineCount);
   const center = (range.start.line + range.end.line) / 2;
-  const fraction = center / Math.max(1, commentrayLines - 1);
+  const fraction = center / Math.max(1, sidetrackLines - 1);
   return Math.min(codeLines - 1, Math.max(0, Math.round(fraction * (codeLines - 1))));
 }
 
@@ -273,15 +273,15 @@ function bindScrollSync(pair: ScrollPair): void {
     const range = event.visibleRanges.at(0);
     if (!range) return;
     if (event.textEditor === activePair.code) {
-      syncCommentrayForVisibleSourceRange(activePair, range);
-    } else if (event.textEditor === activePair.commentray) {
-      syncCodeForVisibleCommentrayRange(activePair, range);
+      syncSideTrackForVisibleSourceRange(activePair, range);
+    } else if (event.textEditor === activePair.sidetrack) {
+      syncCodeForVisibleSideTrackRange(activePair, range);
     }
   };
 
   const onDocChange = (e: vscode.TextDocumentChangeEvent) => {
     if (!activePair) return;
-    if (e.document !== activePair.code.document && e.document !== activePair.commentray.document) {
+    if (e.document !== activePair.code.document && e.document !== activePair.sidetrack.document) {
       return;
     }
     scheduleRefreshActivePairBlocks();
@@ -300,16 +300,16 @@ function bindScrollSync(pair: ScrollPair): void {
   );
 
   const initial = pair.code.visibleRanges.at(0);
-  if (initial) syncCommentrayForVisibleSourceRange(pair, initial);
+  if (initial) syncSideTrackForVisibleSourceRange(pair, initial);
 }
 
-async function ensureCommentrayFile(uri: vscode.Uri): Promise<vscode.Uri> {
+async function ensureSideTrackFile(uri: vscode.Uri): Promise<vscode.Uri> {
   try {
     await vscode.workspace.fs.stat(uri);
     return uri;
   } catch {
     const enc = new TextEncoder();
-    await vscode.workspace.fs.writeFile(uri, enc.encode("# Commentray\n\n"));
+    await vscode.workspace.fs.writeFile(uri, enc.encode("# SideTrack\n\n"));
     return uri;
   }
 }
@@ -331,23 +331,21 @@ async function resolvePairedPaths(
     return null;
   }
   const repoRoot = folder.uri.fsPath;
-  const cfg = await loadCommentrayConfig(repoRoot);
-  const sourcePrefix = commentrayStorageSourcePrefix(cfg.storageDir);
+  const cfg = await loadSideTrackConfig(repoRoot);
+  const sourcePrefix = sidetrackStorageSourcePrefix(cfg.storageDir);
   if (normalized.startsWith(sourcePrefix)) {
     await vscode.window.showWarningMessage(
-      "Run this command from the primary source file — not from a file under .commentray/source/…",
+      "Run this command from the primary source file — not from a file under .sidetrack/source/…",
     );
     return null;
   }
-  const resolution = resolveCommentrayMarkdownPath(repoRoot, normalized, cfg, angleId ?? undefined);
-  const commentrayUri = vscode.Uri.file(
-    path.join(repoRoot, ...resolution.commentrayPath.split("/")),
-  );
+  const resolution = resolveSideTrackMarkdownPath(repoRoot, normalized, cfg, angleId ?? undefined);
+  const sidetrackUri = vscode.Uri.file(path.join(repoRoot, ...resolution.sidetrackPath.split("/")));
   return {
     repoRoot,
     sourceRelative: normalized,
-    commentrayUri,
-    commentrayPathRel: resolution.commentrayPath,
+    sidetrackUri,
+    sidetrackPathRel: resolution.sidetrackPath,
     angleId: resolution.angleId,
   };
 }
@@ -365,7 +363,7 @@ function selectedRangeTouchesMarkerBoundary(sourceText: string, range: BlockRang
   const start0 = Math.max(0, range.startLine - 1);
   const end0 = Math.min(lines.length - 1, range.endLine - 1);
   for (let i = start0; i <= end0; i++) {
-    const hit = parseCommentrayRegionBoundary(lines[i] ?? "");
+    const hit = parseSideTrackRegionBoundary(lines[i] ?? "");
     if (hit) return hit.id;
   }
   return null;
@@ -376,7 +374,7 @@ function selectedRangeInsideMarkerRegion(sourceText: string, range: BlockRange):
   const start0 = Math.max(0, range.startLine - 1);
   const end0 = Math.min(lines.length - 1, range.endLine - 1);
 
-  for (const pair of findCommentrayMarkerPairs(sourceText)) {
+  for (const pair of findSideTrackMarkerPairs(sourceText)) {
     const innerStart = pair.startLine0 + 2;
     const innerEnd = pair.endLine0;
     if (innerEnd < innerStart) continue;
@@ -387,7 +385,7 @@ function selectedRangeInsideMarkerRegion(sourceText: string, range: BlockRange):
   // inside any open marker region, treat them as enclosed and refuse insertion.
   const openIds = new Set<string>();
   for (let i = 0; i < lines.length; i++) {
-    const hit = parseCommentrayRegionBoundary(lines[i] ?? "");
+    const hit = parseSideTrackRegionBoundary(lines[i] ?? "");
     if (hit?.kind === "start") {
       openIds.add(hit.id);
       continue;
@@ -443,23 +441,23 @@ function markerIdFromAnchor(anchor: string): string | null {
 
 function collectUsedMarkerIds(input: {
   sourceText: string;
-  existingCommentray: string;
-  index: CommentrayIndex | null;
-  commentrayPathRel: string;
+  existingSideTrack: string;
+  index: SideTrackIndex | null;
+  sidetrackPathRel: string;
 }): Set<string> {
   const used = new Set<string>();
-  for (const pair of findCommentrayMarkerPairs(input.sourceText)) {
+  for (const pair of findSideTrackMarkerPairs(input.sourceText)) {
     used.add(pair.id);
   }
   const lines = input.sourceText.replaceAll("\r\n", "\n").split("\n");
   for (const line of lines) {
-    const hit = parseCommentrayRegionBoundary(line);
+    const hit = parseSideTrackRegionBoundary(line);
     if (hit) used.add(hit.id);
   }
-  for (const id of extractCommentrayBlockIdsFromMarkdown(input.existingCommentray)) {
+  for (const id of extractSideTrackBlockIdsFromMarkdown(input.existingSideTrack)) {
     used.add(id);
   }
-  const indexed = input.index?.byCommentrayPath[input.commentrayPathRel];
+  const indexed = input.index?.bySideTrackPath[input.sidetrackPathRel];
   for (const b of indexed?.blocks ?? []) {
     if (typeof b.markerId === "string" && b.markerId.trim().length > 0) {
       used.add(b.markerId.trim().toLowerCase());
@@ -497,57 +495,57 @@ function chooseUniqueMarkerId(preferred: string, used: Set<string>): string {
       continue;
     }
   }
-  throw new Error("Could not generate a unique Commentray marker id for this selection.");
+  throw new Error("Could not generate a unique SideTrack marker id for this selection.");
 }
 
 function scrollSyncEnabled(): boolean {
-  const v = vscode.workspace.getConfiguration("commentray").get("scrollSync.enabled");
+  const v = vscode.workspace.getConfiguration("sidetrack").get("scrollSync.enabled");
   return v !== false;
 }
 
 function pairedPathsFromDiskPair(
   repoRoot: string,
-  diskPair: { sourcePath: string; commentrayPath: string },
+  diskPair: { sourcePath: string; sidetrackPath: string },
 ): PairedPaths {
-  const commentrayUri = vscode.Uri.file(path.join(repoRoot, ...diskPair.commentrayPath.split("/")));
+  const sidetrackUri = vscode.Uri.file(path.join(repoRoot, ...diskPair.sidetrackPath.split("/")));
   return {
     repoRoot,
     sourceRelative: diskPair.sourcePath,
-    commentrayUri,
-    commentrayPathRel: diskPair.commentrayPath,
+    sidetrackUri,
+    sidetrackPathRel: diskPair.sidetrackPath,
     angleId: null,
   };
 }
 
 async function bindPairScrollSync(
   codeEditor: vscode.TextEditor,
-  commentrayEditor: vscode.TextEditor,
+  sidetrackEditor: vscode.TextEditor,
   paths: PairedPaths,
 ): Promise<void> {
-  let index: CommentrayIndex | null = null;
+  let index: SideTrackIndex | null = null;
   try {
     index = await readIndex(paths.repoRoot);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    logCommentray(`[commentray] readIndex (open pair): ${msg}`);
+    logSideTrack(`[sidetrack] readIndex (open pair): ${msg}`);
     void vscode.window.showWarningMessage(
-      `Commentray could not read metadata index.json; block-aware scroll sync is limited until the file is valid. (${msg})`,
+      `SideTrack could not read metadata index.json; block-aware scroll sync is limited until the file is valid. (${msg})`,
     );
   }
   const blocks = buildBlockScrollLinks(
     index,
     paths.sourceRelative,
-    paths.commentrayPathRel,
-    commentrayEditor.document.getText(),
+    paths.sidetrackPathRel,
+    sidetrackEditor.document.getText(),
     codeEditor.document.getText(),
   );
   const pair: ScrollPair = {
     code: codeEditor,
-    commentray: commentrayEditor,
+    sidetrack: sidetrackEditor,
     blocks,
     repoRoot: paths.repoRoot,
     sourceRelative: paths.sourceRelative,
-    commentrayPathRel: paths.commentrayPathRel,
+    sidetrackPathRel: paths.sidetrackPathRel,
   };
   if (scrollSyncEnabled()) {
     bindScrollSync(pair);
@@ -561,7 +559,7 @@ async function bindPairScrollSync(
 async function revealSourceLeftOfCompanionAndReturnEditors(
   companionEditor: vscode.TextEditor,
   sourceDoc: vscode.TextDocument,
-): Promise<{ code: vscode.TextEditor; commentray: vscode.TextEditor }> {
+): Promise<{ code: vscode.TextEditor; sidetrack: vscode.TextEditor }> {
   const companionUri = companionEditor.document.uri;
   const findCompanion = (): vscode.TextEditor =>
     vscode.window.visibleTextEditors.find(
@@ -577,7 +575,7 @@ async function revealSourceLeftOfCompanionAndReturnEditors(
       viewColumn: vscode.ViewColumn.One,
       preview: false,
     });
-    return { code: codeEditor, commentray: findCompanion() };
+    return { code: codeEditor, sidetrack: findCompanion() };
   }
 
   const codeEditor = await vscode.window.showTextDocument(sourceDoc, { preview: false });
@@ -588,24 +586,24 @@ async function revealSourceLeftOfCompanionAndReturnEditors(
     preserveFocus: true,
   });
   const code = findSource(sourceDoc) ?? codeEditor;
-  return { code, commentray: findCompanion() };
+  return { code, sidetrack: findCompanion() };
 }
 
 async function openBesideAndSync(
   sourceEditor: vscode.TextEditor,
   paths: PairedPaths,
 ): Promise<vscode.TextEditor> {
-  const ensured = await ensureCommentrayFile(paths.commentrayUri);
-  const commentrayDoc = await vscode.workspace.openTextDocument(ensured);
-  const commentrayEditor = await vscode.window.showTextDocument(commentrayDoc, {
+  const ensured = await ensureSideTrackFile(paths.sidetrackUri);
+  const sidetrackDoc = await vscode.workspace.openTextDocument(ensured);
+  const sidetrackEditor = await vscode.window.showTextDocument(sidetrackDoc, {
     viewColumn: vscode.ViewColumn.Beside,
     preview: false,
   });
   const codeEditor =
     vscode.window.visibleTextEditors.find((te) => te.document === sourceEditor.document) ??
     sourceEditor;
-  await bindPairScrollSync(codeEditor, commentrayEditor, paths);
-  return commentrayEditor;
+  await bindPairScrollSync(codeEditor, sidetrackEditor, paths);
+  return sidetrackEditor;
 }
 
 function workspaceFolderContaining(uri: vscode.Uri): vscode.WorkspaceFolder | undefined {
@@ -656,8 +654,8 @@ function findPlaceholderSelection(
   doc: vscode.TextDocument,
   blockId: string,
 ): vscode.Selection | null {
-  const PLACEHOLDER_TEXT = "_(write commentary here)_";
-  const marker = `<!-- commentray:block id=${blockId} -->`;
+  const PLACEHOLDER_TEXT = "_(write sidetrack here)_";
+  const marker = `<!-- sidetrack:block id=${blockId} -->`;
   const text = doc.getText();
   const markerIndex = text.indexOf(marker);
   if (markerIndex < 0) return null;
@@ -672,7 +670,7 @@ function findBlockMarkerSelection(
   doc: vscode.TextDocument,
   blockId: string,
 ): vscode.Selection | null {
-  const marker = `<!-- commentray:block id=${blockId} -->`;
+  const marker = `<!-- sidetrack:block id=${blockId} -->`;
   const text = doc.getText();
   const markerIndex = text.indexOf(marker);
   if (markerIndex < 0) return null;
@@ -692,8 +690,8 @@ async function ensureMarkerBlockPresent(args: {
   sourceText: string;
   repoRoot: string;
   sourceRelative: string;
-  commentrayPathRel: string;
-  commentrayDoc: vscode.TextDocument;
+  sidetrackPathRel: string;
+  sidetrackDoc: vscode.TextDocument;
 }): Promise<void> {
   const sourceRange = sourceLineRangeForMarkerId(args.sourceText, args.markerId);
   if (sourceRange === null) {
@@ -702,8 +700,8 @@ async function ensureMarkerBlockPresent(args: {
     );
   }
 
-  const existingCommentray = args.commentrayDoc.getText();
-  const markdownHasBlock = extractCommentrayBlockIdsFromMarkdown(existingCommentray).has(
+  const existingSideTrack = args.sidetrackDoc.getText();
+  const markdownHasBlock = extractSideTrackBlockIdsFromMarkdown(existingSideTrack).has(
     args.markerId,
   );
   const created = createBlockForRange({
@@ -715,25 +713,25 @@ async function ensureMarkerBlockPresent(args: {
 
   if (!markdownHasBlock) {
     const nextContent = insertBlockBySourceMarkerOrder({
-      existingCommentray,
+      existingSideTrack,
       blockMarkdown: created.markdown,
       sourceText: args.sourceText,
       markerId: created.block.id,
     });
-    const existingMarkers = [...extractCommentrayBlockIdsFromMarkdown(existingCommentray)];
-    const nextMarkers = extractCommentrayBlockIdsFromMarkdown(nextContent);
+    const existingMarkers = [...extractSideTrackBlockIdsFromMarkdown(existingSideTrack)];
+    const nextMarkers = extractSideTrackBlockIdsFromMarkdown(nextContent);
     const lostMarker = existingMarkers.find((id) => !nextMarkers.has(id));
     if (lostMarker) {
       throw new Error(
         `Refusing to recover block "${args.markerId}" because existing block marker "${lostMarker}" would be removed unexpectedly.`,
       );
     }
-    await replaceDocumentContents(args.commentrayDoc, nextContent);
-    await args.commentrayDoc.save();
+    await replaceDocumentContents(args.sidetrackDoc, nextContent);
+    await args.sidetrackDoc.save();
   }
 
   const index = await readIndex(args.repoRoot);
-  const indexed = index?.byCommentrayPath[args.commentrayPathRel];
+  const indexed = index?.bySideTrackPath[args.sidetrackPathRel];
   const indexHasBlock =
     indexed?.blocks.some(
       (block) =>
@@ -745,7 +743,7 @@ async function ensureMarkerBlockPresent(args: {
     await upsertBlockMetadata(
       args.repoRoot,
       args.sourceRelative,
-      args.commentrayPathRel,
+      args.sidetrackPathRel,
       created.block,
     );
   }
@@ -757,24 +755,24 @@ async function revealExistingMarkerBlock(args: {
   paths: PairedPaths;
   sourceText: string;
 }): Promise<void> {
-  const ensured = await ensureCommentrayFile(args.paths.commentrayUri);
-  const commentrayDoc = await vscode.workspace.openTextDocument(ensured);
+  const ensured = await ensureSideTrackFile(args.paths.sidetrackUri);
+  const sidetrackDoc = await vscode.workspace.openTextDocument(ensured);
   await ensureMarkerBlockPresent({
     markerId: args.markerId,
     sourceText: args.sourceText,
     repoRoot: args.paths.repoRoot,
     sourceRelative: args.paths.sourceRelative,
-    commentrayPathRel: args.paths.commentrayPathRel,
-    commentrayDoc,
+    sidetrackPathRel: args.paths.sidetrackPathRel,
+    sidetrackDoc,
   });
 
-  const commentrayEditor = await openBesideAndSync(args.activeEditor, args.paths);
+  const sidetrackEditor = await openBesideAndSync(args.activeEditor, args.paths);
   const selection =
-    findPlaceholderSelection(commentrayEditor.document, args.markerId) ??
-    findBlockMarkerSelection(commentrayEditor.document, args.markerId);
+    findPlaceholderSelection(sidetrackEditor.document, args.markerId) ??
+    findBlockMarkerSelection(sidetrackEditor.document, args.markerId);
   if (selection) {
-    commentrayEditor.selection = selection;
-    commentrayEditor.revealRange(selection, vscode.TextEditorRevealType.InCenterIfOutsideViewport);
+    sidetrackEditor.selection = selection;
+    sidetrackEditor.revealRange(selection, vscode.TextEditorRevealType.InCenterIfOutsideViewport);
   }
 }
 
@@ -784,9 +782,9 @@ async function createNewBlockFromSelection(args: {
   lineRange: BlockRange;
   sourceTextBeforeWrap: string;
 }): Promise<void> {
-  const ensured = await ensureCommentrayFile(args.paths.commentrayUri);
-  const commentrayDoc = await vscode.workspace.openTextDocument(ensured);
-  const existingCommentray = commentrayDoc.getText();
+  const ensured = await ensureSideTrackFile(args.paths.sidetrackUri);
+  const sidetrackDoc = await vscode.workspace.openTextDocument(ensured);
+  const existingSideTrack = sidetrackDoc.getText();
   const index = await readIndex(args.paths.repoRoot);
   const suggestedId = defaultRegionMarkerNamingStrategy.suggestMarkerId({
     languageId: args.activeEditor.document.languageId,
@@ -795,13 +793,13 @@ async function createNewBlockFromSelection(args: {
   });
   const usedIds = collectUsedMarkerIds({
     sourceText: args.sourceTextBeforeWrap,
-    existingCommentray,
+    existingSideTrack,
     index,
-    commentrayPathRel: args.paths.commentrayPathRel,
+    sidetrackPathRel: args.paths.sidetrackPathRel,
   });
   const blockId = chooseUniqueMarkerId(suggestedId, usedIds);
 
-  const wrapped = wrapSourceLineRangeWithCommentrayMarkers({
+  const wrapped = wrapSourceLineRangeWithSideTrackMarkers({
     sourceText: args.sourceTextBeforeWrap,
     range: args.lineRange,
     languageId: args.activeEditor.document.languageId,
@@ -818,14 +816,14 @@ async function createNewBlockFromSelection(args: {
   });
 
   const nextContent = insertBlockBySourceMarkerOrder({
-    existingCommentray,
+    existingSideTrack,
     blockMarkdown: created.markdown,
     sourceText,
     markerId: created.block.id,
   });
 
-  const existingMarkers = [...extractCommentrayBlockIdsFromMarkdown(existingCommentray)];
-  const nextMarkers = extractCommentrayBlockIdsFromMarkdown(nextContent);
+  const existingMarkers = [...extractSideTrackBlockIdsFromMarkdown(existingSideTrack)];
+  const nextMarkers = extractSideTrackBlockIdsFromMarkdown(nextContent);
   const lostMarker = existingMarkers.find((id) => !nextMarkers.has(id));
   if (lostMarker) {
     throw new Error(
@@ -833,41 +831,41 @@ async function createNewBlockFromSelection(args: {
     );
   }
 
-  await replaceDocumentContents(commentrayDoc, nextContent);
-  await commentrayDoc.save();
+  await replaceDocumentContents(sidetrackDoc, nextContent);
+  await sidetrackDoc.save();
 
   await upsertBlockMetadata(
     args.paths.repoRoot,
     args.paths.sourceRelative,
-    args.paths.commentrayPathRel,
+    args.paths.sidetrackPathRel,
     created.block,
   );
 
-  const commentrayEditor = await openBesideAndSync(args.activeEditor, args.paths);
-  const selection = findPlaceholderSelection(commentrayEditor.document, created.block.id);
+  const sidetrackEditor = await openBesideAndSync(args.activeEditor, args.paths);
+  const selection = findPlaceholderSelection(sidetrackEditor.document, created.block.id);
   if (selection) {
-    commentrayEditor.selection = selection;
-    commentrayEditor.revealRange(selection, vscode.TextEditorRevealType.InCenterIfOutsideViewport);
+    sidetrackEditor.selection = selection;
+    sidetrackEditor.revealRange(selection, vscode.TextEditorRevealType.InCenterIfOutsideViewport);
   }
 }
 
 async function upsertBlockMetadata(
   repoRoot: string,
   sourceRelative: string,
-  commentrayPathRel: string,
+  sidetrackPathRel: string,
   block: Parameters<typeof addBlockToIndex>[1]["block"],
 ): Promise<void> {
-  let current: CommentrayIndex;
+  let current: SideTrackIndex;
   try {
     current = (await readIndex(repoRoot)) ?? emptyIndex();
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    logCommentray(`[commentray] readIndex (block metadata): ${msg}`);
+    logSideTrack(`[sidetrack] readIndex (block metadata): ${msg}`);
     current = emptyIndex();
   }
   const next = addBlockToIndex(current, {
     sourcePath: sourceRelative,
-    commentrayPath: commentrayPathRel,
+    sidetrackPath: sidetrackPathRel,
     block,
   });
   await writeIndex(repoRoot, next);
@@ -879,7 +877,7 @@ function uriFromOpenSideBySideArgs(arg: unknown): vscode.Uri | undefined {
   return undefined;
 }
 
-/** `executeCommand("commentray.openCommentrayAngle", { angleId: "…" })` skips the picker (tests, keybindings). */
+/** `executeCommand("sidetrack.openSideTrackAngle", { angleId: "…" })` skips the picker (tests, keybindings). */
 type OpenAngleCommandArg = "absent" | "invalid" | { angleId: string };
 
 function presetAngleFromOpenAngleCommandArg(arg: unknown): OpenAngleCommandArg {
@@ -910,17 +908,17 @@ function validateAngleIdInput(value: string): string | undefined {
  * Angles layout must be on. Returns an angle id, or `null` when the user cancels, angles are off,
  * or the programmatic `arg` is invalid (after showing a warning).
  */
-async function pickCommentrayAngleIdInteractively(
+async function pickSideTrackAngleIdInteractively(
   folder: vscode.WorkspaceFolder,
   arg: unknown | undefined,
   quickPickTitle: string,
   placeHolder: string,
 ): Promise<string | null> {
-  const cfg = await loadCommentrayConfig(folder.uri.fsPath);
-  if (!commentrayAnglesLayoutEnabled(folder.uri.fsPath, cfg.storageDir)) {
-    const sentinel = commentrayAnglesSentinelPath(cfg.storageDir);
+  const cfg = await loadSideTrackConfig(folder.uri.fsPath);
+  if (!sidetrackAnglesLayoutEnabled(folder.uri.fsPath, cfg.storageDir)) {
+    const sentinel = sidetrackAnglesSentinelPath(cfg.storageDir);
     await vscode.window.showInformationMessage(
-      `Angles layout is off (missing ${sentinel}). Use “Commentray: Add angle to project…” to enable it and register angles in .commentray.toml.`,
+      `Angles layout is off (missing ${sentinel}). Use “SideTrack: Add angle to project…” to enable it and register angles in .sidetrack.toml.`,
     );
     return null;
   }
@@ -958,7 +956,7 @@ async function pickCommentrayAngleIdInteractively(
   return assertValidAngleId(chosen.description);
 }
 
-/** `executeCommand("commentray.addAngleDefinition", { id: "architecture", title: "Architecture", makeDefault: true })` skips prompts (tests, automation). */
+/** `executeCommand("sidetrack.addAngleDefinition", { id: "architecture", title: "Architecture", makeDefault: true })` skips prompts (tests, automation). */
 type AddAngleDefinitionCommandArg =
   "absent" | "invalid" | { id: string; title?: string; makeDefault?: boolean };
 
@@ -1017,13 +1015,13 @@ async function openSideBySideCommand(arg?: unknown): Promise<void> {
   await openBesideAndSync(active.editor, paths);
 }
 
-async function openCommentrayAngleCommand(arg?: unknown): Promise<void> {
+async function openSideTrackAngleCommand(arg?: unknown): Promise<void> {
   const active = await requireActiveEditorInWorkspace();
   if (!active) return;
-  const angleId = await pickCommentrayAngleIdInteractively(
+  const angleId = await pickSideTrackAngleIdInteractively(
     active.folder,
     arg,
-    "Open Commentray angle",
+    "Open SideTrack angle",
     "Pick an angle for the current source file",
   );
   if (!angleId) return;
@@ -1051,7 +1049,7 @@ async function addAngleDefinitionCommand(arg?: unknown): Promise<void> {
     return;
   }
   const repoRoot = folder.uri.fsPath;
-  const cfg = await loadCommentrayConfig(repoRoot);
+  const cfg = await loadSideTrackConfig(repoRoot);
   const preset = presetFromAddAngleDefinitionCommandArg(arg);
   if (preset === "invalid") {
     await vscode.window.showWarningMessage(
@@ -1065,8 +1063,8 @@ async function addAngleDefinitionCommand(arg?: unknown): Promise<void> {
   let makeDefault: boolean;
   if (preset === "absent") {
     const idRaw = await vscode.window.showInputBox({
-      title: "New Commentray angle",
-      prompt: "Short id (used in paths and .commentray.toml), e.g. architecture",
+      title: "New SideTrack angle",
+      prompt: "Short id (used in paths and .sidetrack.toml), e.g. architecture",
       validateInput: validateAngleIdInput,
     });
     if (!idRaw) return;
@@ -1081,7 +1079,7 @@ async function addAngleDefinitionCommand(arg?: unknown): Promise<void> {
     if (!makeDefault) {
       const pick = await vscode.window.showQuickPick(
         [
-          { label: "Yes", description: "Set as default_angle in .commentray.toml" },
+          { label: "Yes", description: "Set as default_angle in .sidetrack.toml" },
           { label: "No", description: "Keep the current default" },
         ],
         { placeHolder: `Set “${id}” as the default angle?` },
@@ -1096,18 +1094,18 @@ async function addAngleDefinitionCommand(arg?: unknown): Promise<void> {
 
   try {
     await ensureAnglesSentinelFile(repoRoot, cfg.storageDir);
-    await upsertAngleDefinitionInCommentrayToml(repoRoot, {
+    await upsertAngleDefinitionInSideTrackToml(repoRoot, {
       id,
       title,
       makeDefault,
     });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    await vscode.window.showErrorMessage(`Could not update .commentray.toml: ${msg}`);
+    await vscode.window.showErrorMessage(`Could not update .sidetrack.toml: ${msg}`);
     return;
   }
   void vscode.window.showInformationMessage(
-    `Angle “${id}” was added to .commentray.toml and Angles layout is enabled (${commentrayAnglesSentinelPath(cfg.storageDir)}).`,
+    `Angle “${id}” was added to .sidetrack.toml and Angles layout is enabled (${sidetrackAnglesSentinelPath(cfg.storageDir)}).`,
   );
 }
 
@@ -1126,7 +1124,7 @@ async function startBlockFromSelectionCommand(): Promise<void> {
       selectionIntersectsMarkdownFence(sourceTextBeforeWrap, lineRange)
     ) {
       void vscode.window.showWarningMessage(
-        "Selection intersects a fenced Markdown code block. Add-block stays strict here because inserting Commentray markers would change rendered code content.",
+        "Selection intersects a fenced Markdown code block. Add-block stays strict here because inserting SideTrack markers would change rendered code content.",
       );
       return;
     }
@@ -1160,8 +1158,8 @@ async function startBlockFromSelectionCommand(): Promise<void> {
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    logCommentray(`[commentray] startBlockFromSelection failed: ${msg}`);
-    await vscode.window.showErrorMessage(`Could not add Commentray block: ${msg}`);
+    logSideTrack(`[sidetrack] startBlockFromSelection failed: ${msg}`);
+    await vscode.window.showErrorMessage(`Could not add SideTrack block: ${msg}`);
   }
 }
 
@@ -1181,18 +1179,16 @@ async function resolvePathsForActiveEditor(active: {
     return null;
   }
   const repoRoot = active.folder.uri.fsPath;
-  const cfg = await loadCommentrayConfig(repoRoot);
+  const cfg = await loadSideTrackConfig(repoRoot);
 
   const diskPair = resolveCompanionPathToSourcePair(normalized, repoRoot, cfg);
   if (diskPair) {
-    const commentrayUri = vscode.Uri.file(
-      path.join(repoRoot, ...diskPair.commentrayPath.split("/")),
-    );
+    const sidetrackUri = vscode.Uri.file(path.join(repoRoot, ...diskPair.sidetrackPath.split("/")));
     return {
       repoRoot,
       sourceRelative: diskPair.sourcePath,
-      commentrayUri,
-      commentrayPathRel: diskPair.commentrayPath,
+      sidetrackUri,
+      sidetrackPathRel: diskPair.sidetrackPath,
       angleId: null,
     };
   }
@@ -1214,7 +1210,7 @@ async function detectOrPromptBlockId(active: {
   if (isMarkdown) {
     const offset = active.editor.document.offsetAt(active.editor.selection.active);
     const hits: { id: string; start: number }[] = [];
-    const markerRe = /<!--\s*commentray:block\s+id=([a-z0-9](?:[a-z0-9_-]{0,62}[a-z0-9])?)\s*-->/gi;
+    const markerRe = /<!--\s*sidetrack:block\s+id=([a-z0-9](?:[a-z0-9_-]{0,62}[a-z0-9])?)\s*-->/gi;
     for (const m of sourceText.matchAll(markerRe)) {
       const idRaw = m[1];
       if (idRaw === undefined) continue;
@@ -1283,39 +1279,39 @@ async function removeMarkersFromSource(paths: PairedPaths, blockId: string): Pro
 }
 
 async function removeBlockFromCompanion(paths: PairedPaths, blockId: string): Promise<void> {
-  let commentrayDoc: vscode.TextDocument | null = null;
+  let sidetrackDoc: vscode.TextDocument | null = null;
   try {
-    commentrayDoc = await vscode.workspace.openTextDocument(paths.commentrayUri);
+    sidetrackDoc = await vscode.workspace.openTextDocument(paths.sidetrackUri);
   } catch {
     // Ignore
   }
 
-  if (commentrayDoc) {
-    const commentrayContent = commentrayDoc.getText();
-    const updatedCommentray = removeBlockFromCommentray(commentrayContent, blockId);
-    if (updatedCommentray !== commentrayContent) {
-      const commentrayEditor = vscode.window.visibleTextEditors.find(
-        (te) => te.document.uri.toString() === commentrayDoc.uri.toString(),
+  if (sidetrackDoc) {
+    const sidetrackContent = sidetrackDoc.getText();
+    const updatedSideTrack = removeBlockFromSideTrack(sidetrackContent, blockId);
+    if (updatedSideTrack !== sidetrackContent) {
+      const sidetrackEditor = vscode.window.visibleTextEditors.find(
+        (te) => te.document.uri.toString() === sidetrackDoc.uri.toString(),
       );
-      if (commentrayEditor) {
-        await replaceDocumentContents(commentrayEditor.document, updatedCommentray);
-        await commentrayEditor.document.save();
+      if (sidetrackEditor) {
+        await replaceDocumentContents(sidetrackEditor.document, updatedSideTrack);
+        await sidetrackEditor.document.save();
       } else {
-        await replaceDocumentContents(commentrayDoc, updatedCommentray);
-        await commentrayDoc.save();
+        await replaceDocumentContents(sidetrackDoc, updatedSideTrack);
+        await sidetrackDoc.save();
       }
     }
   }
 }
 
 async function removeBlockFromIdx(paths: PairedPaths, blockId: string): Promise<void> {
-  let currentIdx: CommentrayIndex;
+  let currentIdx: SideTrackIndex;
   try {
     currentIdx = (await readIndex(paths.repoRoot)) ?? emptyIndex();
   } catch {
     currentIdx = emptyIndex();
   }
-  const updatedIdx = removeBlockFromIndex(currentIdx, paths.commentrayPathRel, blockId);
+  const updatedIdx = removeBlockFromIndex(currentIdx, paths.sidetrackPathRel, blockId);
   await writeIndex(paths.repoRoot, updatedIdx);
 }
 
@@ -1334,12 +1330,10 @@ async function removeBlockCommand(): Promise<void> {
     await removeBlockFromCompanion(paths, blockId);
     await removeBlockFromIdx(paths, blockId);
 
-    void vscode.window.showInformationMessage(
-      `Commentary block "${blockId}" removed successfully.`,
-    );
+    void vscode.window.showInformationMessage(`SideTrack block "${blockId}" removed successfully.`);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    logCommentray(`[commentray] removeBlock failed: ${msg}`);
+    logSideTrack(`[sidetrack] removeBlock failed: ${msg}`);
     await vscode.window.showErrorMessage(`Could not remove block: ${msg}`);
   }
 }
@@ -1358,16 +1352,16 @@ async function cleanRegionsCommand(): Promise<void> {
     const sourceDoc = await vscode.workspace.openTextDocument(sourceUri);
     const sourceText = sourceDoc.getText();
 
-    let commentrayDoc: vscode.TextDocument;
+    let sidetrackDoc: vscode.TextDocument;
     try {
-      commentrayDoc = await vscode.workspace.openTextDocument(paths.commentrayUri);
+      sidetrackDoc = await vscode.workspace.openTextDocument(paths.sidetrackUri);
     } catch {
       await vscode.window.showWarningMessage("Paired companion markdown file does not exist.");
       return;
     }
-    const commentrayMarkdown = commentrayDoc.getText();
+    const sidetrackMarkdown = sidetrackDoc.getText();
 
-    let index: CommentrayIndex;
+    let index: SideTrackIndex;
     try {
       index = (await readIndex(paths.repoRoot)) ?? emptyIndex();
     } catch {
@@ -1376,31 +1370,31 @@ async function cleanRegionsCommand(): Promise<void> {
 
     const result = alignAndCleanRegions({
       sourceText,
-      commentrayMarkdown,
+      sidetrackMarkdown,
       index,
-      commentrayPath: paths.commentrayPathRel,
+      sidetrackPath: paths.sidetrackPathRel,
       sourcePath: paths.sourceRelative,
     });
 
     await writeIndex(paths.repoRoot, result.index);
 
-    if (result.commentrayMarkdown !== commentrayMarkdown) {
-      const commentrayEditor = vscode.window.visibleTextEditors.find(
-        (te) => te.document.uri.toString() === commentrayDoc.uri.toString(),
+    if (result.sidetrackMarkdown !== sidetrackMarkdown) {
+      const sidetrackEditor = vscode.window.visibleTextEditors.find(
+        (te) => te.document.uri.toString() === sidetrackDoc.uri.toString(),
       );
-      if (commentrayEditor) {
-        await replaceDocumentContents(commentrayEditor.document, result.commentrayMarkdown);
-        await commentrayEditor.document.save();
+      if (sidetrackEditor) {
+        await replaceDocumentContents(sidetrackEditor.document, result.sidetrackMarkdown);
+        await sidetrackEditor.document.save();
       } else {
-        await replaceDocumentContents(commentrayDoc, result.commentrayMarkdown);
-        await commentrayDoc.save();
+        await replaceDocumentContents(sidetrackDoc, result.sidetrackMarkdown);
+        await sidetrackDoc.save();
       }
     }
 
-    void vscode.window.showInformationMessage("Commentary regions aligned and cleaned up.");
+    void vscode.window.showInformationMessage("SideTrack regions aligned and cleaned up.");
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    logCommentray(`[commentray] cleanRegions failed: ${msg}`);
+    logSideTrack(`[sidetrack] cleanRegions failed: ${msg}`);
     await vscode.window.showErrorMessage(`Could not clean regions: ${msg}`);
   }
 }
@@ -1419,16 +1413,16 @@ async function repairFileCommand(): Promise<void> {
     const sourceDoc = await vscode.workspace.openTextDocument(sourceUri);
     const sourceText = sourceDoc.getText();
 
-    let commentrayDoc: vscode.TextDocument;
+    let sidetrackDoc: vscode.TextDocument;
     try {
-      commentrayDoc = await vscode.workspace.openTextDocument(paths.commentrayUri);
+      sidetrackDoc = await vscode.workspace.openTextDocument(paths.sidetrackUri);
     } catch {
       await vscode.window.showWarningMessage("Paired companion markdown file does not exist.");
       return;
     }
-    const companionMarkdown = commentrayDoc.getText();
+    const companionMarkdown = sidetrackDoc.getText();
 
-    let index: CommentrayIndex;
+    let index: SideTrackIndex;
     try {
       index = (await readIndex(paths.repoRoot)) ?? emptyIndex();
     } catch {
@@ -1440,12 +1434,12 @@ async function repairFileCommand(): Promise<void> {
       languageId: active.editor.document.languageId,
       companionMarkdown,
       index,
-      commentrayPath: paths.commentrayPathRel,
+      sidetrackPath: paths.sidetrackPathRel,
     });
 
     if (result.healedCount === 0) {
       void vscode.window.showInformationMessage(
-        "No missing commentary region markers detected or healed.",
+        "No missing sidetrack region markers detected or healed.",
       );
       return;
     }
@@ -1469,7 +1463,7 @@ async function repairFileCommand(): Promise<void> {
     );
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    logCommentray(`[commentray] repairFile failed: ${msg}`);
+    logSideTrack(`[sidetrack] repairFile failed: ${msg}`);
     await vscode.window.showErrorMessage(`Could not repair file: ${msg}`);
   }
 }
@@ -1479,29 +1473,25 @@ async function renameCompanionFile(
   entry: SourceFileIndexEntry,
   newNorm: string,
   repoRoot: string,
-  cfg: Awaited<ReturnType<typeof loadCommentrayConfig>>,
+  cfg: Awaited<ReturnType<typeof loadSideTrackConfig>>,
   anglesLayout: boolean,
 ): Promise<void> {
   let newCp = oldCp;
   if (anglesLayout) {
-    const angleId = inferAngleIdFromCommentrayPath(
-      entry.commentrayPath,
+    const angleId = inferAngleIdFromSideTrackPath(
+      entry.sidetrackPath,
       entry.sourcePath,
       cfg.storageDir,
     );
     if (angleId) {
       try {
-        newCp = commentrayMarkdownPathForAngle(
-          newNorm,
-          assertValidAngleId(angleId),
-          cfg.storageDir,
-        );
+        newCp = sidetrackMarkdownPathForAngle(newNorm, assertValidAngleId(angleId), cfg.storageDir);
       } catch (err) {
-        logCommentray(`[commentray] rename watcher failed to resolve angle path: ${err}`);
+        logSideTrack(`[sidetrack] rename watcher failed to resolve angle path: ${err}`);
       }
     }
   } else {
-    newCp = commentrayMarkdownPath(newNorm, cfg.storageDir);
+    newCp = sidetrackMarkdownPath(newNorm, cfg.storageDir);
   }
 
   if (newCp !== oldCp) {
@@ -1511,11 +1501,11 @@ async function renameCompanionFile(
       const parent = path.dirname(newUri.fsPath);
       await vscode.workspace.fs.createDirectory(vscode.Uri.file(parent));
       await vscode.workspace.fs.rename(oldUri, newUri, { overwrite: true });
-      logCommentray(
-        `[commentray] Automatically renamed companion Markdown file on disk: ${oldCp} -> ${newCp}`,
+      logSideTrack(
+        `[sidetrack] Automatically renamed companion Markdown file on disk: ${oldCp} -> ${newCp}`,
       );
     } catch (renameErr) {
-      logCommentray(`[commentray] Failed to rename companion file on disk: ${renameErr}`);
+      logSideTrack(`[sidetrack] Failed to rename companion file on disk: ${renameErr}`);
     }
   }
 }
@@ -1531,29 +1521,29 @@ async function handleFileRename(file: { oldUri: vscode.Uri; newUri: vscode.Uri }
     if (!folder) return;
     const repoRoot = folder.uri.fsPath;
 
-    const cfg = await loadCommentrayConfig(repoRoot);
+    const cfg = await loadSideTrackConfig(repoRoot);
     const index = await readIndex(repoRoot);
     if (!index) return;
 
-    const anglesLayout = commentrayAnglesLayoutEnabled(repoRoot, cfg.storageDir);
+    const anglesLayout = sidetrackAnglesLayoutEnabled(repoRoot, cfg.storageDir);
     const renames = [{ from: oldNorm, to: newNorm }];
 
-    for (const [oldCp, entry] of Object.entries(index.byCommentrayPath)) {
+    for (const [oldCp, entry] of Object.entries(index.bySideTrackPath)) {
       if (normalizeRepoRelativePath(entry.sourcePath) === oldNorm) {
         await renameCompanionFile(oldCp, entry, newNorm, repoRoot, cfg, anglesLayout);
       }
     }
 
-    const result = applyPathRenamesToCommentrayIndex(index, renames, repoRoot, cfg);
+    const result = applyPathRenamesToSideTrackIndex(index, renames, repoRoot, cfg);
     if (result.changed) {
       await writeIndex(repoRoot, result.index);
-      logCommentray(
-        `[commentray] Automatically updated index for renamed file: ${oldNorm} -> ${newNorm}`,
+      logSideTrack(
+        `[sidetrack] Automatically updated index for renamed file: ${oldNorm} -> ${newNorm}`,
       );
     }
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    logCommentray(`[commentray] rename watcher failed: ${msg}`);
+    logSideTrack(`[sidetrack] rename watcher failed: ${msg}`);
   }
 }
 
@@ -1576,21 +1566,21 @@ async function initWorkspaceCommand(output: vscode.OutputChannel): Promise<void>
   const repoRoot = folder.uri.fsPath;
   let init;
   try {
-    init = await initializeCommentrayProject(repoRoot, {
+    init = await initializeSideTrackProject(repoRoot, {
       ensureSiteGitignore: true,
       runValidation: true,
     });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    await vscode.window.showErrorMessage(`Commentray init failed: ${msg}`);
+    await vscode.window.showErrorMessage(`SideTrack init failed: ${msg}`);
     return;
   }
 
   output.clear();
-  output.appendLine("Commentray init summary:");
+  output.appendLine("SideTrack init summary:");
   output.appendLine(`- created index: ${init.createdIndex ? "yes" : "no"}`);
   output.appendLine(`- migrated index: ${init.migratedIndex ? "yes" : "no"}`);
-  output.appendLine(`- created .commentray.toml: ${init.createdToml ? "yes" : "no"}`);
+  output.appendLine(`- created .sidetrack.toml: ${init.createdToml ? "yes" : "no"}`);
   output.appendLine(`- added _site to .gitignore: ${init.addedSiteGitignore ? "yes" : "no"}`);
   for (const issue of init.validationIssues) {
     output.appendLine(`[${issue.level}] ${issue.message}`);
@@ -1600,13 +1590,13 @@ async function initWorkspaceCommand(output: vscode.OutputChannel): Promise<void>
   if (hasErrors) {
     output.show(true);
     void vscode.window.showErrorMessage(
-      "Commentray initialized, but validation reported errors. See the Commentray output panel.",
+      "SideTrack initialized, but validation reported errors. See the SideTrack output panel.",
     );
   } else {
-    void vscode.window.showInformationMessage("Commentray initialized for this workspace.");
+    void vscode.window.showInformationMessage("SideTrack initialized for this workspace.");
   }
 
-  void applyCommentrayActiveEditorUiContexts(vscode.window.activeTextEditor?.document.uri);
+  void applySideTrackActiveEditorUiContexts(vscode.window.activeTextEditor?.document.uri);
 }
 
 async function validateWorkspaceCommand(output: vscode.OutputChannel): Promise<void> {
@@ -1626,7 +1616,7 @@ async function validateWorkspaceCommand(output: vscode.OutputChannel): Promise<v
   output.show(true);
 }
 
-async function openCommentrayPreviewCommand(): Promise<void> {
+async function openSideTrackPreviewCommand(): Promise<void> {
   const active = await requireActiveEditorInWorkspace();
   if (!active) return;
 
@@ -1634,8 +1624,8 @@ async function openCommentrayPreviewCommand(): Promise<void> {
   try {
     const relative = vscode.workspace.asRelativePath(active.editor.document.uri, false);
     const normalized = normalizeRepoRelativePath(relative.replaceAll("\\", "/"));
-    const cfg = await loadCommentrayConfig(active.folder.uri.fsPath);
-    const sourcePrefix = commentrayStorageSourcePrefix(cfg.storageDir);
+    const cfg = await loadSideTrackConfig(active.folder.uri.fsPath);
+    const sourcePrefix = sidetrackStorageSourcePrefix(cfg.storageDir);
     if (normalized.startsWith(sourcePrefix) && active.editor.document.fileName.endsWith(".md")) {
       await vscode.commands.executeCommand("markdown.showPreview", active.editor.document.uri);
       return;
@@ -1646,14 +1636,14 @@ async function openCommentrayPreviewCommand(): Promise<void> {
 
   const paths = await resolvePairedPaths(active.editor, active.folder);
   if (!paths) return;
-  const ensured = await ensureCommentrayFile(paths.commentrayUri);
+  const ensured = await ensureSideTrackFile(paths.sidetrackUri);
   await vscode.commands.executeCommand("markdown.showPreview", ensured);
 }
 
 async function openCorrespondingSourceCommand(): Promise<void> {
   const editor = vscode.window.activeTextEditor;
   if (!editor) {
-    await vscode.window.showWarningMessage("Open a Commentray companion markdown file first.");
+    await vscode.window.showWarningMessage("Open a SideTrack companion markdown file first.");
     return;
   }
   if (!vscode.workspace.workspaceFolders?.length) {
@@ -1676,12 +1666,12 @@ async function openCorrespondingSourceCommand(): Promise<void> {
   }
 
   const repoRoot = active.folder.uri.fsPath;
-  const cfg = await loadCommentrayConfig(repoRoot);
+  const cfg = await loadSideTrackConfig(repoRoot);
   const diskPair = resolveCompanionPathToSourcePair(normalized, repoRoot, cfg);
 
   if (!diskPair) {
     await vscode.window.showInformationMessage(
-      "Open a Commentray companion `.md` (under storage/source or the configured static_site.commentray_markdown path) to jump to its primary source file.",
+      "Open a SideTrack companion `.md` (under storage/source or the configured static_site.sidetrack_markdown path) to jump to its primary source file.",
     );
     return;
   }
@@ -1699,8 +1689,8 @@ async function openCorrespondingSourceCommand(): Promise<void> {
 
   const paths = pairedPathsFromDiskPair(repoRoot, diskPair);
   const sourceDoc = await vscode.workspace.openTextDocument(sourceUri);
-  const { code, commentray } = await revealSourceLeftOfCompanionAndReturnEditors(editor, sourceDoc);
-  await bindPairScrollSync(code, commentray, paths);
+  const { code, sidetrack } = await revealSourceLeftOfCompanionAndReturnEditors(editor, sourceDoc);
+  await bindPairScrollSync(code, sidetrack, paths);
   await vscode.window.showTextDocument(code.document, {
     viewColumn: code.viewColumn,
     preview: false,
@@ -1711,18 +1701,18 @@ async function openCorrespondingSourceCommand(): Promise<void> {
 function resolveCompanionPathToSourcePair(
   normalizedRepoPath: string,
   repoRoot: string,
-  cfg: Awaited<ReturnType<typeof loadCommentrayConfig>>,
-): { sourcePath: string; commentrayPath: string } | null {
-  const sourcePrefix = commentrayStorageSourcePrefix(cfg.storageDir);
+  cfg: Awaited<ReturnType<typeof loadSideTrackConfig>>,
+): { sourcePath: string; sidetrackPath: string } | null {
+  const sourcePrefix = sidetrackStorageSourcePrefix(cfg.storageDir);
   if (normalizedRepoPath.startsWith(sourcePrefix) && normalizedRepoPath.endsWith(".md")) {
     const relFromSourceDir = normalizedRepoPath.slice(sourcePrefix.length);
     const storageNorm = normalizeRepoRelativePath(cfg.storageDir.replaceAll("\\", "/"));
-    const anglesOn = commentrayAnglesLayoutEnabled(repoRoot, cfg.storageDir);
-    return pairFromCommentraySourceRel(storageNorm, relFromSourceDir, anglesOn);
+    const anglesOn = sidetrackAnglesLayoutEnabled(repoRoot, cfg.storageDir);
+    return pairFromSideTrackSourceRel(storageNorm, relFromSourceDir, anglesOn);
   }
 
-  const configured = cfg.staticSite.commentrayMarkdownFile
-    ? normalizeRepoRelativePath(cfg.staticSite.commentrayMarkdownFile.replaceAll("\\", "/"))
+  const configured = cfg.staticSite.sidetrackMarkdownFile
+    ? normalizeRepoRelativePath(cfg.staticSite.sidetrackMarkdownFile.replaceAll("\\", "/"))
     : "";
   if (
     configured.length > 0 &&
@@ -1731,7 +1721,7 @@ function resolveCompanionPathToSourcePair(
   ) {
     return {
       sourcePath: normalizeRepoRelativePath(cfg.staticSite.sourceFile.replaceAll("\\", "/")),
-      commentrayPath: configured,
+      sidetrackPath: configured,
     };
   }
 
@@ -1745,16 +1735,16 @@ async function openRenderedPreviewCore(
 ): Promise<void> {
   const paths = await resolvePairedPaths(editor, folder, angleId);
   if (!paths) return;
-  const ensured = await ensureCommentrayFile(paths.commentrayUri);
-  const cfg = await loadCommentrayConfig(folder.uri.fsPath);
+  const ensured = await ensureSideTrackFile(paths.sidetrackUri);
+  const cfg = await loadSideTrackConfig(folder.uri.fsPath);
   const editorNow =
     vscode.window.visibleTextEditors.find((e) => e.document === editor.document) ?? editor;
-  await CommentrayRenderedPreviewPanel.openOrReveal({
+  await SideTrackRenderedPreviewPanel.openOrReveal({
     repoRoot: paths.repoRoot,
     storageDir: cfg.storageDir,
     sourceRelative: paths.sourceRelative,
-    commentrayPathRel: paths.commentrayPathRel,
-    commentrayUri: ensured,
+    sidetrackPathRel: paths.sidetrackPathRel,
+    sidetrackUri: ensured,
     sourceEditor: editorNow,
     pauseEditorScrollSync: () => disposeScrollSync(),
     restoreEditorScrollSync: () => applyScrollSyncSettingFromConfig(),
@@ -1770,10 +1760,10 @@ async function openRenderedPreviewFromSourceCommand(): Promise<void> {
 async function openRenderedPreviewChooseAngleCommand(arg?: unknown): Promise<void> {
   const active = await requireActiveEditorInWorkspace();
   if (!active) return;
-  const angleId = await pickCommentrayAngleIdInteractively(
+  const angleId = await pickSideTrackAngleIdInteractively(
     active.folder,
     arg,
-    "Rendered Commentray preview — angle",
+    "Rendered SideTrack preview — angle",
     "Pick an angle for the current source file",
   );
   if (!angleId) return;
@@ -1782,56 +1772,53 @@ async function openRenderedPreviewChooseAngleCommand(arg?: unknown): Promise<voi
 }
 
 export function activate(context: vscode.ExtensionContext) {
-  const output = vscode.window.createOutputChannel("Commentray");
-  commentrayOutput = output;
+  const output = vscode.window.createOutputChannel("SideTrack");
+  sidetrackOutput = output;
   const refreshUiContexts = () =>
-    void applyCommentrayActiveEditorUiContexts(vscode.window.activeTextEditor?.document.uri);
+    void applySideTrackActiveEditorUiContexts(vscode.window.activeTextEditor?.document.uri);
 
   // Register commands before any listener that might throw — otherwise the host can show
   // "command … not found" when activation aborts mid-way.
   context.subscriptions.push(
     output,
-    vscode.commands.registerCommand("commentray.init", () => initWorkspaceCommand(output)),
-    vscode.commands.registerCommand("commentray.openSideBySide", openSideBySideCommand),
-    vscode.commands.registerCommand("commentray.openCommentrayAngle", openCommentrayAngleCommand),
-    vscode.commands.registerCommand("commentray.addAngleDefinition", addAngleDefinitionCommand),
+    vscode.commands.registerCommand("sidetrack.init", () => initWorkspaceCommand(output)),
+    vscode.commands.registerCommand("sidetrack.openSideBySide", openSideBySideCommand),
+    vscode.commands.registerCommand("sidetrack.openSideTrackAngle", openSideTrackAngleCommand),
+    vscode.commands.registerCommand("sidetrack.addAngleDefinition", addAngleDefinitionCommand),
     vscode.commands.registerCommand(
-      "commentray.startBlockFromSelection",
+      "sidetrack.startBlockFromSelection",
       startBlockFromSelectionCommand,
     ),
+    vscode.commands.registerCommand("sidetrack.openSideTrackPreview", openSideTrackPreviewCommand),
     vscode.commands.registerCommand(
-      "commentray.openCommentrayPreview",
-      openCommentrayPreviewCommand,
-    ),
-    vscode.commands.registerCommand(
-      "commentray.openCorrespondingSource",
+      "sidetrack.openCorrespondingSource",
       openCorrespondingSourceCommand,
     ),
     vscode.commands.registerCommand(
-      "commentray.openRenderedPreview",
+      "sidetrack.openRenderedPreview",
       openRenderedPreviewFromSourceCommand,
     ),
     vscode.commands.registerCommand(
-      "commentray.openRenderedPreviewChooseAngle",
+      "sidetrack.openRenderedPreviewChooseAngle",
       openRenderedPreviewChooseAngleCommand,
     ),
-    vscode.commands.registerCommand("commentray.validateWorkspace", () =>
+    vscode.commands.registerCommand("sidetrack.validateWorkspace", () =>
       validateWorkspaceCommand(output),
     ),
-    vscode.commands.registerCommand("commentray.removeBlock", removeBlockCommand),
-    vscode.commands.registerCommand("commentray.cleanRegions", cleanRegionsCommand),
-    vscode.commands.registerCommand("commentray.repairFile", repairFileCommand),
+    vscode.commands.registerCommand("sidetrack.removeBlock", removeBlockCommand),
+    vscode.commands.registerCommand("sidetrack.cleanRegions", cleanRegionsCommand),
+    vscode.commands.registerCommand("sidetrack.repairFile", repairFileCommand),
     vscode.workspace.onDidChangeConfiguration((e) => {
       try {
-        if (!e.affectsConfiguration("commentray.scrollSync")) return;
+        if (!e.affectsConfiguration("sidetrack.scrollSync")) return;
         applyScrollSyncSettingFromConfig();
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        logCommentray(`[commentray] scroll sync setting handler: ${msg}`);
+        logSideTrack(`[sidetrack] scroll sync setting handler: ${msg}`);
       }
     }),
     vscode.window.onDidChangeActiveTextEditor((ed) => {
-      void applyCommentrayActiveEditorUiContexts(ed?.document.uri);
+      void applySideTrackActiveEditorUiContexts(ed?.document.uri);
     }),
     vscode.window.onDidChangeWindowState((state) => {
       if (!state.focused) return;
@@ -1841,12 +1828,12 @@ export function activate(context: vscode.ExtensionContext) {
       refreshUiContexts();
     }),
     vscode.workspace.onDidSaveTextDocument((doc) => {
-      if (path.basename(doc.uri.fsPath) !== ".commentray.toml") return;
+      if (path.basename(doc.uri.fsPath) !== ".sidetrack.toml") return;
       refreshUiContexts();
     }),
-    // Watch for external init (e.g. `commentray serve` creating files without a save event).
+    // Watch for external init (e.g. `sidetrack serve` creating files without a save event).
     (() => {
-      const watcher = vscode.workspace.createFileSystemWatcher("**/.commentray.toml");
+      const watcher = vscode.workspace.createFileSystemWatcher("**/.sidetrack.toml");
       const refresh = () => refreshUiContexts();
       watcher.onDidCreate(refresh);
       watcher.onDidChange(refresh);
@@ -1854,9 +1841,7 @@ export function activate(context: vscode.ExtensionContext) {
       return watcher;
     })(),
     (() => {
-      const watcher = vscode.workspace.createFileSystemWatcher(
-        "**/.commentray/metadata/index.json",
-      );
+      const watcher = vscode.workspace.createFileSystemWatcher("**/.sidetrack/metadata/index.json");
       const refresh = () => refreshUiContexts();
       watcher.onDidCreate(refresh);
       watcher.onDidChange(refresh);
@@ -1864,7 +1849,7 @@ export function activate(context: vscode.ExtensionContext) {
       return watcher;
     })(),
     (() => {
-      const watcher = vscode.workspace.createFileSystemWatcher("**/.commentray/source/**");
+      const watcher = vscode.workspace.createFileSystemWatcher("**/.sidetrack/source/**");
       const refresh = () => refreshUiContexts();
       watcher.onDidCreate(refresh);
       watcher.onDidDelete(refresh);
@@ -1878,9 +1863,9 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 export function deactivate() {
-  CommentrayRenderedPreviewPanel.disposeIfOpen();
+  SideTrackRenderedPreviewPanel.disposeIfOpen();
   disposeScrollSync();
   lastBoundScrollPair = undefined;
-  commentrayOutput = undefined;
-  void applyCommentrayActiveEditorUiContexts(undefined);
+  sidetrackOutput = undefined;
+  void applySideTrackActiveEditorUiContexts(undefined);
 }

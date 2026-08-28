@@ -2,15 +2,15 @@ import { describe, expect, it } from "vitest";
 import { assertValidIndex } from "./metadata.js";
 import { CURRENT_SCHEMA_VERSION } from "./model.js";
 
-const cp = ".commentray/source/src/a.ts.md";
+const cp = ".sidetrack/source/src/a.ts.md";
 
 function indexWithBlock(block: Record<string, unknown>): Record<string, unknown> {
   return {
     schemaVersion: CURRENT_SCHEMA_VERSION,
-    byCommentrayPath: {
+    bySideTrackPath: {
       [cp]: {
         sourcePath: "src/a.ts",
-        commentrayPath: cp,
+        sidetrackPath: cp,
         blocks: [block],
       },
     },
@@ -20,7 +20,7 @@ function indexWithBlock(block: Record<string, unknown>): Record<string, unknown>
 describe("Index JSON shape validation", () => {
   it("accepts a minimal valid index", () => {
     const idx = assertValidIndex(indexWithBlock({ id: "b1", anchor: "lines:1-2" }));
-    expect(idx.byCommentrayPath[cp]?.blocks[0]?.id).toBe("b1");
+    expect(idx.bySideTrackPath[cp]?.blocks[0]?.id).toBe("b1");
   });
 
   it("accepts schemaVersion as an integer string and canonicalizes to a number", () => {
@@ -34,22 +34,22 @@ describe("Index JSON shape validation", () => {
 
   it("rejects invalid shapes", () => {
     expect(() => assertValidIndex(null)).toThrow();
-    expect(() => assertValidIndex({ schemaVersion: 999, byCommentrayPath: {} })).toThrow();
+    expect(() => assertValidIndex({ schemaVersion: 999, bySideTrackPath: {} })).toThrow();
   });
 
-  it("rejects when index key does not match entry.commentrayPath", () => {
+  it("rejects when index key does not match entry.sidetrackPath", () => {
     expect(() =>
       assertValidIndex({
         schemaVersion: CURRENT_SCHEMA_VERSION,
-        byCommentrayPath: {
+        bySideTrackPath: {
           [cp]: {
             sourcePath: "src/a.ts",
-            commentrayPath: ".commentray/source/wrong.md",
+            sidetrackPath: ".sidetrack/source/wrong.md",
             blocks: [],
           },
         },
       }),
-    ).toThrow(/index key must equal entry\.commentrayPath/);
+    ).toThrow(/index key must equal entry\.sidetrackPath/);
   });
 
   it("accepts an optional snippet string and markerId on a block when id matches the marker anchor", () => {
@@ -59,7 +59,7 @@ describe("Index JSON shape validation", () => {
           id: "b1",
           anchor: "marker:b1",
           markerId: "b1",
-          snippet: "commentray-snippet/v1\n x",
+          snippet: "sidetrack-snippet/v1\n x",
         }),
       ),
     ).not.toThrow();

@@ -1,4 +1,4 @@
-export type { CommentrayBlock, CommentrayIndex, SourceFileIndexEntry } from "./model.js";
+export type { SideTrackBlock, SideTrackIndex, SourceFileIndexEntry } from "./model.js";
 export { coerceIndexSchemaVersion, CURRENT_SCHEMA_VERSION } from "./model.js";
 export type {
   AddBlockToIndexInput,
@@ -6,27 +6,27 @@ export type {
   BlockRange,
   CreateBlockForRangeInput,
   CreatedBlock,
-  WrapSourceLineRangeWithCommentrayMarkersInput,
-  WrapSourceLineRangeWithCommentrayMarkersResult,
+  WrapSourceLineRangeWithSideTrackMarkersInput,
+  WrapSourceLineRangeWithSideTrackMarkersResult,
 } from "./blocks.js";
 export {
   addBlockToIndex,
   alignAndCleanRegions,
-  appendBlockToCommentray,
+  appendBlockToSideTrack,
   createBlockForRange,
   generateBlockId,
   insertBlockBySourceMarkerOrder,
-  removeBlockFromCommentray,
+  removeBlockFromSideTrack,
   removeBlockFromIndex,
   removeSourceMarkersFromText,
-  wrapSourceLineRangeWithCommentrayMarkers,
+  wrapSourceLineRangeWithSideTrackMarkers,
 } from "./blocks.js";
 export { healSourceFile } from "./self-healing.js";
 export { assertValidAngleId } from "./angles.js";
 export {
-  applyAnglesFlatMigrationToCommentrayToml,
+  applyAnglesFlatMigrationToSideTrackToml,
   ensureAnglesSentinelFile,
-  upsertAngleDefinitionInCommentrayToml,
+  upsertAngleDefinitionInSideTrackToml,
 } from "./angles-toml.js";
 export type {
   ApplyAnglesFlatMigrationTomlInput,
@@ -35,36 +35,36 @@ export type {
 export {
   defaultAngleIdForOpen,
   FALLBACK_DEFAULT_ANGLE_ID,
-  resolveCommentrayMarkdownPath,
-} from "./commentray-path-resolution.js";
-export type { ResolvedCommentrayMarkdownPath } from "./commentray-path-resolution.js";
+  resolveSideTrackMarkdownPath,
+} from "./sidetrack-path-resolution.js";
+export type { ResolvedSideTrackMarkdownPath } from "./sidetrack-path-resolution.js";
 export {
-  commentrayAnglesLayoutEnabled,
-  commentrayAnglesSentinelPath,
-  commentrayMarkdownPath,
-  commentrayMarkdownPathForAngle,
+  sidetrackAnglesLayoutEnabled,
+  sidetrackAnglesSentinelPath,
+  sidetrackMarkdownPath,
+  sidetrackMarkdownPathForAngle,
   defaultMetadataIndexPath,
   normalizeRepoRelativePath,
   resolvePathUnderRepoRoot,
 } from "./paths.js";
 export { findMonorepoPackagesDir, monorepoLayoutStartDir } from "./monorepo-layout.js";
 export type {
-  CommentrayStaticBrowsePairPaths,
-  CommentrayStaticBrowsePathResolver,
+  SideTrackStaticBrowsePairPaths,
+  SideTrackStaticBrowsePathResolver,
 } from "./browse-contract.js";
-export { defaultCommentrayStaticBrowsePathResolver } from "./browse-path-default.js";
-export { staticBrowseIndexRelPathFromPair } from "./commentray-static-browse-path.js";
+export { defaultSideTrackStaticBrowsePathResolver } from "./browse-path-default.js";
+export { staticBrowseIndexRelPathFromPair } from "./sidetrack-static-browse-path.js";
 export {
-  commentrayActiveEditorUiFlags,
-  commentrayStorageSourcePrefix,
-} from "./commentray-active-editor-ui-context.js";
-export type { CommentrayActiveEditorUiFlags } from "./commentray-active-editor-ui-context.js";
+  sidetrackActiveEditorUiFlags,
+  sidetrackStorageSourcePrefix,
+} from "./sidetrack-active-editor-ui-context.js";
+export type { SideTrackActiveEditorUiFlags } from "./sidetrack-active-editor-ui-context.js";
 export {
-  commentrayPairSourceFileExistsOnDisk,
-  discoverCommentrayPairsOnDisk,
-  pairFromCommentraySourceRel,
-} from "./commentray-disk-pairs.js";
-export type { DiskCommentrayPair } from "./commentray-disk-pairs.js";
+  sidetrackPairSourceFileExistsOnDisk,
+  discoverSideTrackPairsOnDisk,
+  pairFromSideTrackSourceRel,
+} from "./sidetrack-disk-pairs.js";
+export type { DiskSideTrackPair } from "./sidetrack-disk-pairs.js";
 export {
   collectOrphanCompanionMarkdownTargets,
   orphanCompanionCleanupAbsPath,
@@ -75,18 +75,18 @@ export type {
   PruneOrphanCompanionMarkdownResult,
 } from "./orphan-companion-markdown.js";
 export type {
-  CommentrayToml,
+  SideTrackToml,
   ResolvedAngleDefinition,
   ResolvedAngles,
-  ResolvedCommentrayConfig,
+  ResolvedSideTrackConfig,
   ResolvedGithubNavLink,
   ResolvedStaticSite,
   StaticSiteStretchBufferSync,
 } from "./config.js";
 export {
   DEFAULT_STRETCH_BUFFER_SYNC,
-  loadCommentrayConfig,
-  mergeCommentrayConfig,
+  loadSideTrackConfig,
+  mergeSideTrackConfig,
   resolveMermaidRuntimePath,
 } from "./config.js";
 export { githubRepoBlobFileUrl, parseGithubRepoWebUrl } from "./github-url.js";
@@ -109,10 +109,10 @@ export { formatLineRange, parseAnchor } from "./anchors.js";
 export type { ScmPathRename, ScmProvider } from "./scm/scm-provider.js";
 export { GitScmProvider, parseGitRenameLines } from "./scm/git-scm-provider.js";
 export {
-  applyPathRenamesToCommentrayIndex,
-  inferAngleIdFromCommentrayPath,
-} from "./commentray-index-renames.js";
-export type { PathRename } from "./commentray-index-renames.js";
+  applyPathRenamesToSideTrackIndex,
+  inferAngleIdFromSideTrackPath,
+} from "./sidetrack-index-renames.js";
+export type { PathRename } from "./sidetrack-index-renames.js";
 export type { BlockDiagnostic } from "./staleness.js";
 export { diagnoseBlock } from "./staleness.js";
 export type {
@@ -127,14 +127,14 @@ export {
   writeIndex,
 } from "./validate-project.js";
 export {
-  DEFAULT_COMMENTRAY_TOML,
-  initializeCommentrayProject,
-  isCommentrayProjectInitialized,
+  DEFAULT_SIDETRACK_TOML,
+  initializeSideTrackProject,
+  isSideTrackProjectInitialized,
   pathExists,
 } from "./init-project.js";
 export type {
-  InitializeCommentrayProjectOptions,
-  InitializeCommentrayProjectResult,
+  InitializeSideTrackProjectOptions,
+  InitializeSideTrackProjectResult,
 } from "./init-project.js";
 export { ensureCompanionForSource } from "./companion-bootstrap.js";
 export type {
@@ -178,29 +178,29 @@ export { runCommanderMain } from "./cli-bootstrap.js";
 export type {
   BlockScrollLink,
   BlockScrollStickyState,
-  MarkdownHtmlCommentrayRegion,
+  MarkdownHtmlSideTrackRegion,
 } from "./scroll-sync.js";
 export {
   blockStrictlyContainingSourceViewportLine,
   buildBlockScrollLinks,
-  commentrayProbeInStrictInterMarkerGap,
-  DEFAULT_COMMENTRAY_VIEWPORT_HYSTERESIS_LINES,
+  sidetrackProbeInStrictInterMarkerGap,
+  DEFAULT_SIDETRACK_VIEWPORT_HYSTERESIS_LINES,
   DEFAULT_SOURCE_VIEWPORT_HYSTERESIS_LINES,
-  pickBlockScrollLinkForCommentrayScroll,
-  pickBlockScrollLinkForCommentrayViewportWithHysteresis,
+  pickBlockScrollLinkForSideTrackScroll,
+  pickBlockScrollLinkForSideTrackViewportWithHysteresis,
   pickBlockScrollLinkForSourceViewportTop,
   pickBlockScrollLinkForSourceViewportWithHysteresis,
-  pickCommentrayLineForSourceDualPane,
-  pickCommentrayLineForSourceScroll,
-  pickSourceLine0ForCommentrayScroll,
-  parseMarkdownHtmlCommentrayRegions,
+  pickSideTrackLineForSourceDualPane,
+  pickSideTrackLineForSourceScroll,
+  pickSourceLine0ForSideTrackScroll,
+  parseMarkdownHtmlSideTrackRegions,
   sourceTopLineStrictlyBeforeFirstIndexLine,
 } from "./scroll-sync.js";
 export {
-  commentrayRegionInsertions,
+  sidetrackRegionInsertions,
   lineCommentLeaderForLanguage,
   markerViewportHalfOpen1Based,
-  parseCommentrayRegionBoundary,
+  parseSideTrackRegionBoundary,
   sourceLineRangeForMarkerId,
 } from "./source-markers.js";
 export type {
@@ -222,17 +222,17 @@ export {
   tryNormaliseContextLabelToMarkerId,
   tryTomlTablePathAboveSelection,
 } from "./region-marker-naming.js";
-export type { CommentrayMarkerPair } from "./region-marker-convert.js";
+export type { SideTrackMarkerPair } from "./region-marker-convert.js";
 export {
-  convertCommentraySourceMarkersToLanguage,
-  findCommentrayMarkerPairs,
+  convertSideTrackSourceMarkersToLanguage,
+  findSideTrackMarkerPairs,
   leadingIndentOfLine,
 } from "./region-marker-convert.js";
 export { MARKER_ID_BODY, assertValidMarkerId, normaliseMarkerSlugOrThrow } from "./marker-ids.js";
 export type { MarkerValidationIssue } from "./marker-validation.js";
 export {
-  extractCommentrayBlockIdsInMarkdownOrder,
-  extractCommentrayBlockIdsFromMarkdown,
+  extractSideTrackBlockIdsInMarkdownOrder,
+  extractSideTrackBlockIdsFromMarkdown,
   validateIndexMarkerSemantics,
   validateMarkerBoundariesInSource,
   validateMarkerRegionsAgainstIndexedSources,

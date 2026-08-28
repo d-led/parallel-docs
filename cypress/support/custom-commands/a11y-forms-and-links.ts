@@ -59,11 +59,11 @@ Cypress.Commands.add("ColorThemeMenuShouldBeVisible", () => {
 });
 
 Cypress.Commands.add("ClickLightPresetInColorThemeMenu", () => {
-  cy.get(shellA11y.colorThemeMenu).find('[data-commentray-theme-value="light"]').click();
+  cy.get(shellA11y.colorThemeMenu).find('[data-sidetrack-theme-value="light"]').click();
 });
 
 Cypress.Commands.add("ColorThemeTriggerShouldReportLightMode", () => {
-  cy.get(shellA11y.colorThemeTrigger).should("have.attr", "data-commentray-trigger-mode", "light");
+  cy.get(shellA11y.colorThemeTrigger).should("have.attr", "data-sidetrack-trigger-mode", "light");
 });
 
 Cypress.Commands.add("ClickTopLeftOfMainLandmarkBody", () => {

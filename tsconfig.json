@@ -3,7 +3,7 @@
   "references": [
     { "path": "./packages/core" },
     { "path": "./packages/render" },
-    { "path": "./packages/code-commentray-static" },
+    { "path": "./packages/code-sidetrack-static" },
     { "path": "./packages/mcp-server" },
     { "path": "./packages/cli" },
     { "path": "./packages/vscode" }

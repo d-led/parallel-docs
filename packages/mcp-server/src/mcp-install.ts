@@ -34,19 +34,19 @@ const HARNESSES: HarnessConfig[] = [
 
 // ── MCP server entry (portable — no absolute paths) ───────────────────────
 
-const COMMENTRAY_DESCRIPTION =
-  "Commentray: out-of-file commentary anchored to code. " +
+const SIDETRACK_DESCRIPTION =
+  "SideTrack: out-of-file sidetrack anchored to code. " +
   'Explains design decisions, trade-offs, and rationale — the "why" that doesn\'t belong in comments or docs. ' +
-  "Strict separation: code comments (inline), documentation (standalone), Commentray (anchored, cross-linked).";
+  "Strict separation: code comments (inline), documentation (standalone), SideTrack (anchored, cross-linked).";
 
 function makeMcpEntry(): Record<string, unknown> {
   return {
-    commentray: {
+    sidetrack: {
       type: "stdio",
-      command: "commentray",
+      command: "sidetrack",
       args: ["mcp", "serve"],
       cwd: "${workspaceFolder}",
-      description: COMMENTRAY_DESCRIPTION,
+      description: SIDETRACK_DESCRIPTION,
     },
   };
 }
@@ -71,11 +71,11 @@ async function readOrEmpty(absPath: string): Promise<McpConfig> {
 /**
  * Install (or update) repo-local MCP config files for all supported harnesses.
  *
- * Each config file references `commentray mcp serve` as the command — fully
+ * Each config file references `sidetrack mcp serve` as the command — fully
  * portable, no absolute paths. Safe to commit to a multi-contributor repo.
  *
  * @param repoRoot Absolute path to the repo root
- * @param options dryRun (preview only), force (overwrite existing commentray entry)
+ * @param options dryRun (preview only), force (overwrite existing sidetrack entry)
  * @returns Array of results describing what happened for each harness
  */
 export async function installMcpConfigs(
@@ -97,9 +97,9 @@ export async function installMcpConfigs(
     }
 
     const existing = await readOrEmpty(configAbs);
-    const hasCommentray = existing.servers && "commentray" in existing.servers;
+    const hasSideTrack = existing.servers && "sidetrack" in existing.servers;
 
-    if (hasCommentray && !options.force) {
+    if (hasSideTrack && !options.force) {
       results.push({
         harness: harness.name,
         configFile: harness.configFileRel,
@@ -108,8 +108,8 @@ export async function installMcpConfigs(
       continue;
     }
 
-    const action = hasCommentray ? "updated" : "created";
-    const dryAction = hasCommentray ? "would_update" : "would_create";
+    const action = hasSideTrack ? "updated" : "created";
+    const dryAction = hasSideTrack ? "would_update" : "would_create";
 
     if (options.dryRun) {
       results.push({
@@ -120,7 +120,7 @@ export async function installMcpConfigs(
       continue;
     }
 
-    // Merge the Commentray entry into the existing config
+    // Merge the SideTrack entry into the existing config
     const merged: McpConfig = {
       ...existing,
       servers: {

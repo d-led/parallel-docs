@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 
-import { normalizeRepoRelativePath } from "@commentray/core";
+import { normalizeRepoRelativePath } from "@sidetrack/core";
 
 /**
  * Lists repo-relative paths of staged files (Git index), POSIX-normalized.

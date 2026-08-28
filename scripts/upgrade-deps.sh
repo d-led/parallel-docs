@@ -5,7 +5,7 @@ set -euo pipefail
 # root, then regenerate the lockfile and re-sync intra-monorepo pins.
 #
 # Delegates version resolution to `taze` (recursive mode). Intra-monorepo
-# `@commentray/*` deps are kept at their canonical version via
+# `@sidetrack/*` deps are kept at their canonical version via
 # `bash scripts/sync-workspace-deps.sh` — taze cannot know about those pins.
 #
 # Usage:
@@ -46,7 +46,7 @@ log_step "Running taze (${mode}, recursive) across all workspaces"
 # Exclude intra-monorepo packages: taze would try to fetch them from the
 # public npm registry and emit spurious 404s. sync-workspace-deps.sh
 # owns those pins.
-taze_exclude="@commentray/*,commentray-vscode"
+taze_exclude="@sidetrack/*,sidetrack-vscode"
 taze_args=("$mode" --recursive --include-locked --force --exclude "$taze_exclude")
 if [[ "$check" == true ]]; then
   echo "(check mode — no files will be modified)"
@@ -60,7 +60,7 @@ if [[ "$check" == true ]]; then
   exit 0
 fi
 
-log_step "Re-pinning intra-monorepo @commentray/* deps"
+log_step "Re-pinning intra-monorepo @sidetrack/* deps"
 bash scripts/sync-workspace-deps.sh
 
 if [[ "$do_install" == true ]]; then

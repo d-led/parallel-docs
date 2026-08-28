@@ -1,24 +1,24 @@
 import {
-  findCommentrayBlockMarkerHits,
+  findSideTrackBlockMarkerHits,
   recoverSourceMarkersFromSnippet,
   snippetFromRange,
 } from "./blocks.js";
-import { parseCommentrayRegionBoundary } from "./source-markers.js";
-import type { CommentrayIndex } from "./model.js";
+import { parseSideTrackRegionBoundary } from "./source-markers.js";
+import type { SideTrackIndex } from "./model.js";
 
 export function healSourceFile(args: {
   sourceText: string;
   languageId: string;
   companionMarkdown: string;
-  index: CommentrayIndex;
-  commentrayPath: string;
+  index: SideTrackIndex;
+  sidetrackPath: string;
 }): {
   sourceText: string;
-  index: CommentrayIndex;
+  index: SideTrackIndex;
   healedCount: number;
 } {
-  const markdownHits = findCommentrayBlockMarkerHits(args.companionMarkdown);
-  const entry = args.index.byCommentrayPath[args.commentrayPath];
+  const markdownHits = findSideTrackBlockMarkerHits(args.companionMarkdown);
+  const entry = args.index.bySideTrackPath[args.sidetrackPath];
   if (!entry) {
     return { sourceText: args.sourceText, index: args.index, healedCount: 0 };
   }
@@ -58,9 +58,9 @@ export function healSourceFile(args: {
     return { sourceText: args.sourceText, index: args.index, healedCount: 0 };
   }
 
-  const nextByCommentrayPath = {
-    ...args.index.byCommentrayPath,
-    [args.commentrayPath]: {
+  const nextBySideTrackPath = {
+    ...args.index.bySideTrackPath,
+    [args.sidetrackPath]: {
       ...entry,
       blocks: updatedBlocks,
     },
@@ -70,7 +70,7 @@ export function healSourceFile(args: {
     sourceText: currentSourceText,
     index: {
       ...args.index,
-      byCommentrayPath: nextByCommentrayPath,
+      bySideTrackPath: nextBySideTrackPath,
     },
     healedCount,
   };
@@ -80,7 +80,7 @@ function hasRegionInSource(sourceText: string, markerId: string): boolean {
   const normalized = markerId.toLowerCase();
   const lines = sourceText.split("\n");
   for (const line of lines) {
-    const hit = parseCommentrayRegionBoundary(line);
+    const hit = parseSideTrackRegionBoundary(line);
     if (hit && hit.id.toLowerCase() === normalized) {
       return true;
     }

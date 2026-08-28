@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Run Commentray VS Code extension integration tests inside your current
-# Antigravity IDE (or Cursor/VS Code if specified via COMMENTRAY_EDITOR).
+# Run SideTrack VS Code extension integration tests inside your current
+# Antigravity IDE (or Cursor/VS Code if specified via SIDETRACK_EDITOR).
 #
 # Usage:
 #   bash scripts/test-in-this-ide.sh
@@ -12,8 +12,8 @@ cd "$REPO_ROOT"
 
 # Resolve the path to the Antigravity IDE/editor application CLI
 IDE_BIN=""
-if [[ -n "${COMMENTRAY_EDITOR:-}" ]]; then
-  IDE_BIN="$COMMENTRAY_EDITOR"
+if [[ -n "${SIDETRACK_EDITOR:-}" ]]; then
+  IDE_BIN="$SIDETRACK_EDITOR"
 elif command -v antigravity-ide >/dev/null 2>&1; then
   IDE_BIN="$(which antigravity-ide)"
 elif [[ -n "${ANTIGRAVITY_EDITOR_APP_ROOT:-}" ]] && [[ -f "$ANTIGRAVITY_EDITOR_APP_ROOT/bin/antigravity-ide" ]]; then
@@ -57,8 +57,8 @@ fi
 echo "==> Running VS Code integration tests using: $VSCODE_TEST_PATH"
 
 # Build all dependencies to be sure we are running on fresh bundles
-npm run build -w @commentray/core
-npm run build -w @commentray/render
+npm run build -w @sidetrack/core
+npm run build -w @sidetrack/render
 cd packages/vscode
 npm run build
 

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Bump the version of every Commentray workspace package in lockstep,
-# sync intra-workspace @commentray/* dep pins (via bash scripts/sync-workspace-deps.sh),
+# Bump the version of every SideTrack workspace package in lockstep,
+# sync intra-workspace @sidetrack/* dep pins (via bash scripts/sync-workspace-deps.sh),
 # and update CHANGELOG.md if it exists. Does not run git: no commit, no tag.
 # Use when you want to edit versions alongside other work, then commit when ready.
 #
@@ -112,7 +112,7 @@ echo "New version:     $new_version"
 if [[ "$dry_run" == true ]]; then
   echo ""
   echo "=== DRY RUN ==="
-  echo "Would align @commentray/* pins to canonical (bash scripts/sync-workspace-deps.sh),"
+  echo "Would align @sidetrack/* pins to canonical (bash scripts/sync-workspace-deps.sh),"
   if [[ "$new_version" != "$current" ]]; then
     echo "set every packages/*/package.json version ($current -> $new_version) via"
     echo "node scripts/set-workspace-versions.mjs, re-sync pins, update CHANGELOG.md if present,"
@@ -123,13 +123,13 @@ if [[ "$dry_run" == true ]]; then
   exit 0
 fi
 
-log_info "Aligning @commentray/* dependency pins to canonical $current..."
+log_info "Aligning @sidetrack/* dependency pins to canonical $current..."
 bash scripts/sync-workspace-deps.sh
 
 if [[ "$new_version" != "$current" ]]; then
   log_info "Setting every workspace package version to $new_version..."
   node scripts/set-workspace-versions.mjs "$new_version"
-  log_info "Re-aligning @commentray/* dependency pins to $new_version..."
+  log_info "Re-aligning @sidetrack/* dependency pins to $new_version..."
   bash scripts/sync-workspace-deps.sh
 else
   log_info "Canonical version already $new_version; skipping workspace version writes."

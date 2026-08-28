@@ -4,8 +4,8 @@
 #   bash scripts/show-vscode-readme-screenshots.sh
 #   npm run extension:vscode-readme-screenshots:show
 #
-# Assets live under `.commentray/source/packages/vscode/README.md/assets/` (see
-# `scripts/refresh-vscode-readme-screenshots-desktop.sh`). Honors COMMENTRAY_EDITOR, else `cursor`,
+# Assets live under `.sidetrack/source/packages/vscode/README.md/assets/` (see
+# `scripts/refresh-vscode-readme-screenshots-desktop.sh`). Honors SIDETRACK_EDITOR, else `cursor`,
 # else `code` (same as scripts/lib/pick-editor-cli.sh).
 
 set -euo pipefail
@@ -14,7 +14,7 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # shellcheck source=lib/pick-editor-cli.sh
 source "$REPO_ROOT/scripts/lib/pick-editor-cli.sh"
 
-ASSETS="$REPO_ROOT/.commentray/source/packages/vscode/README.md/assets"
+ASSETS="$REPO_ROOT/.sidetrack/source/packages/vscode/README.md/assets"
 
 if [[ ! -d "$ASSETS" ]]; then
   echo "No assets directory at:" >&2
@@ -47,7 +47,7 @@ if [[ ${#sorted[@]} -eq 0 ]]; then
   exit 1
 fi
 
-CLI="$(commentray_pick_editor_cli)" || exit 1
+CLI="$(sidetrack_pick_editor_cli)" || exit 1
 
 echo "Opening ${#sorted[@]} screenshot(s) with: $CLI"
 for f in "${sorted[@]}"; do

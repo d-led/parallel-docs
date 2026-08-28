@@ -1,35 +1,35 @@
 /** Persisted in {@link readWebStorageItem} / {@link writeWebStorageItem} for the static code browser. */
-export const COMMENTRAY_COLOR_THEME_STORAGE_KEY = "commentray.codeCommentrayStatic.colorTheme";
+export const SIDETRACK_COLOR_THEME_STORAGE_KEY = "sidetrack.codeSideTrackStatic.colorTheme";
 
-export type CommentrayColorThemeMode = "system" | "light" | "dark";
+export type SideTrackColorThemeMode = "system" | "light" | "dark";
 
 /** Order used when cycling the theme via secondary click (e.g. context menu). */
-export const COMMENTRAY_COLOR_THEME_CYCLE: readonly CommentrayColorThemeMode[] = [
+export const SIDETRACK_COLOR_THEME_CYCLE: readonly SideTrackColorThemeMode[] = [
   "system",
   "light",
   "dark",
 ];
 
-export function nextCommentrayColorThemeMode(
-  mode: CommentrayColorThemeMode,
-): CommentrayColorThemeMode {
-  const i = COMMENTRAY_COLOR_THEME_CYCLE.indexOf(mode);
-  const next = (i >= 0 ? i + 1 : 0) % COMMENTRAY_COLOR_THEME_CYCLE.length;
-  return COMMENTRAY_COLOR_THEME_CYCLE[next] ?? "system";
+export function nextSideTrackColorThemeMode(
+  mode: SideTrackColorThemeMode,
+): SideTrackColorThemeMode {
+  const i = SIDETRACK_COLOR_THEME_CYCLE.indexOf(mode);
+  const next = (i >= 0 ? i + 1 : 0) % SIDETRACK_COLOR_THEME_CYCLE.length;
+  return SIDETRACK_COLOR_THEME_CYCLE[next] ?? "system";
 }
 
-export function parseCommentrayColorThemeMode(
+export function parseSideTrackColorThemeMode(
   stored: string | null | undefined,
-): CommentrayColorThemeMode {
+): SideTrackColorThemeMode {
   if (stored === "light" || stored === "dark" || stored === "system") return stored;
   return "system";
 }
 
-export function syncHighlightJsStylesheets(mode: CommentrayColorThemeMode): void {
+export function syncHighlightJsStylesheets(mode: SideTrackColorThemeMode): void {
   const doc = globalThis.document;
   if (!doc) return;
-  const light = doc.getElementById("commentray-hljs-light");
-  const darkEl = doc.getElementById("commentray-hljs-dark");
+  const light = doc.getElementById("sidetrack-hljs-light");
+  const darkEl = doc.getElementById("sidetrack-hljs-dark");
   if (!(light instanceof HTMLStyleElement) || !(darkEl instanceof HTMLStyleElement)) return;
 
   if (mode === "light") {
@@ -52,27 +52,27 @@ export function syncHighlightJsStylesheets(mode: CommentrayColorThemeMode): void
   darkEl.media = "(prefers-color-scheme: dark)";
 }
 
-export function applyCommentrayColorTheme(mode: CommentrayColorThemeMode): void {
+export function applySideTrackColorTheme(mode: SideTrackColorThemeMode): void {
   const root = globalThis.document?.documentElement;
   if (!root) return;
-  root.dataset.commentrayTheme = mode;
+  root.dataset.sidetrackTheme = mode;
   syncHighlightJsStylesheets(mode);
 }
 
 /**
  * Synchronous boot snippet for `<head>` (after the two Highlight.js `<link>` nodes). Applies
- * stored theme before first paint. Must stay aligned with {@link applyCommentrayColorTheme}.
+ * stored theme before first paint. Must stay aligned with {@link applySideTrackColorTheme}.
  */
-export function commentrayColorThemeHeadBoot(): string {
-  const key = COMMENTRAY_COLOR_THEME_STORAGE_KEY;
+export function sidetrackColorThemeHeadBoot(): string {
+  const key = SIDETRACK_COLOR_THEME_STORAGE_KEY;
   return (
     "(function(){" +
     `var k=${JSON.stringify(key)};` +
     "var m='system';" +
     "try{var v=localStorage.getItem(k);if(v==='light'||v==='dark'||v==='system')m=v;}catch(e){}" +
-    "document.documentElement.dataset.commentrayTheme=m;" +
-    "var L=document.getElementById('commentray-hljs-light');" +
-    "var D=document.getElementById('commentray-hljs-dark');" +
+    "document.documentElement.dataset.sidetrackTheme=m;" +
+    "var L=document.getElementById('sidetrack-hljs-light');" +
+    "var D=document.getElementById('sidetrack-hljs-dark');" +
     "if(!L||!D||!(L instanceof HTMLStyleElement)||!(D instanceof HTMLStyleElement))return;" +
     "if(m==='light'){L.disabled=false;L.removeAttribute('media');D.disabled=true;D.setAttribute('media','(prefers-color-scheme: dark)');return;}" +
     "if(m==='dark'){D.disabled=false;D.removeAttribute('media');L.disabled=true;L.setAttribute('media','(prefers-color-scheme: light)');return;}" +

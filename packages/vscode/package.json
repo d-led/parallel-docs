@@ -1,19 +1,19 @@
 {
-  "name": "commentray-vscode",
-  "displayName": "Commentray",
-  "description": "Side-by-side authoring for Commentray markdown tracks",
-  "version": "0.4.2",
+  "name": "sidetrack-vscode",
+  "displayName": "SideTrack",
+  "description": "Out-of-file documentation side tracks, authored side-by-side with your code",
+  "version": "1.0.0",
   "publisher": "d-led",
   "license": "MPL-2.0",
   "icon": "icon.png",
   "repository": {
     "type": "git",
-    "url": "https://github.com/d-led/commentray.git",
+    "url": "https://github.com/d-led/sidetrack.git",
     "directory": "packages/vscode"
   },
-  "homepage": "https://github.com/d-led/commentray#readme",
+  "homepage": "https://github.com/d-led/sidetrack#readme",
   "bugs": {
-    "url": "https://github.com/d-led/commentray/issues"
+    "url": "https://github.com/d-led/sidetrack/issues"
   },
   "engines": {
     "vscode": "^1.95.0"
@@ -22,200 +22,200 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:commentray.init",
-    "onCommand:commentray.openSideBySide",
-    "onCommand:commentray.openCommentrayAngle",
-    "onCommand:commentray.addAngleDefinition",
-    "onCommand:commentray.startBlockFromSelection",
-    "onCommand:commentray.openCommentrayPreview",
-    "onCommand:commentray.openRenderedPreview",
-    "onCommand:commentray.openRenderedPreviewChooseAngle",
-    "onCommand:commentray.validateWorkspace",
-    "onCommand:commentray.openCorrespondingSource",
-    "onCommand:commentray.removeBlock",
-    "onCommand:commentray.cleanRegions",
-    "onCommand:commentray.repairFile"
+    "onCommand:sidetrack.init",
+    "onCommand:sidetrack.openSideBySide",
+    "onCommand:sidetrack.openSideTrackAngle",
+    "onCommand:sidetrack.addAngleDefinition",
+    "onCommand:sidetrack.startBlockFromSelection",
+    "onCommand:sidetrack.openSideTrackPreview",
+    "onCommand:sidetrack.openRenderedPreview",
+    "onCommand:sidetrack.openRenderedPreviewChooseAngle",
+    "onCommand:sidetrack.validateWorkspace",
+    "onCommand:sidetrack.openCorrespondingSource",
+    "onCommand:sidetrack.removeBlock",
+    "onCommand:sidetrack.cleanRegions",
+    "onCommand:sidetrack.repairFile"
   ],
   "main": "./dist/extension.js",
   "contributes": {
     "configuration": {
-      "title": "Commentray",
+      "title": "SideTrack",
       "properties": {
-        "commentray.scrollSync.enabled": {
+        "sidetrack.scrollSync.enabled": {
           "type": "boolean",
           "default": true,
-          "markdownDescription": "When enabled, scrolling the source editor updates the paired commentray editor (and vice versa), using block anchors when available. Reload or reopen the pair after changing this setting."
+          "markdownDescription": "When enabled, scrolling the source editor updates the paired sidetrack editor (and vice versa), using block anchors when available. Reload or reopen the pair after changing this setting."
         }
       }
     },
     "commands": [
       {
-        "command": "commentray.init",
+        "command": "sidetrack.init",
         "title": "Initialize workspace",
-        "category": "Commentray",
-        "enablement": "!commentray.workspaceInitialized"
+        "category": "SideTrack",
+        "enablement": "!sidetrack.workspaceInitialized"
       },
       {
-        "command": "commentray.openSideBySide",
+        "command": "sidetrack.openSideBySide",
         "title": "Open paired markdown beside editor",
-        "category": "Commentray",
-        "enablement": "commentray.workspaceInitialized && !commentray.activeEditorUnderCompanionSourceTree"
+        "category": "SideTrack",
+        "enablement": "sidetrack.workspaceInitialized && !sidetrack.activeEditorUnderCompanionSourceTree"
       },
       {
-        "command": "commentray.openCommentrayAngle",
+        "command": "sidetrack.openSideTrackAngle",
         "title": "Open paired markdown (choose angle)",
-        "category": "Commentray",
-        "enablement": "commentray.workspaceInitialized && !commentray.activeEditorUnderCompanionSourceTree"
+        "category": "SideTrack",
+        "enablement": "sidetrack.workspaceInitialized && !sidetrack.activeEditorUnderCompanionSourceTree"
       },
       {
-        "command": "commentray.addAngleDefinition",
+        "command": "sidetrack.addAngleDefinition",
         "title": "Add angle to project…",
-        "category": "Commentray",
-        "enablement": "commentray.workspaceInitialized"
+        "category": "SideTrack",
+        "enablement": "sidetrack.workspaceInitialized"
       },
       {
-        "command": "commentray.startBlockFromSelection",
-        "title": "Add commentary block from selection",
-        "category": "Commentray",
-        "enablement": "commentray.workspaceInitialized && !commentray.activeEditorUnderCompanionSourceTree && !editorReadonly"
+        "command": "sidetrack.startBlockFromSelection",
+        "title": "Add side-track block from selection",
+        "category": "SideTrack",
+        "enablement": "sidetrack.workspaceInitialized && !sidetrack.activeEditorUnderCompanionSourceTree && !editorReadonly"
       },
       {
-        "command": "commentray.openCommentrayPreview",
+        "command": "sidetrack.openSideTrackPreview",
         "title": "Open Markdown preview for paired file",
-        "category": "Commentray",
-        "enablement": "commentray.workspaceInitialized && (!commentray.activeEditorUnderCompanionSourceTree || editorLangId == markdown)"
+        "category": "SideTrack",
+        "enablement": "sidetrack.workspaceInitialized && (!sidetrack.activeEditorUnderCompanionSourceTree || editorLangId == markdown)"
       },
       {
-        "command": "commentray.openRenderedPreview",
-        "title": "Open rendered Commentray preview (default angle)",
-        "category": "Commentray",
-        "enablement": "commentray.workspaceInitialized && !commentray.activeEditorUnderCompanionSourceTree"
+        "command": "sidetrack.openRenderedPreview",
+        "title": "Open rendered SideTrack preview (default angle)",
+        "category": "SideTrack",
+        "enablement": "sidetrack.workspaceInitialized && !sidetrack.activeEditorUnderCompanionSourceTree"
       },
       {
-        "command": "commentray.openRenderedPreviewChooseAngle",
-        "title": "Open rendered Commentray preview (choose angle)…",
-        "category": "Commentray",
-        "enablement": "commentray.workspaceInitialized && !commentray.activeEditorUnderCompanionSourceTree"
+        "command": "sidetrack.openRenderedPreviewChooseAngle",
+        "title": "Open rendered SideTrack preview (choose angle)…",
+        "category": "SideTrack",
+        "enablement": "sidetrack.workspaceInitialized && !sidetrack.activeEditorUnderCompanionSourceTree"
       },
       {
-        "command": "commentray.validateWorkspace",
+        "command": "sidetrack.validateWorkspace",
         "title": "Validate workspace",
-        "category": "Commentray"
+        "category": "SideTrack"
       },
       {
-        "command": "commentray.openCorrespondingSource",
+        "command": "sidetrack.openCorrespondingSource",
         "title": "Open corresponding source file",
-        "category": "Commentray",
-        "enablement": "commentray.workspaceInitialized && commentray.activeEditorIsResolvableCompanionMarkdown"
+        "category": "SideTrack",
+        "enablement": "sidetrack.workspaceInitialized && sidetrack.activeEditorIsResolvableCompanionMarkdown"
       },
       {
-        "command": "commentray.removeBlock",
-        "title": "Remove commentary block/region",
-        "category": "Commentray",
-        "enablement": "commentray.workspaceInitialized && !editorReadonly"
+        "command": "sidetrack.removeBlock",
+        "title": "Remove side-track block/region",
+        "category": "SideTrack",
+        "enablement": "sidetrack.workspaceInitialized && !editorReadonly"
       },
       {
-        "command": "commentray.cleanRegions",
-        "title": "Clean and align commentary regions",
-        "category": "Commentray",
-        "enablement": "commentray.workspaceInitialized"
+        "command": "sidetrack.cleanRegions",
+        "title": "Clean and align sidetrack regions",
+        "category": "SideTrack",
+        "enablement": "sidetrack.workspaceInitialized"
       },
       {
-        "command": "commentray.repairFile",
-        "title": "Repair commentary region markers",
-        "category": "Commentray",
-        "enablement": "commentray.workspaceInitialized && !editorReadonly"
+        "command": "sidetrack.repairFile",
+        "title": "Repair sidetrack region markers",
+        "category": "SideTrack",
+        "enablement": "sidetrack.workspaceInitialized && !editorReadonly"
       }
     ],
     "keybindings": [
       {
-        "command": "commentray.openSideBySide",
+        "command": "sidetrack.openSideBySide",
         "key": "ctrl+alt+o",
         "mac": "cmd+alt+o",
-        "when": "editorTextFocus && commentray.workspaceInitialized && !commentray.activeEditorUnderCompanionSourceTree"
+        "when": "editorTextFocus && sidetrack.workspaceInitialized && !sidetrack.activeEditorUnderCompanionSourceTree"
       },
       {
-        "command": "commentray.startBlockFromSelection",
+        "command": "sidetrack.startBlockFromSelection",
         "key": "ctrl+alt+k",
         "mac": "cmd+alt+k",
-        "when": "editorTextFocus && commentray.workspaceInitialized && !editorReadonly && !commentray.activeEditorUnderCompanionSourceTree"
+        "when": "editorTextFocus && sidetrack.workspaceInitialized && !editorReadonly && !sidetrack.activeEditorUnderCompanionSourceTree"
       }
     ],
     "menus": {
       "editor/context": [
         {
-          "command": "commentray.init",
-          "group": "commentray@0",
-          "when": "editorTextFocus && !commentray.workspaceInitialized"
+          "command": "sidetrack.init",
+          "group": "sidetrack@0",
+          "when": "editorTextFocus && !sidetrack.workspaceInitialized"
         },
         {
-          "command": "commentray.openSideBySide",
-          "group": "commentray@1",
-          "when": "editorTextFocus && commentray.workspaceInitialized && !commentray.activeEditorUnderCompanionSourceTree"
+          "command": "sidetrack.openSideBySide",
+          "group": "sidetrack@1",
+          "when": "editorTextFocus && sidetrack.workspaceInitialized && !sidetrack.activeEditorUnderCompanionSourceTree"
         },
         {
-          "command": "commentray.openCommentrayAngle",
-          "group": "commentray@1b",
-          "when": "editorTextFocus && commentray.workspaceInitialized && !commentray.activeEditorUnderCompanionSourceTree"
+          "command": "sidetrack.openSideTrackAngle",
+          "group": "sidetrack@1b",
+          "when": "editorTextFocus && sidetrack.workspaceInitialized && !sidetrack.activeEditorUnderCompanionSourceTree"
         },
         {
-          "command": "commentray.openRenderedPreview",
-          "group": "commentray@1d",
-          "when": "editorTextFocus && commentray.workspaceInitialized && !commentray.activeEditorUnderCompanionSourceTree"
+          "command": "sidetrack.openRenderedPreview",
+          "group": "sidetrack@1d",
+          "when": "editorTextFocus && sidetrack.workspaceInitialized && !sidetrack.activeEditorUnderCompanionSourceTree"
         },
         {
-          "command": "commentray.openRenderedPreviewChooseAngle",
-          "group": "commentray@1e",
-          "when": "editorTextFocus && commentray.workspaceInitialized && !commentray.activeEditorUnderCompanionSourceTree"
+          "command": "sidetrack.openRenderedPreviewChooseAngle",
+          "group": "sidetrack@1e",
+          "when": "editorTextFocus && sidetrack.workspaceInitialized && !sidetrack.activeEditorUnderCompanionSourceTree"
         },
         {
-          "command": "commentray.addAngleDefinition",
-          "group": "commentray@1c",
-          "when": "editorTextFocus && commentray.workspaceInitialized"
+          "command": "sidetrack.addAngleDefinition",
+          "group": "sidetrack@1c",
+          "when": "editorTextFocus && sidetrack.workspaceInitialized"
         },
         {
-          "command": "commentray.startBlockFromSelection",
-          "group": "commentray@2",
-          "when": "editorTextFocus && commentray.workspaceInitialized && !editorReadonly && !commentray.activeEditorUnderCompanionSourceTree"
+          "command": "sidetrack.startBlockFromSelection",
+          "group": "sidetrack@2",
+          "when": "editorTextFocus && sidetrack.workspaceInitialized && !editorReadonly && !sidetrack.activeEditorUnderCompanionSourceTree"
         },
         {
-          "command": "commentray.openCorrespondingSource",
-          "group": "commentray@1f",
-          "when": "editorTextFocus && commentray.workspaceInitialized && commentray.activeEditorIsResolvableCompanionMarkdown"
+          "command": "sidetrack.openCorrespondingSource",
+          "group": "sidetrack@1f",
+          "when": "editorTextFocus && sidetrack.workspaceInitialized && sidetrack.activeEditorIsResolvableCompanionMarkdown"
         },
         {
-          "command": "commentray.removeBlock",
-          "group": "commentray@2a",
-          "when": "editorTextFocus && commentray.workspaceInitialized && !editorReadonly"
+          "command": "sidetrack.removeBlock",
+          "group": "sidetrack@2a",
+          "when": "editorTextFocus && sidetrack.workspaceInitialized && !editorReadonly"
         },
         {
-          "command": "commentray.cleanRegions",
-          "group": "commentray@2b",
-          "when": "editorTextFocus && commentray.workspaceInitialized"
+          "command": "sidetrack.cleanRegions",
+          "group": "sidetrack@2b",
+          "when": "editorTextFocus && sidetrack.workspaceInitialized"
         },
         {
-          "command": "commentray.repairFile",
-          "group": "commentray@2c",
-          "when": "editorTextFocus && commentray.workspaceInitialized && !editorReadonly"
+          "command": "sidetrack.repairFile",
+          "group": "sidetrack@2c",
+          "when": "editorTextFocus && sidetrack.workspaceInitialized && !editorReadonly"
         }
       ],
       "explorer/context": [
         {
-          "command": "commentray.init",
-          "group": "commentray@0",
-          "when": "resourceScheme == file && !commentray.workspaceInitialized"
+          "command": "sidetrack.init",
+          "group": "sidetrack@0",
+          "when": "resourceScheme == file && !sidetrack.workspaceInitialized"
         },
         {
-          "command": "commentray.openSideBySide",
-          "group": "commentray@1",
-          "when": "resourceScheme == file && commentray.workspaceInitialized"
+          "command": "sidetrack.openSideBySide",
+          "group": "sidetrack@1",
+          "when": "resourceScheme == file && sidetrack.workspaceInitialized"
         }
       ]
     },
     "snippets": [
       {
         "language": "markdown",
-        "path": "./snippets/commentray-markdown.code-snippets"
+        "path": "./snippets/sidetrack-markdown.code-snippets"
       }
     ]
   },
@@ -226,8 +226,8 @@
     "test:vscode": "tsc -p tsconfig.tests.json && vscode-test"
   },
   "dependencies": {
-    "@commentray/core": "0.4.2",
-    "@commentray/render": "0.4.2"
+    "@sidetrack/core": "1.0.0",
+    "@sidetrack/render": "1.0.0"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",

@@ -1,7 +1,7 @@
 import { defineConfig } from "cypress";
 
-/** Keep in sync with `scripts/e2e-static-serve.mjs` (override with `COMMENTRAY_E2E_PORT`). */
-const commentrayE2ePort = (process.env.COMMENTRAY_E2E_PORT ?? "14173").trim();
+/** Keep in sync with `scripts/e2e-static-serve.mjs` (override with `SIDETRACK_E2E_PORT`). */
+const sidetrackE2ePort = (process.env.SIDETRACK_E2E_PORT ?? "14173").trim();
 
 export default defineConfig({
   reporter: "mocha-junit-reporter",
@@ -17,7 +17,7 @@ export default defineConfig({
     /** Matches wide dual-pane specs: keeps `matchMedia('(max-width: 767px)')` false and toolbar chrome visible. */
     viewportWidth: 1280,
     viewportHeight: 900,
-    baseUrl: `http://127.0.0.1:${commentrayE2ePort}`,
+    baseUrl: `http://127.0.0.1:${sidetrackE2ePort}`,
     supportFile: "cypress/support/e2e.ts",
     specPattern: "cypress/e2e/**/*.cy.ts",
     excludeSpecPattern: "**/screenshot*.cy.ts",

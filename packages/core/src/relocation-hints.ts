@@ -1,12 +1,12 @@
 import { parseAnchor } from "./anchors.js";
-import { parseCommentraySnippetV1 } from "./block-snippet.js";
-import type { CommentrayBlock, CommentrayIndex, SourceFileIndexEntry } from "./model.js";
+import { parseSideTrackSnippetV1 } from "./block-snippet.js";
+import type { SideTrackBlock, SideTrackIndex, SourceFileIndexEntry } from "./model.js";
 import { normalizeRepoRelativePath } from "./paths.js";
-import { findCommentrayMarkerPairs } from "./region-marker-convert.js";
+import { findSideTrackMarkerPairs } from "./region-marker-convert.js";
 import type { ScmPathRename } from "./scm/scm-provider.js";
 
 export type RelocationHintsInput = {
-  index: CommentrayIndex;
+  index: SideTrackIndex;
   /** Normalized repo-relative paths that are indexed but not readable on disk */
   missingSourcePathsNorm: ReadonlySet<string>;
   /** Optional Git renames (same shape as `sync-moved-paths`, e.g. `HEAD~1` → `HEAD`) */
@@ -16,10 +16,10 @@ export type RelocationHintsInput = {
 };
 
 function entriesForNormalizedSource(
-  index: CommentrayIndex,
+  index: SideTrackIndex,
   missingNorm: string,
 ): SourceFileIndexEntry[] {
-  return Object.values(index.byCommentrayPath).filter(
+  return Object.values(index.bySideTrackPath).filter(
     (e) => normalizeRepoRelativePath(e.sourcePath) === missingNorm,
   );
 }
@@ -32,15 +32,15 @@ function markerPathsContainingId(
   const out: string[] = [];
   for (const [p, text] of textsByPath) {
     if (p === excludeNorm) continue;
-    const pairs = findCommentrayMarkerPairs(text);
+    const pairs = findSideTrackMarkerPairs(text);
     if (pairs.some((pair) => pair.id === markerId)) out.push(p);
   }
   return [...new Set(out)].sort((a, b) => a.localeCompare(b));
 }
 
-function snippetNeedleFromBlock(block: CommentrayBlock): string | null {
+function snippetNeedleFromBlock(block: SideTrackBlock): string | null {
   if (!block.snippet) return null;
-  const lines = parseCommentraySnippetV1(block.snippet);
+  const lines = parseSideTrackSnippetV1(block.snippet);
   if (!lines || lines.length === 0) return null;
   const substantive = lines.map((l) => l.trim()).filter((l) => l.length >= 3);
   if (substantive.length === 0) return null;
@@ -61,7 +61,7 @@ function pathsContainingSnippetNeedle(
   return [...new Set(out)].sort((a, b) => a.localeCompare(b));
 }
 
-function markerIdFromBlock(block: CommentrayBlock): string | null {
+function markerIdFromBlock(block: SideTrackBlock): string | null {
   try {
     const a = parseAnchor(block.anchor);
     if (a.kind === "marker") return a.id;
@@ -85,7 +85,7 @@ function collectMarkerIds(entries: readonly SourceFileIndexEntry[]): Set<string>
 function gitRenameHint(prefix: string, gitHit: ScmPathRename): string {
   const to = normalizeRepoRelativePath(gitHit.to);
   return (
-    `${prefix}: Git lists a rename to "${to}". Run: commentray sync-moved-paths --from HEAD~1 --to HEAD ` +
+    `${prefix}: Git lists a rename to "${to}". Run: sidetrack sync-moved-paths --from HEAD~1 --to HEAD ` +
     `(adjust --from/--to to the commit range that contains the rename).`
   );
 }
@@ -102,7 +102,7 @@ function markerHintsForMissing(
     if (paths.length === 1) {
       out.push(
         `${prefix}: marker id "${mid}" appears in indexed source "${paths[0]}". ` +
-          `If commentary should follow that file, update index sourcePath (e.g. apply renames then sync-moved-paths, or edit index.json).`,
+          `If sidetrack should follow that file, update index sourcePath (e.g. apply renames then sync-moved-paths, or edit index.json).`,
       );
     } else if (paths.length > 1) {
       out.push(
@@ -115,7 +115,7 @@ function markerHintsForMissing(
 
 function snippetHintLineForBlock(
   prefix: string,
-  block: CommentrayBlock,
+  block: SideTrackBlock,
   texts: ReadonlyMap<string, string>,
   missingNorm: string,
 ): string | null {
@@ -179,7 +179,7 @@ function symbolOpaqueHints(
   if (needsSymbolNote) {
     out.push(
       `${prefix}: one or more blocks use symbol: anchors (${affectedMd.join(", ")}). ` +
-        `After a cross-file move, re-point anchors with language tooling or by hand — Commentray does not resolve symbols across files yet.`,
+        `After a cross-file move, re-point anchors with language tooling or by hand — SideTrack does not resolve symbols across files yet.`,
     );
   }
   if (needsOpaqueNote) {
@@ -192,7 +192,7 @@ function symbolOpaqueHints(
 
 function hintsForOneMissingPath(missingNorm: string, input: RelocationHintsInput): string[] {
   const entries = entriesForNormalizedSource(input.index, missingNorm);
-  const affectedMd = [...new Set(entries.map((e) => e.commentrayPath))].sort((a, b) =>
+  const affectedMd = [...new Set(entries.map((e) => e.sidetrackPath))].sort((a, b) =>
     a.localeCompare(b),
   );
   const prefix = `Missing primary "${missingNorm}"`;

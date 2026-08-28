@@ -1,34 +1,34 @@
 # Development
 
-Hands-on notes for working on Commentray itself: building, debugging, and
+Hands-on notes for working on SideTrack itself: building, debugging, and
 observing the editor extension while dogfooding. If you just want to
-install Commentray to use it, see the top-level `README.md`.
+install SideTrack to use it, see the top-level `README.md`.
 
 ## Dogfood: README on GitHub Pages
 
-This repository pairs the root **`README.md`** with longer commentary under **`.commentray/source/README.md/`** for the **`[static_site]`** build (see the root **`.commentray.toml`**). The README stays relatively factual; the commentary file is the voice-over (trade-offs, cookbook, diagrams). Open the **[published site](https://d-led.github.io/commentray/)** to try scroll-linked panes on the static output without installing anything.
+This repository pairs the root **`README.md`** with longer sidetrack under **`.sidetrack/source/README.md/`** for the **`[static_site]`** build (see the root **`.sidetrack.toml`**). The README stays relatively factual; the sidetrack file is the voice-over (trade-offs, cookbook, diagrams). Open the **[published site](https://d-led.github.io/sidetrack/)** to try scroll-linked panes on the static output without installing anything.
 
 ## Layout
 
-<!-- #region commentray:dev-layout -->
+<!-- #region sidetrack:dev-layout -->
 
-- `packages/core` — shared library (`.commentray.toml` parsing, path
+- `packages/core` — shared library (`.sidetrack.toml` parsing, path
   normalization, metadata schema, validation, git adapter).
 - `packages/render` — Markdown → HTML renderer + client-side bundle for
   the static site.
-- `packages/cli` — the `commentray` CLI (also packaged as a standalone
-  Node SEA binary). Published consumers often run **`npx commentray`**; **`npx commentray --help`** shows `Usage: commentray [options] [command]`.
-- `packages/code-commentray-static` (`@commentray/code-commentray-static` on npm) — static-site generator for the
-  rendered commentary pages.
+- `packages/cli` — the `sidetrack` CLI (also packaged as a standalone
+  Node SEA binary). Published consumers often run **`npx sidetrack`**; **`npx sidetrack --help`** shows `Usage: sidetrack [options] [command]`.
+- `packages/code-sidetrack-static` (`@sidetrack/code-sidetrack-static` on npm) — static-site generator for the
+  rendered sidetrack pages.
 - `packages/vscode` — VS Code / Cursor extension.
 
-<!-- #endregion commentray:dev-layout -->
+<!-- #endregion sidetrack:dev-layout -->
 
 ## Clone and workspace setup
 
 ```bash
-git clone https://github.com/d-led/commentray.git
-cd commentray
+git clone https://github.com/d-led/sidetrack.git
+cd sidetrack
 npm ci
 npm run setup          # install, build, init, doctor — idempotent
 ```
@@ -42,7 +42,7 @@ npm run cli:install    # bash scripts/install-cli.sh
 
 ## Quality gate
 
-<!-- #region commentray:dev-quality-gate -->
+<!-- #region sidetrack:dev-quality-gate -->
 
 One command gates every review:
 
@@ -80,37 +80,37 @@ bash scripts/test-all.sh
 
 **Skip steps** (set to `1` to skip; you can combine both):
 
-| Variable                   | Skips                                                          |
-| -------------------------- | -------------------------------------------------------------- |
-| `COMMENTRAY_SKIP_VSCODE=1` | VS Code / Electron extension host (no GUI or faster iteration) |
-| `COMMENTRAY_SKIP_E2E=1`    | Cypress / Chrome                                               |
+| Variable                  | Skips                                                          |
+| ------------------------- | -------------------------------------------------------------- |
+| `SIDETRACK_SKIP_VSCODE=1` | VS Code / Electron extension host (no GUI or faster iteration) |
+| `SIDETRACK_SKIP_E2E=1`    | Cypress / Chrome                                               |
 
 ```bash
-COMMENTRAY_SKIP_VSCODE=1 npm run test:all
-COMMENTRAY_SKIP_E2E=1 npm run test:all
-COMMENTRAY_SKIP_VSCODE=1 COMMENTRAY_SKIP_E2E=1 npm run test:all   # only ci:full
+SIDETRACK_SKIP_VSCODE=1 npm run test:all
+SIDETRACK_SKIP_E2E=1 npm run test:all
+SIDETRACK_SKIP_VSCODE=1 SIDETRACK_SKIP_E2E=1 npm run test:all   # only ci:full
 ```
 
 If a check is failing, fix the root cause. Do not widen ignore lists or
 raise thresholds to hide it. `CONTRIBUTING.md` states the social contract;
 the bullets below are the day-to-day detail.
 
-<!-- #endregion commentray:dev-quality-gate -->
+<!-- #endregion sidetrack:dev-quality-gate -->
 
 ## Contributor expectations
 
-<!-- #region commentray:dev-contributor-expectations -->
+<!-- #region sidetrack:dev-contributor-expectations -->
 
 - **Slow lane:** `npm run ci:full` — quality gate, integration tests, then expensive tests (no Cypress). **`npm run test:all`** adds VS Code extension tests and Cypress on top; see [Full local test run](#full-local-test-run-testall) above.
-- **Tests:** run `npm run test:unit` before every PR; add `npm run test:integration` when you touch the Git SCM adapter, `.commentray/` layout, or fixture-backed behavior; use `npm run test:expensive` for fuzzed / large-repo suites when relevant. Never silence failures with `.skip`, swallowed errors, or widened thresholds — fix code or fix tests. When you change **`packages/vscode`**, run **`npm run test:vscode-extension`** and keep **`engines.vscode`**, **`@types/vscode`**, and the **minimum** row in [`.github/workflows/ci-vscode-extension.yml`](../.github/workflows/ci-vscode-extension.yml) aligned (see **VS Code engine compatibility** under Editor extension workflows below).
+- **Tests:** run `npm run test:unit` before every PR; add `npm run test:integration` when you touch the Git SCM adapter, `.sidetrack/` layout, or fixture-backed behavior; use `npm run test:expensive` for fuzzed / large-repo suites when relevant. Never silence failures with `.skip`, swallowed errors, or widened thresholds — fix code or fix tests. When you change **`packages/vscode`**, run **`npm run test:vscode-extension`** and keep **`engines.vscode`**, **`@types/vscode`**, and the **minimum** row in [`.github/workflows/ci-vscode-extension.yml`](../.github/workflows/ci-vscode-extension.yml) aligned (see **VS Code engine compatibility** under Editor extension workflows below).
 - **Lint / dupes:** `npm run lint` (ESLint + shellcheck on `scripts/` + refactor metrics); `npm run dupes` (`jscpd`); `npm run quality` runs lint + dupes. Treat findings as design feedback.
-- **Dependencies:** preview with `npm run deps:upgrade -- --check`; apply with `npm run deps:upgrade` (`patch` / `minor` / `major` / `latest`). The script re-pins `@commentray/*` via `scripts/sync-workspace-deps.mjs` and refreshes the lockfile — then run `npm run quality:gate`. Triage `npm audit` seriously; avoid blanket `--force`.
+- **Dependencies:** preview with `npm run deps:upgrade -- --check`; apply with `npm run deps:upgrade` (`patch` / `minor` / `major` / `latest`). The script re-pins `@sidetrack/*` via `scripts/sync-workspace-deps.mjs` and refreshes the lockfile — then run `npm run quality:gate`. Triage `npm audit` seriously; avoid blanket `--force`.
 - **Format:** `npm run format` (write) or `npm run format:check` (verify).
-- **Coverage (discovery, not a score chase):** `npm run test:coverage` (unit) and `npm run test:coverage:all` (unit + integration) emit HTML + `lcov` under `./coverage/` (gitignored). Set `COMMENTRAY_COVERAGE_OPEN=0` to skip opening a browser.
+- **Coverage (discovery, not a score chase):** `npm run test:coverage` (unit) and `npm run test:coverage:all` (unit + integration) emit HTML + `lcov` under `./coverage/` (gitignored). Set `SIDETRACK_COVERAGE_OPEN=0` to skip opening a browser.
 - **Tests read like behavior:** prefer given / when / then; avoid asserting private implementation details.
 - **Small, reversible PRs** where practical; land behavior-neutral refactors separately when it keeps review honest.
 
-<!-- #endregion commentray:dev-contributor-expectations -->
+<!-- #endregion sidetrack:dev-contributor-expectations -->
 
 ## Package managers
 
@@ -120,11 +120,11 @@ The repo is developed with **npm**. **Yarn** is an alternative path via `.yarnrc
 
 ### Static hub browse URLs
 
-<!-- #region commentray:dev-static-hub-urls -->
+<!-- #region sidetrack:dev-static-hub-urls -->
 
 The static hub and `_site/browse/` pages are meant to provide **working URLs**
 for sharing whose opaque browse slugs are **stable unless** you rename or move
-the primary file or companion Markdown: same `sourcePath` and `commentrayPath`
+the primary file or companion Markdown: same `sourcePath` and `sidetrackPath`
 strings → same slug on every rebuild and machine. **Renames or moves** change
 those strings and therefore **change the slug**—they are not “permalinks”
 across file moves. Keep hub
@@ -136,33 +136,33 @@ change—treat it as rare, document it, and consider redirects. When you change
 URL shape or client navigation, update automated tests (including Cypress under
 `cypress/e2e/`) and call out breaking changes in the PR.
 
-- **Init:** `npm run commentray -- init` is idempotent (storage, seed `index.json` / `.commentray.toml` when missing). Use `npm run commentray -- init config` for TOML defaults, or `init config --force` to replace. `npm run commentray -- init scm` refreshes the marked `pre-commit` block that runs `commentray validate --staged` when the linked CLI exists at the repo root.
-- **Standalone binaries / CI:** [`.github/workflows/binaries.yml`](../.github/workflows/binaries.yml); workflow artifacts expire; **`v*`** tags attach builds to [GitHub Releases](https://github.com/d-led/commentray/releases). Local builds, smoke tests, and macOS quarantine: see subsections below (README **Standalone CLI binaries**).
-- **Homebrew tap (binary formula):** After a tagged release is published, job **`update-homebrew-tap`** (same workflow) runs [`scripts/push-homebrew-tap.sh`](../scripts/push-homebrew-tap.sh): it clones [d-led/homebrew-d-led](https://github.com/d-led/homebrew-d-led), writes `commentray.rb` via [`scripts/generate-homebrew-formula.mjs`](../scripts/generate-homebrew-formula.mjs), and pushes to **`main`** when there are changes. Set repository secret **`HOMEBREW_TAP_PUSH_TOKEN`** to a fine-grained PAT with **Contents: Read and write** on that tap only (classic PAT with `repo` scope also works). **In GitHub Actions the job fails if that secret is missing** so a tag release cannot silently omit the formula; locally, the same script exits 0 without cloning when the token is unset. The formula uses the same four release assets as the CI matrix (**darwin-arm64**, **darwin-x64**, **linux-arm64**, **linux-x64**); Windows is release-only, not Homebrew.
-- **GitHub Pages:** set `[static_site]` in `.commentray.toml`; `npm run pages:build` writes `_site/`. [`.github/workflows/pages.yml`](../.github/workflows/pages.yml) deploys via `workflow_run` after [`ci.yml`](../.github/workflows/ci.yml) succeeds on `main` (includes Cypress in `e2e-static`). Re-run a failed **pages** job from Actions if deploy flaked. Enable **Settings → Pages → Build: GitHub Actions**.
-- **Local Pages preview (watch, dev-only):** The Node static server here is for **developers and the CLI**; **production** is still the built **`_site/`** tree on your real host (for example GitHub Pages above). **`npm run serve`** and **`npm run pages:serve`** both run [`scripts/serve.sh`](../scripts/serve.sh), which builds the CLI stack then runs [`scripts/serve-with-package-watch.mjs`](../scripts/serve-with-package-watch.mjs): that layer watches `packages/{core,render,code-commentray-static,cli}/src` (and render's `esbuild-code-browser-client.mjs`), rebuilds affected workspace packages on save, and **automatically restarts** **`commentray serve`** when needed so Node reloads `dist/`—you do **not** need to stop or restart the dev server by hand. Inside the CLI, **`commentray serve`** watches `.commentray.toml`, static-site inputs, companions under `.commentray/`, and `index.json`, rebuilds **`_site/`** on change, keeps the same HTTP listener, and injects a local **browser livereload** client into generated HTML after successful rebuilds. Default port **4173** (override with `npm run serve -- --port 8080`); livereload listens on the next port when available. Set **`COMMENTRAY_SERVE_NO_PACKAGE_WATCH=1`** to skip the workspace watcher (one-shot package builds only). For native file watching on the workspace tree, set **`COMMENTRAY_SERVE_PACKAGE_WATCH_POLL=0`** (defaults to polling to avoid **EMFILE** with small `ulimit -n`).
+- **Init:** `npm run sidetrack -- init` is idempotent (storage, seed `index.json` / `.sidetrack.toml` when missing). Use `npm run sidetrack -- init config` for TOML defaults, or `init config --force` to replace. `npm run sidetrack -- init scm` refreshes the marked `pre-commit` block that runs `sidetrack validate --staged` when the linked CLI exists at the repo root.
+- **Standalone binaries / CI:** [`.github/workflows/binaries.yml`](../.github/workflows/binaries.yml); workflow artifacts expire; **`v*`** tags attach builds to [GitHub Releases](https://github.com/d-led/sidetrack/releases). Local builds, smoke tests, and macOS quarantine: see subsections below (README **Standalone CLI binaries**).
+- **Homebrew tap (binary formula):** After a tagged release is published, job **`update-homebrew-tap`** (same workflow) runs [`scripts/push-homebrew-tap.sh`](../scripts/push-homebrew-tap.sh): it clones [d-led/homebrew-d-led](https://github.com/d-led/homebrew-d-led), writes `sidetrack.rb` via [`scripts/generate-homebrew-formula.mjs`](../scripts/generate-homebrew-formula.mjs), and pushes to **`main`** when there are changes. Set repository secret **`HOMEBREW_TAP_PUSH_TOKEN`** to a fine-grained PAT with **Contents: Read and write** on that tap only (classic PAT with `repo` scope also works). **In GitHub Actions the job fails if that secret is missing** so a tag release cannot silently omit the formula; locally, the same script exits 0 without cloning when the token is unset. The formula uses the same four release assets as the CI matrix (**darwin-arm64**, **darwin-x64**, **linux-arm64**, **linux-x64**); Windows is release-only, not Homebrew.
+- **GitHub Pages:** set `[static_site]` in `.sidetrack.toml`; `npm run pages:build` writes `_site/`. [`.github/workflows/pages.yml`](../.github/workflows/pages.yml) deploys via `workflow_run` after [`ci.yml`](../.github/workflows/ci.yml) succeeds on `main` (includes Cypress in `e2e-static`). Re-run a failed **pages** job from Actions if deploy flaked. Enable **Settings → Pages → Build: GitHub Actions**.
+- **Local Pages preview (watch, dev-only):** The Node static server here is for **developers and the CLI**; **production** is still the built **`_site/`** tree on your real host (for example GitHub Pages above). **`npm run serve`** and **`npm run pages:serve`** both run [`scripts/serve.sh`](../scripts/serve.sh), which builds the CLI stack then runs [`scripts/serve-with-package-watch.mjs`](../scripts/serve-with-package-watch.mjs): that layer watches `packages/{core,render,code-sidetrack-static,cli}/src` (and render's `esbuild-code-browser-client.mjs`), rebuilds affected workspace packages on save, and **automatically restarts** **`sidetrack serve`** when needed so Node reloads `dist/`—you do **not** need to stop or restart the dev server by hand. Inside the CLI, **`sidetrack serve`** watches `.sidetrack.toml`, static-site inputs, companions under `.sidetrack/`, and `index.json`, rebuilds **`_site/`** on change, keeps the same HTTP listener, and injects a local **browser livereload** client into generated HTML after successful rebuilds. Default port **4173** (override with `npm run serve -- --port 8080`); livereload listens on the next port when available. Set **`SIDETRACK_SERVE_NO_PACKAGE_WATCH=1`** to skip the workspace watcher (one-shot package builds only). For native file watching on the workspace tree, set **`SIDETRACK_SERVE_PACKAGE_WATCH_POLL=0`** (defaults to polling to avoid **EMFILE** with small `ulimit -n`).
 
-<!-- #endregion commentray:dev-static-hub-urls -->
+<!-- #endregion sidetrack:dev-static-hub-urls -->
 
 ### macOS quarantine (standalone CLI)
 
-Apple’s security layer may block a downloaded `commentray-darwin-*` binary until you clear the quarantine extended attribute:
+Apple’s security layer may block a downloaded `sidetrack-darwin-*` binary until you clear the quarantine extended attribute:
 
 ```bash
-xattr -d com.apple.quarantine /path/to/commentray-darwin-arm64
+xattr -d com.apple.quarantine /path/to/sidetrack-darwin-arm64
 ```
 
 Broader cleanup (all extended attributes on one file):
 
 ```bash
-xattr -c /path/to/commentray-darwin-arm64
+xattr -c /path/to/sidetrack-darwin-arm64
 ```
 
 (`xattr -r` is not valid on macOS; use `find … -exec` only if you truly need a tree.)
 
 ### Building binaries locally
 
-From the repo root: `npm ci`, then `npm run binary:build` and `npm run binary:smoke`. If your `node` is from **Homebrew**, the SEA build may need a **nodejs.org**-style Node of the same major as CI—set **`COMMENTRAY_SEA_NODE`** to that binary’s path (the build script logs what it used).
+From the repo root: `npm ci`, then `npm run binary:build` and `npm run binary:smoke`. If your `node` is from **Homebrew**, the SEA build may need a **nodejs.org**-style Node of the same major as CI—set **`SIDETRACK_SEA_NODE`** to that binary’s path (the build script logs what it used).
 
 ## Expensive CI
 
@@ -170,7 +170,7 @@ From the repo root: `npm ci`, then `npm run binary:build` and `npm run binary:sm
 
 ## GitHub CI (Cypress static site)
 
-On push/PR, [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) runs job **`e2e-static`** after **`quick`**: `pages:build`, **`node scripts/validate-pages-github-links.mjs`** (GitHub blob URL shape, no doubled-browse-path stacking, optional live HEAD to the hub source URL when `COMMENTRAY_VALIDATE_PAGES_LIVE=1`), Cypress in `cypress/included`, artifact **`e2e-ci-bundle`**. The static server listens on **14173** (not the dev **`commentray serve`** default **4173**). After a local **`npm run pages:build`**, run **`npm run pages:validate`** (set **`COMMENTRAY_VALIDATE_PAGES_LIVE=1`** to also HEAD-check `toolbar-source-github` against `github.com`). [`.github/workflows/e2e-publish-checks.yml`](../.github/workflows/e2e-publish-checks.yml) (`workflow_run` on **`ci`**) downloads that bundle and publishes JUnit to **GitHub Checks** without checking out fork PR SHAs. Ad-hoc runs: [`.github/workflows/e2e.yml`](../.github/workflows/e2e.yml) (**workflow_dispatch** only). Locally use `npm run e2e` or `npm run e2e:ci`.
+On push/PR, [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) runs job **`e2e-static`** after **`quick`**: `pages:build`, **`node scripts/validate-pages-github-links.mjs`** (GitHub blob URL shape, no doubled-browse-path stacking, optional live HEAD to the hub source URL when `SIDETRACK_VALIDATE_PAGES_LIVE=1`), Cypress in `cypress/included`, artifact **`e2e-ci-bundle`**. The static server listens on **14173** (not the dev **`sidetrack serve`** default **4173**). After a local **`npm run pages:build`**, run **`npm run pages:validate`** (set **`SIDETRACK_VALIDATE_PAGES_LIVE=1`** to also HEAD-check `toolbar-source-github` against `github.com`). [`.github/workflows/e2e-publish-checks.yml`](../.github/workflows/e2e-publish-checks.yml) (`workflow_run` on **`ci`**) downloads that bundle and publishes JUnit to **GitHub Checks** without checking out fork PR SHAs. Ad-hoc runs: [`.github/workflows/e2e.yml`](../.github/workflows/e2e.yml) (**workflow_dispatch** only). Locally use `npm run e2e` or `npm run e2e:ci`.
 
 ## Editor extension workflows
 
@@ -198,7 +198,7 @@ npm run extension:uninstall    # remove it
 ```
 
 The installer script bundles the extension with esbuild (inlining
-`@commentray/core`) before `vsce` packages the `.vsix`.
+`@sidetrack/core`) before `vsce` packages the `.vsix`.
 
 ### 3. Extension Development Host + debugger (F5)
 
@@ -207,9 +207,9 @@ editor and use the **Run and Debug** / **Extension** launch configuration (add
 `launch.json` if your editor has not generated one). That path attaches a debugger;
 `npm run extension:dogfood` installs the packaged extension into your normal editor instead.
 
-### VS Code engine compatibility (Commentray extension)
+### VS Code engine compatibility (SideTrack extension)
 
-<!-- #region commentray:dev-vscode-engine -->
+<!-- #region sidetrack:dev-vscode-engine -->
 
 The extension is a normal VS Code extension: compatibility is a contract between
 **declared minimum**, **TypeScript typings**, **runtime behavior**, and **where
@@ -231,7 +231,7 @@ matches the API surface you actually guarantee.
 `engines.vscode` does not polyfill newer APIs. If you need a capability added in
 a specific release, either **raise the engine** (preferred for this repo) or
 **detect the capability** and show a clear message (output channel / notification)
-instead of dereferencing `undefined`. New commands should reuse the **Commentray**
+instead of dereferencing `undefined`. New commands should reuse the **SideTrack**
 output channel where appropriate (see below).
 
 #### Integration tests and VS Code builds
@@ -239,7 +239,7 @@ output channel where appropriate (see below).
 Extension integration tests use **`@vscode/test-cli`** and
 `packages/vscode/.vscode-test.mjs`. By default they download **`stable`**.
 
-**Desktop README screenshots (automated):** `bash scripts/refresh-vscode-readme-screenshots-desktop.sh` (alias: `npm run extension:vscode-readme-screenshots:desktop`) launches that VS Code build with `--remote-debugging-port` and uses Playwright CDP (`scripts/capture-vscode-readme-screenshots-desktop.mjs`), writing several **`vscode-*.png`** files. Scenario sequence and how to extend it: **`.commentray/source/packages/vscode/README.md/main.md`** (Maintainer). Optional **`COMMENTRAY_VSCODE_VIEWPORT_WIDTH`** / **`COMMENTRAY_VSCODE_VIEWPORT_HEIGHT`** (defaults 1200×780) and **`COMMENTRAY_VSCODE_ZOOM_LEVEL`** (default 2). The temp profile hides the secondary sidebar for cleaner frames. **`bash scripts/commentray-screenshots-in-fresh-worktree.sh`** runs the same in a clean worktree. Requires `npx playwright install chromium` once. Respects **`VSCODE_TEST_VERSION`** like extension tests. **Manual:** `bash scripts/refresh-vscode-readme-screenshots-manual.sh`, **`bash scripts/refresh-root-readme-screenshots.sh`** for hub README assets.
+**Desktop README screenshots (automated):** `bash scripts/refresh-vscode-readme-screenshots-desktop.sh` (alias: `npm run extension:vscode-readme-screenshots:desktop`) launches that VS Code build with `--remote-debugging-port` and uses Playwright CDP (`scripts/capture-vscode-readme-screenshots-desktop.mjs`), writing several **`vscode-*.png`** files. Scenario sequence and how to extend it: **`.sidetrack/source/packages/vscode/README.md/main.md`** (Maintainer). Optional **`SIDETRACK_VSCODE_VIEWPORT_WIDTH`** / **`SIDETRACK_VSCODE_VIEWPORT_HEIGHT`** (defaults 1200×780) and **`SIDETRACK_VSCODE_ZOOM_LEVEL`** (default 2). The temp profile hides the secondary sidebar for cleaner frames. **`bash scripts/sidetrack-screenshots-in-fresh-worktree.sh`** runs the same in a clean worktree. Requires `npx playwright install chromium` once. Respects **`VSCODE_TEST_VERSION`** like extension tests. **Manual:** `bash scripts/refresh-vscode-readme-screenshots-manual.sh`, **`bash scripts/refresh-root-readme-screenshots.sh`** for hub README assets.
 
 - **Local / one-off:** set **`VSCODE_TEST_VERSION`** to `stable`, `insiders`, or
   an exact version string (for example the same value as `engines.vscode`):
@@ -267,26 +267,26 @@ testing and expectations — refresh the numbers when you verify on newer instal
 | Cursor                    | 1.105.1                 | 2026-04-23 |
 | VS Code (macOS Universal) | 1.117.0                 | 2026-04-23 |
 
-Commentray’s declared minimum (`^1.95.0` at the time this section was added) is
+SideTrack’s declared minimum (`^1.95.0` at the time this section was added) is
 intentionally **below** both reference rows: forks can lag upstream, and the
 extension should keep working on the declared range until you intentionally adopt
 newer-only APIs and raise `engines.vscode`.
 
-<!-- #endregion commentray:dev-vscode-engine -->
+<!-- #endregion sidetrack:dev-vscode-engine -->
 
 ## Scroll sync and paired panes
 
-After **Commentray: Open commentray beside source** (or **Add block from
+After **SideTrack: Open sidetrack beside source** (or **Add block from
 selection**, which opens the pair for you), the extension wires a scroll
 listener on **both** editors:
 
-- **Source → commentray:** the top visible line of the source picks a target
+- **Source → sidetrack:** the top visible line of the source picks a target
   line in the Markdown. If `index.json` lists `lines:` anchors that match
-  `<!-- commentray:block id=… -->` markers in the commentray file, the
-  commentary scroll snaps to the block whose source range **contains** that
+  `<!-- sidetrack:block id=… -->` markers in the sidetrack file, the
+  sidetrack scroll snaps to the block whose source range **contains** that
   top line (or the nearest sensible block when you are in a gap). Without
   blocks, a lightweight proportional scroll is used instead.
-- **Commentray → source:** the top visible line in the Markdown maps back to
+- **SideTrack → source:** the top visible line in the Markdown maps back to
   the start of the corresponding source range for the same block list.
 
 Edits to either file or saving `index.json` refresh the block map on a short
@@ -295,15 +295,15 @@ window.
 
 ## Observing the extension at runtime
 
-### The `Commentray` output channel
+### The `SideTrack` output channel
 
-The extension creates an output channel named **Commentray** for
-user-facing reports. Today it is only written to by **Commentray:
+The extension creates an output channel named **SideTrack** for
+user-facing reports. Today it is only written to by **SideTrack:
 Validate workspace metadata**, which dumps each validation issue there
 and reveals the panel. To view:
 
 - Open the Output panel: **View → Output** (or `Cmd/Ctrl+Shift+U`).
-- Pick **Commentray** from the dropdown on the right of the panel.
+- Pick **SideTrack** from the dropdown on the right of the panel.
 
 If you are adding a new command and want visible, structured logging,
 reuse that same channel rather than `console.log` — users see Output,
@@ -326,22 +326,22 @@ For extension code paths that touch the webview preview or for any
 
 `npm run extension:dogfood` installs the packaged build into your normal editor without a debugger; use **Run and Debug** on the `packages/vscode` workspace to attach one.
 
-If a `Commentray:` command is missing after install, run `npm run extension:install` (or dogfood) and reload the window. After editing extension sources in the **Extension** dev host, run `npm run build -w commentray-vscode` before reloading.
+If a `SideTrack:` command is missing after install, run `npm run extension:install` (or dogfood) and reload the window. After editing extension sources in the **Extension** dev host, run `npm run build -w sidetrack-vscode` before reloading.
 
-### The `.commentray/` folder did not appear
+### The `.sidetrack/` folder did not appear
 
-`commentray init` only creates `.commentray/storage` and
-`.commentray/metadata/index.json` — it does _not_ preseed per-file
+`sidetrack init` only creates `.sidetrack/storage` and
+`.sidetrack/metadata/index.json` — it does _not_ preseed per-file
 Markdown. Those are created on demand when you:
 
-- Open a source file and run **Commentray: Open commentray beside
+- Open a source file and run **SideTrack: Open sidetrack beside
   source**, or
-- Run `commentray render --source <file>` to render a file's track.
+- Run `sidetrack render --source <file>` to render a file's track.
 
 Also: `storage.dir` inside `.git/` is rejected by design (see
 `SECURITY.md`). The CLI will refuse to initialize with a clear error.
 
-### `commentray` not found on PATH after `npm run cli:install`
+### `sidetrack` not found on PATH after `npm run cli:install`
 
 The global `npm` bin directory might not be on your PATH.
 `scripts/install-cli.sh` prints the exact path to add after linking.
@@ -379,8 +379,8 @@ Root shortcuts: `npm run version:bump`, `version:tag`, `version:sync`, `publish:
 
 **Stepwise** (e.g. wait for CI binaries before npm): `npm run version:bump -- minor` → commit → `npm run version:tag` → `git push && git push --tags` → `npm run publish:all`.
 
-The **`commentray-vscode`** package is **private** on npm; ship it with `npm run extension:package` and upload the `.vsix`.
+The **`sidetrack-vscode`** package is **private** on npm; ship it with `npm run extension:package` and upload the `.vsix`.
 
 Publishing is **manual** from a maintainer machine with **2FA** / OTP — not from GitHub Actions today. Prefer **OIDC trusted publishing** and **npm provenance** when automation lands: [npm trusted publishers](https://docs.npmjs.com/trusted-publishers), [GitHub OIDC](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect). Avoid long-lived npm tokens in repo secrets unless there is no alternative.
 
-Do not hand-edit `@commentray/*` version pins; `scripts/sync-workspace-deps.mjs` keeps them aligned with `packages/core/package.json`.
+Do not hand-edit `@sidetrack/*` version pins; `scripts/sync-workspace-deps.mjs` keeps them aligned with `packages/core/package.json`.

@@ -2,12 +2,12 @@
 set -euo pipefail
 
 # Regenerate **desktop VS Code** PNGs for the extension README companion
-# (`.commentray/source/packages/vscode/README.md/assets/vscode-*.png`).
+# (`.sidetrack/source/packages/vscode/README.md/assets/vscode-*.png`).
 #
 # Implementation: `scripts/capture-vscode-readme-screenshots-desktop.mjs` (keyboard scenarios).
 # Opens a **disposable copy** of `packages/vscode/fixtures/dogfood` with Angles enabled for stable
 # “choose angle” frames (the git-tracked fixture stays flat for tests).
-# How to change scenarios: see `.commentray/source/packages/vscode/README.md/main.md` § Maintainer.
+# How to change scenarios: see `.sidetrack/source/packages/vscode/README.md/main.md` § Maintainer.
 #
 # Usage (repository root):
 #   bash scripts/refresh-vscode-readme-screenshots-desktop.sh

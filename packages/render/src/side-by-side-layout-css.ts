@@ -52,58 +52,58 @@ pre {
   margin: 0;
 }
 
-.commentray {
+.sidetrack {
   font-size: 15px;
   line-height: 1.45;
 }
 
-.commentray img {
+.sidetrack img {
   max-width: 100%;
   height: auto;
 }
 
-.commentray :where(table) {
+.sidetrack :where(table) {
   width: max-content;
   max-width: none;
   border-collapse: collapse;
   margin: 0.85em 0;
 }
 
-.commentray :where(th, td) {
+.sidetrack :where(th, td) {
   border: 1px solid color-mix(in oklab, CanvasText 22%, Canvas);
   padding: 8px 12px;
   vertical-align: top;
 }
 
-.commentray :where(thead th) {
+.sidetrack :where(thead th) {
   font-weight: 600;
   background: color-mix(in oklab, CanvasText 7%, Canvas);
 }
 
-.commentray tbody tr:nth-child(even) :where(td) {
+.sidetrack tbody tr:nth-child(even) :where(td) {
   background: color-mix(in oklab, CanvasText 3.5%, Canvas);
 }
 
-.commentray :where(ul.contains-task-list) {
+.sidetrack :where(ul.contains-task-list) {
   list-style: none;
   padding-inline-start: 1.2em;
 }
 
-.commentray :where(li.task-list-item) {
+.sidetrack :where(li.task-list-item) {
   position: relative;
 }
 
-.commentray :where(li.task-list-item input[type="checkbox"]) {
+.sidetrack :where(li.task-list-item input[type="checkbox"]) {
   position: absolute;
   margin-inline-start: -1.35em;
   margin-top: 0.2em;
 }
 
-.commentray :where(del) {
+.sidetrack :where(del) {
   opacity: 0.82;
 }
 
-.commentray :where(section.footnotes) {
+.sidetrack :where(section.footnotes) {
   margin-top: 1.5em;
   padding-top: 0.75em;
   border-top: 1px solid color-mix(in oklab, CanvasText 18%, Canvas);

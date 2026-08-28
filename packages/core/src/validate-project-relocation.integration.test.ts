@@ -21,34 +21,34 @@ describe("Project validation — relocation hints from git-tracked files", () =>
   });
 
   it("given a marker only present in a tracked file that is not in the index, when validate runs, then the hint names that file", async () => {
-    repo = await mkdtemp(path.join(tmpdir(), "commentray-val-rel-"));
-    await mkdir(path.join(repo, ".commentray", "source"), { recursive: true });
-    await mkdir(path.join(repo, ".commentray", "metadata"), { recursive: true });
+    repo = await mkdtemp(path.join(tmpdir(), "sidetrack-val-rel-"));
+    await mkdir(path.join(repo, ".sidetrack", "source"), { recursive: true });
+    await mkdir(path.join(repo, ".sidetrack", "metadata"), { recursive: true });
     await mkdir(path.join(repo, "src", "lib"), { recursive: true });
 
     const region =
-      "//#region commentray:relocateMe\n" + "// impl\n" + "//#endregion commentray:relocateMe\n";
+      "//#region sidetrack:relocateMe\n" + "// impl\n" + "//#endregion sidetrack:relocateMe\n";
     await writeFile(path.join(repo, "src", "lib", "handler.ts"), region, "utf8");
 
     const index = {
       schemaVersion: CURRENT_SCHEMA_VERSION,
-      byCommentrayPath: {
-        ".commentray/source/src/deleted.ts.md": {
+      bySideTrackPath: {
+        ".sidetrack/source/src/deleted.ts.md": {
           sourcePath: "src/deleted.ts",
-          commentrayPath: ".commentray/source/src/deleted.ts.md",
+          sidetrackPath: ".sidetrack/source/src/deleted.ts.md",
           blocks: [{ id: "relocateMe", anchor: "marker:relocateMe" }],
         },
       },
     };
     await writeFile(
-      path.join(repo, ".commentray", "metadata", "index.json"),
+      path.join(repo, ".sidetrack", "metadata", "index.json"),
       `${JSON.stringify(index, null, 2)}\n`,
       "utf8",
     );
 
     await git(repo, ["init", "-b", "main"]);
     await git(repo, ["config", "user.email", "test@example.com"]);
-    await git(repo, ["config", "user.name", "Commentray Test"]);
+    await git(repo, ["config", "user.name", "SideTrack Test"]);
     await git(repo, ["add", "."]);
     await git(repo, ["commit", "-m", "init"]);
 

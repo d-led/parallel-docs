@@ -1,8 +1,8 @@
 # Contributing
 
-Thank you for helping build Commentray.
+Thank you for helping build SideTrack.
 
-**Terminology:** **Commentray** is the tool and packages in this repo. **commentray** (lowercase) is also the paired Markdown under `.commentray/source/` beside a source file.
+**Terminology:** **SideTrack** is the tool and packages in this repo. **sidetrack** (lowercase) is also the paired Markdown under `.sidetrack/source/` beside a source file.
 
 ## Principles
 

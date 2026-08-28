@@ -2,9 +2,9 @@
 set -euo pipefail
 
 # Rasterize the canonical vector logo into the PNG icon shipped inside the
-# Commentray VSIX. The Marketplace requires a PNG (SVG is rejected).
-# Source: `docs/logos/2.svg`. After changing `docs/logos/2.jpg`, run the full
-# pipeline: `bash scripts/refresh-logo-assets.sh`
+# SideTrack VSIX. The Marketplace requires a PNG (SVG is rejected).
+# Source: `docs/logos/2.svg`. After changing `docs/logos/2.svg`, run:
+#   `bash scripts/refresh-logo-assets.sh`
 #
 # Usage:
 #   bash scripts/build-vscode-icon.sh

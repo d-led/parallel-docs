@@ -1,6 +1,6 @@
-/** Commentray block aligned to a region of a primary source file. */
-export type CommentrayBlock = {
-  /** Stable id within the commentray markdown file. */
+/** SideTrack block aligned to a region of a primary source file. */
+export type SideTrackBlock = {
+  /** Stable id within the side-track markdown file. */
   id: string;
   /** Human or machine anchor string (see anchor grammar in docs). */
   anchor: string;
@@ -12,9 +12,9 @@ export type CommentrayBlock = {
   snippet?: string;
   /**
    * When the anchor is `marker:<id>`, the same id appears in source as the
-   * region name `commentray:<id>` (e.g. `//#region` / `//#endregion` in
+   * region name `sidetrack:<id>` (e.g. `//#region` / `//#endregion` in
    * TypeScript, aligned with the Region Marker extension), or in legacy
-   * `commentray:start id=…` / `commentray:end id=…` line comments.
+   * `sidetrack:start id=…` / `sidetrack:end id=…` line comments.
    */
   markerId?: string;
   /** Last human-verified commit (full SHA) when this block was considered accurate. */
@@ -26,21 +26,21 @@ export type CommentrayBlock = {
 };
 
 export type SourceFileIndexEntry = {
-  /** Repo-relative path to the primary file this commentray belongs to. */
+  /** Repo-relative path to the primary file this sidetrack belongs to. */
   sourcePath: string;
-  /** Repo-relative path to the Markdown commentray file. */
-  commentrayPath: string;
-  blocks: CommentrayBlock[];
+  /** Repo-relative path to the Markdown sidetrack file. */
+  sidetrackPath: string;
+  blocks: SideTrackBlock[];
 };
 
-/** Root metadata document stored as JSON under `.commentray/metadata/`. */
-export type CommentrayIndex = {
+/** Root metadata document stored as JSON under `.sidetrack/metadata/`. */
+export type SideTrackIndex = {
   schemaVersion: number;
   /**
-   * Blocks grouped by repo-relative commentray Markdown path so multiple **Angles**
+   * Blocks grouped by repo-relative sidetrack Markdown path so multiple **Angles**
    * for the same `sourcePath` each keep their own block lists (schema v3+).
    */
-  byCommentrayPath: Record<string, SourceFileIndexEntry>;
+  bySideTrackPath: Record<string, SourceFileIndexEntry>;
 };
 
 export const CURRENT_SCHEMA_VERSION = 3 as const;

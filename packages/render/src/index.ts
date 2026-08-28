@@ -6,23 +6,23 @@ export type {
   DualPaneScrollSyncStrategyId,
   StretchBufferSyncStrategy,
 } from "./code-browser.js";
-export { commentrayRenderVersion } from "./package-version.js";
+export { sidetrackRenderVersion } from "./package-version.js";
 export type {
-  CommentrayOutputUrlOptions,
-  CommentrayStaticAssetCopy,
+  SideTrackOutputUrlOptions,
+  SideTrackStaticAssetCopy,
   MarkdownPipelineOptions,
 } from "./markdown-pipeline.js";
 export {
-  COMMENTRAY_STATIC_COMPANION_ASSETS_SEGMENT,
+  SIDETRACK_STATIC_COMPANION_ASSETS_SEGMENT,
   renderFencedCode,
   renderMarkdownToHtml,
 } from "./markdown-pipeline.js";
 export {
-  renderCommentrayPreviewHtml,
-  type RenderCommentrayPreviewHtmlArgs,
-} from "./commentray-preview-html.js";
+  renderSideTrackPreviewHtml,
+  type RenderSideTrackPreviewHtmlArgs,
+} from "./sidetrack-preview-html.js";
 export {
-  injectCommentrayDocAnchors,
+  injectSideTrackDocAnchors,
   injectSourceMarkdownAnchors,
 } from "./inject-md-line-anchors.js";
 export { renderSideBySideHtml } from "./side-by-side.js";
@@ -33,13 +33,13 @@ export {
   appendHtmlToOpaqueBrowseRequestUrl,
 } from "./code-browser-pair-nav.js";
 export {
-  buildCommentrayNavSearchDocument,
-  COMMENTRAY_NAV_SEARCH_SCHEMA_VERSION,
-} from "./build-commentray-nav-search.js";
+  buildSideTrackNavSearchDocument,
+  SIDETRACK_NAV_SEARCH_SCHEMA_VERSION,
+} from "./build-sidetrack-nav-search.js";
 export type {
-  BuildCommentrayNavSearchFallback,
-  BuildCommentrayNavSearchGithubBlobBase,
-  CommentrayNavSearchDocument,
-  CommentrayNavSearchRow,
+  BuildSideTrackNavSearchFallback,
+  BuildSideTrackNavSearchGithubBlobBase,
+  SideTrackNavSearchDocument,
+  SideTrackNavSearchRow,
   DocumentedPairNav,
-} from "./build-commentray-nav-search.js";
+} from "./build-sidetrack-nav-search.js";

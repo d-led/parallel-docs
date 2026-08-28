@@ -1,27 +1,27 @@
-.commentray-wide-intro-target {
+.sidetrack-wide-intro-target {
   outline: none;
 }
 
-#commentray-wide-intro {
-  --commentray-intro-note-bg: #fff4b3;
-  --commentray-intro-note-border: #d4c071;
-  --commentray-intro-note-text: #2f2a11;
-  --commentray-intro-note-btn-bg: #fff8d7;
-  --commentray-intro-note-btn-border: #ccb86a;
+#sidetrack-wide-intro {
+  --sidetrack-intro-note-bg: #fff4b3;
+  --sidetrack-intro-note-border: #d4c071;
+  --sidetrack-intro-note-text: #2f2a11;
+  --sidetrack-intro-note-btn-bg: #fff8d7;
+  --sidetrack-intro-note-btn-border: #ccb86a;
 
   position: fixed;
   z-index: 90;
   width: min(340px, calc(100vw - 16px));
   border-radius: 12px;
-  border: 1px solid var(--commentray-intro-note-border);
-  background: var(--commentray-intro-note-bg);
-  color: var(--commentray-intro-note-text);
+  border: 1px solid var(--sidetrack-intro-note-border);
+  background: var(--sidetrack-intro-note-bg);
+  color: var(--sidetrack-intro-note-text);
   box-shadow: 0 14px 40px rgb(0 0 0 / 20%);
   padding: 12px 12px 10px;
 }
 
-#commentray-wide-intro-arrows {
-  --commentray-intro-note-bg: #fff4b3;
+#sidetrack-wide-intro-arrows {
+  --sidetrack-intro-note-bg: #fff4b3;
 
   position: fixed;
   inset: 0;
@@ -29,9 +29,9 @@
   pointer-events: none;
 }
 
-.commentray-wide-intro-arrow {
+.sidetrack-wide-intro-arrow {
   --wide-intro-arrow-angle: 0rad;
-  --wide-intro-arrow-fill: var(--commentray-intro-note-bg);
+  --wide-intro-arrow-fill: var(--sidetrack-intro-note-bg);
   --wide-intro-arrow-outline: color-mix(in oklab, CanvasText 34%, transparent);
 
   position: fixed;
@@ -46,11 +46,11 @@
     0 2px 10px rgb(168 137 0 / 12%);
 }
 
-.commentray-wide-intro-arrow::before {
+.sidetrack-wide-intro-arrow::before {
   display: none;
 }
 
-.commentray-wide-intro-arrow-head {
+.sidetrack-wide-intro-arrow-head {
   position: absolute;
   right: -10px;
   top: 50%;
@@ -62,7 +62,7 @@
   transform: translateY(-50%);
 }
 
-.commentray-wide-intro-arrow-head::before {
+.sidetrack-wide-intro-arrow-head::before {
   content: "";
   position: absolute;
   left: -12px;
@@ -75,21 +75,21 @@
   z-index: -1;
 }
 
-.commentray-wide-intro-pointer {
+.sidetrack-wide-intro-pointer {
   position: absolute;
   width: 0;
   height: 0;
 }
 
-#commentray-wide-intro[data-side="below"] .commentray-wide-intro-pointer {
+#sidetrack-wide-intro[data-side="below"] .sidetrack-wide-intro-pointer {
   top: -8px;
   left: var(--pointer-left, 18px);
   border-left: 8px solid transparent;
   border-right: 8px solid transparent;
-  border-bottom: 8px solid var(--commentray-intro-note-bg);
+  border-bottom: 8px solid var(--sidetrack-intro-note-bg);
 }
 
-#commentray-wide-intro[data-side="below"] .commentray-wide-intro-pointer::before {
+#sidetrack-wide-intro[data-side="below"] .sidetrack-wide-intro-pointer::before {
   content: "";
   position: absolute;
   left: -9px;
@@ -100,15 +100,15 @@
   z-index: -1;
 }
 
-#commentray-wide-intro[data-side="above"] .commentray-wide-intro-pointer {
+#sidetrack-wide-intro[data-side="above"] .sidetrack-wide-intro-pointer {
   bottom: -8px;
   left: var(--pointer-left, 18px);
   border-left: 8px solid transparent;
   border-right: 8px solid transparent;
-  border-top: 8px solid var(--commentray-intro-note-bg);
+  border-top: 8px solid var(--sidetrack-intro-note-bg);
 }
 
-#commentray-wide-intro[data-side="above"] .commentray-wide-intro-pointer::before {
+#sidetrack-wide-intro[data-side="above"] .sidetrack-wide-intro-pointer::before {
   content: "";
   position: absolute;
   left: -9px;
@@ -119,40 +119,40 @@
   z-index: -1;
 }
 
-.commentray-wide-intro-title {
+.sidetrack-wide-intro-title {
   font-weight: 700;
   margin: 0 0 6px;
   line-height: 1.25;
 }
 
-.commentray-wide-intro-body {
+.sidetrack-wide-intro-body {
   margin: 0 0 10px;
   font-size: 13px;
   line-height: 1.45;
 }
 
-.commentray-wide-intro-step-action {
+.sidetrack-wide-intro-step-action {
   margin: 0 0 10px;
-  border: 1px solid var(--commentray-intro-note-btn-border);
+  border: 1px solid var(--sidetrack-intro-note-btn-border);
   border-radius: 8px;
-  background: var(--commentray-intro-note-btn-bg);
-  color: var(--commentray-intro-note-text);
+  background: var(--sidetrack-intro-note-btn-bg);
+  color: var(--sidetrack-intro-note-text);
   padding: 6px 10px;
   cursor: pointer;
   font-size: 12px;
   font-family: inherit;
 }
 
-.commentray-wide-intro-step-action:hover {
-  background: color-mix(in oklab, var(--commentray-intro-note-btn-bg) 88%, CanvasText);
+.sidetrack-wide-intro-step-action:hover {
+  background: color-mix(in oklab, var(--sidetrack-intro-note-btn-bg) 88%, CanvasText);
 }
 
-.commentray-wide-intro-step-action:focus-visible {
+.sidetrack-wide-intro-step-action:focus-visible {
   outline: 2px solid color-mix(in oklab, #5c5200 58%, Canvas);
   outline-offset: 1px;
 }
 
-.commentray-wide-intro-footer {
+.sidetrack-wide-intro-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -160,28 +160,28 @@
   font-size: 12px;
 }
 
-.commentray-wide-intro-actions {
+.sidetrack-wide-intro-actions {
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
 }
 
-.commentray-wide-intro-actions button {
-  border: 1px solid var(--commentray-intro-note-btn-border);
+.sidetrack-wide-intro-actions button {
+  border: 1px solid var(--sidetrack-intro-note-btn-border);
   border-radius: 8px;
-  background: var(--commentray-intro-note-btn-bg);
-  color: var(--commentray-intro-note-text);
+  background: var(--sidetrack-intro-note-btn-bg);
+  color: var(--sidetrack-intro-note-text);
   padding: 4px 8px;
   cursor: pointer;
   font-size: 12px;
   font-family: inherit;
 }
 
-.commentray-wide-intro-actions button:hover {
-  background: color-mix(in oklab, var(--commentray-intro-note-btn-bg) 88%, CanvasText);
+.sidetrack-wide-intro-actions button:hover {
+  background: color-mix(in oklab, var(--sidetrack-intro-note-btn-bg) 88%, CanvasText);
 }
 
-.commentray-wide-intro-actions button:focus-visible {
+.sidetrack-wide-intro-actions button:focus-visible {
   outline: 2px solid color-mix(in oklab, #5c5200 58%, Canvas);
   outline-offset: 1px;
 }

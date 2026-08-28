@@ -4,7 +4,7 @@ const MERMAID_E2E_TIMEOUT_MS = 20000;
 const BROWSE_LINK_REL_OR_ABS_RE =
   /^(?:\.\/browse\/(?:[^/]+\.html|.+\/index\.html)|https?:\/\/[^/]+\/browse\/(?:[^/]+\.html|.+\/index\.html))(?:\?.*)?$/;
 
-Cypress.Commands.add("CommentrayPaneReadmeLinksShouldUseGithubBlobUrls", () => {
+Cypress.Commands.add("SideTrackPaneReadmeLinksShouldUseGithubBlobUrls", () => {
   cy.get(shellA11y.shell).then(($shell) => {
     if ($shell.attr("data-layout") === "stretch") {
       cy.get(shellA11y.shell)
@@ -12,7 +12,7 @@ Cypress.Commands.add("CommentrayPaneReadmeLinksShouldUseGithubBlobUrls", () => {
         .should("match", /https:\/\/github\.com\/[^/]+\/[^/]+\/blob\/[^/]+\/README\.md/)
         .and("not.match", /href="\.\.\/README\.md"/);
     } else {
-      cy.get(shellA11y.panes.commentray)
+      cy.get(shellA11y.panes.sidetrack)
         .invoke("html")
         .should("match", /https:\/\/github\.com\/[^/]+\/[^/]+\/blob\/[^/]+\/README\.md/)
         .and("not.match", /href="\.\.\/README\.md"/);
@@ -20,7 +20,7 @@ Cypress.Commands.add("CommentrayPaneReadmeLinksShouldUseGithubBlobUrls", () => {
   });
 });
 
-Cypress.Commands.add("CommentrayPaneEmphasisShouldRenderAfterBlocks", () => {
+Cypress.Commands.add("SideTrackPaneEmphasisShouldRenderAfterBlocks", () => {
   cy.get(shellA11y.shell).then(($shell) => {
     if ($shell.attr("data-layout") === "stretch") {
       cy.get(`${shellA11y.shell} .stretch-doc-inner, ${shellA11y.shell} .stretch-preamble`)
@@ -30,10 +30,8 @@ Cypress.Commands.add("CommentrayPaneEmphasisShouldRenderAfterBlocks", () => {
         .first()
         .should("contain.text", "You have the main");
     } else {
-      cy.get(shellA11y.panes.commentray).find("em").should("have.length.at.least", 1);
-      cy.get(`${shellA11y.panes.commentray} em`)
-        .first()
-        .should("contain.text", "You have the main");
+      cy.get(shellA11y.panes.sidetrack).find("em").should("have.length.at.least", 1);
+      cy.get(`${shellA11y.panes.sidetrack} em`).first().should("contain.text", "You have the main");
     }
   });
 });
@@ -47,23 +45,23 @@ Cypress.Commands.add("DocumentationHomeLinkShouldPointToRelativeIndex", () => {
 
 Cypress.Commands.add("ShellPairBrowseLinkShouldAdvertiseOnSiteBrowsePage", () => {
   cy.get(shellA11y.shell)
-    .should("have.attr", "data-commentray-pair-browse-href")
+    .should("have.attr", "data-sidetrack-pair-browse-href")
     .and("match", BROWSE_LINK_REL_OR_ABS_RE)
     .and("not.include", "github.com");
 });
 
-Cypress.Commands.add("OpenCommentRayedFilesDisclosure", () => {
-  cy.contains("summary", "Comment-rayed files").click();
+Cypress.Commands.add("OpenSideTrackedFilesDisclosure", () => {
+  cy.contains("summary", "Side-tracked files").click();
 });
 
-/** Closes the Comment-rayed files `<details>` hub via Escape (filter field is focused when open). */
-Cypress.Commands.add("CloseCommentRayedFilesHubWithEscape", () => {
+/** Closes the Side-tracked files `<details>` hub via Escape (filter field is focused when open). */
+Cypress.Commands.add("CloseSideTrackedFilesHubWithEscape", () => {
   cy.get("#documented-files-hub").should("have.prop", "open", true);
   cy.get("#documented-files-filter").focus().type("{esc}");
   cy.get("#documented-files-hub").should("have.prop", "open", false);
 });
 
-Cypress.Commands.add("CommentRayedFilesTreeShouldExposeAtLeastOneFileLink", () => {
+Cypress.Commands.add("SideTrackedFilesTreeShouldExposeAtLeastOneFileLink", () => {
   cy.get('[role="tree"]', { timeout: 15000 })
     .find("a")
     .should("have.length.at.least", 1)
@@ -89,18 +87,18 @@ Cypress.Commands.add("FollowFirstBrowseFileLinkInTree", () => {
 
 Cypress.Commands.add("ShellPairBrowseLinkShouldAvoidStackedBrowseSegments", () => {
   cy.get(shellA11y.shell)
-    .should("have.attr", "data-commentray-pair-browse-href")
+    .should("have.attr", "data-sidetrack-pair-browse-href")
     .and("match", BROWSE_LINK_REL_OR_ABS_RE)
     .and("not.contain", "/browse/browse/");
 });
 
 Cypress.Commands.add("InterceptNavSearchIndexAsUnavailable", () => {
-  cy.intercept("GET", "**/commentray-nav-search.json", { statusCode: 503, body: "{}" }).as(
+  cy.intercept("GET", "**/sidetrack-nav-search.json", { statusCode: 503, body: "{}" }).as(
     "navJsonFail",
   );
 });
 
-Cypress.Commands.add("CommentRayedFilesTreeShouldContainReadmeLink", () => {
+Cypress.Commands.add("SideTrackedFilesTreeShouldContainReadmeLink", () => {
   cy.get('[role="tree"]', { timeout: 15000 }).contains("a", "README.md");
 });
 
@@ -161,25 +159,25 @@ Cypress.Commands.add("ChooseValueOfAngleSelect", (value) => {
   cy.get(shellA11y.angleSelect).select(value);
 });
 
-Cypress.Commands.add("CommentrayPaneShouldContainText", (text) => {
+Cypress.Commands.add("SideTrackPaneShouldContainText", (text) => {
   cy.get(shellA11y.shell).then(($shell) => {
     if ($shell.attr("data-layout") === "stretch") {
       cy.get(shellA11y.shell).should("contain", text);
     } else {
-      cy.get(shellA11y.panes.commentray).should("contain", text);
+      cy.get(shellA11y.panes.sidetrack).should("contain", text);
     }
   });
 });
 
 Cypress.Commands.add("ShellPairBrowseLinkShouldMatchRelativeBrowseHtml", () => {
   cy.get(shellA11y.shell)
-    .should("have.attr", "data-commentray-pair-browse-href")
+    .should("have.attr", "data-sidetrack-pair-browse-href")
     .and("match", BROWSE_LINK_REL_OR_ABS_RE);
 });
 
 Cypress.Commands.add("ShellPairBrowseLinkShouldNotPointAtGithubHost", () => {
   cy.get(shellA11y.shell)
-    .should("have.attr", "data-commentray-pair-browse-href")
+    .should("have.attr", "data-sidetrack-pair-browse-href")
     .and("not.include", "github.com");
 });
 
@@ -188,7 +186,7 @@ Cypress.Commands.add("DocPaneMermaidShouldShowDiagramOrMarkup", () => {
     if ($shell.attr("data-layout") === "stretch") {
       cy.get(shellA11y.shell, { timeout: MERMAID_E2E_TIMEOUT_MS }).should(($scope) => {
         const mermaidBlocks = $scope.find(
-          `.stretch-doc-inner ${shellA11y.commentrayMermaid}, .stretch-preamble ${shellA11y.commentrayMermaid}`,
+          `.stretch-doc-inner ${shellA11y.sidetrackMermaid}, .stretch-preamble ${shellA11y.sidetrackMermaid}`,
         );
         expect(mermaidBlocks.length, "stretch mermaid block count").to.be.at.least(1);
         const svgCount = mermaidBlocks.find("svg").length;
@@ -203,7 +201,7 @@ Cypress.Commands.add("DocPaneMermaidShouldShowDiagramOrMarkup", () => {
       });
     } else {
       cy.get(shellA11y.docPaneBody, { timeout: MERMAID_E2E_TIMEOUT_MS }).should(($scope) => {
-        const mermaidBlocks = $scope.find(shellA11y.commentrayMermaid);
+        const mermaidBlocks = $scope.find(shellA11y.sidetrackMermaid);
         expect(mermaidBlocks.length, "dual mermaid block count").to.be.at.least(1);
         const svgCount = mermaidBlocks.find("svg").length;
         expect(svgCount, "dual rendered mermaid svg count").to.be.at.least(1);
@@ -224,7 +222,7 @@ Cypress.Commands.add("DocPaneMermaidSvgShouldExist", () => {
   cy.get(shellA11y.shell).then(($shell) => {
     if ($shell.attr("data-layout") === "stretch") {
       cy.get(
-        `${shellA11y.shell} .stretch-doc-inner ${shellA11y.commentrayMermaid}, ${shellA11y.shell} .stretch-preamble ${shellA11y.commentrayMermaid}`,
+        `${shellA11y.shell} .stretch-doc-inner ${shellA11y.sidetrackMermaid}, ${shellA11y.shell} .stretch-preamble ${shellA11y.sidetrackMermaid}`,
         {
           timeout: MERMAID_E2E_TIMEOUT_MS,
         },
@@ -232,7 +230,7 @@ Cypress.Commands.add("DocPaneMermaidSvgShouldExist", () => {
         .find("svg")
         .should("have.length.at.least", 1);
     } else {
-      cy.get(`${shellA11y.docPaneBody} ${shellA11y.commentrayMermaid}`, {
+      cy.get(`${shellA11y.docPaneBody} ${shellA11y.sidetrackMermaid}`, {
         timeout: MERMAID_E2E_TIMEOUT_MS,
       })
         .find("svg")

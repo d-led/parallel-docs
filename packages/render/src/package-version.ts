@@ -1,12 +1,12 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { findMonorepoPackagesDir, monorepoLayoutStartDir } from "@commentray/core";
+import { findMonorepoPackagesDir, monorepoLayoutStartDir } from "@sidetrack/core";
 
 /**
  * Reads `version` from this package’s `package.json` (works for both `src/` and `dist/` layouts).
  */
-export function commentrayRenderVersion(): string {
+export function sidetrackRenderVersion(): string {
   const packagesDir = findMonorepoPackagesDir(monorepoLayoutStartDir(import.meta.url));
   const packageDir = join(packagesDir, "render");
   const raw = readFileSync(join(packageDir, "package.json"), "utf8");

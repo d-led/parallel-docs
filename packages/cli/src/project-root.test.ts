@@ -13,18 +13,18 @@ async function makeDir(p: string): Promise<string> {
 }
 
 beforeEach(async () => {
-  tmpRoot = await fs.mkdtemp(path.join(os.tmpdir(), "commentray-root-"));
+  tmpRoot = await fs.mkdtemp(path.join(os.tmpdir(), "sidetrack-root-"));
 });
 
 afterEach(async () => {
   await fs.rm(tmpRoot, { recursive: true, force: true });
 });
 
-describe("Discovering the Commentray project root from the CWD", () => {
-  it("prefers the nearest .commentray.toml over any .git ancestor", async () => {
+describe("Discovering the SideTrack project root from the CWD", () => {
+  it("prefers the nearest .sidetrack.toml over any .git ancestor", async () => {
     const project = await makeDir(path.join(tmpRoot, "outer", "inner"));
     await makeDir(path.join(tmpRoot, "outer", ".git"));
-    await fs.writeFile(path.join(project, ".commentray.toml"), "", "utf8");
+    await fs.writeFile(path.join(project, ".sidetrack.toml"), "", "utf8");
     const deep = await makeDir(path.join(project, "deep", "nested"));
 
     const root = await findProjectRoot(deep);
@@ -33,7 +33,7 @@ describe("Discovering the Commentray project root from the CWD", () => {
     expect(root.source).toBe("config");
   });
 
-  it("falls back to the git repository root when no .commentray.toml exists", async () => {
+  it("falls back to the git repository root when no .sidetrack.toml exists", async () => {
     const repo = await makeDir(path.join(tmpRoot, "repo"));
     await makeDir(path.join(repo, ".git"));
     const deep = await makeDir(path.join(repo, "src", "pkg"));

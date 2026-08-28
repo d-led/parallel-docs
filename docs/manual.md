@@ -1,20 +1,20 @@
-# Commentray Manual
+# SideTrack Manual
 
-This manual is the operator-focused reference for running Commentray day to day:
+This manual is the operator-focused reference for running SideTrack day to day:
 authoring, validating, rendering, sharing, and maintaining companion docs.
 
 For conceptual background and trade-offs, open this file side-by-side with its
-commentray companion:
-[`/.commentray/source/docs/manual.md/main.md`](../.commentray/source/docs/manual.md/main.md)
+sidetrack companion:
+[`/.sidetrack/source/docs/manual.md/main.md`](../.sidetrack/source/docs/manual.md/main.md)
 
-## 1) What Commentray Is
+## 1) What SideTrack Is
 
-Commentray keeps narrative documentation in repository-tracked Markdown files
-paired to source paths under `.commentray/source/`, plus machine metadata in
-`.commentray/metadata/index.json`.
+SideTrack keeps narrative documentation in repository-tracked Markdown files
+paired to source paths under `.sidetrack/source/`, plus machine metadata in
+`.sidetrack/metadata/index.json`.
 
 - **Primary source**: your code / README / docs file.
-- **Companion commentray**: the paired Markdown file.
+- **Companion sidetrack**: the paired Markdown file.
 - **Index metadata**: structured block anchors, snippets, and validation inputs.
 
 Canonical storage semantics:
@@ -24,7 +24,7 @@ Canonical storage semantics:
 
 Install and setup paths:
 
-- User install guide: [`docs/user/install.md`](./user/install.md) (includes **`npx commentray`**; **`npx commentray --help`** prints `Usage: commentray [options] [command]`.)
+- User install guide: [`docs/user/install.md`](./user/install.md) (includes **`npx sidetrack`**; **`npx sidetrack --help`** prints `Usage: sidetrack [options] [command]`.)
 - Clone + maintainer setup: [`docs/development.md`](./development.md)
 
 Typical bootstrap from repo root:
@@ -41,10 +41,10 @@ CLI command reference:
 
 Common lifecycle:
 
-1. `commentray init` to create storage/config baseline.
-2. Author companions in `.commentray/source/`.
-3. Run `commentray validate` (or `validate --staged`) before commit.
-4. Render static view (`commentray render` or `npm run pages:build`).
+1. `sidetrack init` to create storage/config baseline.
+2. Author companions in `.sidetrack/source/`.
+3. Run `sidetrack validate` (or `validate --staged`) before commit.
+4. Render static view (`sidetrack render` or `npm run pages:build`).
 
 ## 4) Authoring In VS Code / Cursor
 
@@ -54,7 +54,7 @@ Extension guide:
 Key commands:
 
 - Open paired markdown beside source
-- Add commentary block from selection
+- Add side-track block from selection
 - Open paired markdown (choose angle)
 - Add angle to project
 - Validate workspace
@@ -79,7 +79,7 @@ Operational semantics:
 
 - Storage/paths: [`docs/spec/storage.md#angles-named-perspectives-on-the-same-source`](./spec/storage.md#angles-named-perspectives-on-the-same-source)
 - Config keys: [`docs/user/config.md`](./user/config.md)
-- Migration command: `commentray migrate-angles`
+- Migration command: `sidetrack migrate-angles`
 
 ## 7) Static Site, Permalinks, And Sharing
 
@@ -92,7 +92,7 @@ Static browser behavior:
 
 - **Stable** pair browse URLs under `/browse/` **as long as** you do not rename
   or move the primary file or its companion Markdown: the opaque slug is fixed
-  for that `(sourcePath, commentrayPath)` pair across rebuilds and machines.
+  for that `(sourcePath, sidetrackPath)` pair across rebuilds and machines.
   **Rename or move** either side → those strings change → **a new slug** (old
   links are not redirected automatically).
 - Humane alias paths (source-shaped browse routes) where the host can serve them

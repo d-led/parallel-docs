@@ -1,25 +1,22 @@
 /**
  * Static browser scroll helpers: proportional mirror plus block pickers from
- * `@commentray/core/block-scroll-pickers` (small browser bundle entry).
+ * `@sidetrack/core/block-scroll-pickers` (small browser bundle entry).
  */
-export type {
-  BlockScrollLink,
-  BlockScrollStickyState,
-} from "@commentray/core/block-scroll-pickers";
+export type { BlockScrollLink, BlockScrollStickyState } from "@sidetrack/core/block-scroll-pickers";
 export {
   blockStrictlyContainingSourceViewportLine,
-  commentrayProbeInStrictInterMarkerGap,
-  DEFAULT_COMMENTRAY_VIEWPORT_HYSTERESIS_LINES,
+  sidetrackProbeInStrictInterMarkerGap,
+  DEFAULT_SIDETRACK_VIEWPORT_HYSTERESIS_LINES,
   DEFAULT_SOURCE_VIEWPORT_HYSTERESIS_LINES,
-  pickBlockScrollLinkForCommentrayScroll,
-  pickBlockScrollLinkForCommentrayViewportWithHysteresis,
+  pickBlockScrollLinkForSideTrackScroll,
+  pickBlockScrollLinkForSideTrackViewportWithHysteresis,
   pickBlockScrollLinkForSourceViewportTop,
   pickBlockScrollLinkForSourceViewportWithHysteresis,
-  pickCommentrayLineForSourceDualPane,
-  pickCommentrayLineForSourceScroll,
-  pickSourceLine0ForCommentrayScroll,
+  pickSideTrackLineForSourceDualPane,
+  pickSideTrackLineForSourceScroll,
+  pickSourceLine0ForSideTrackScroll,
   sourceTopLineStrictlyBeforeFirstIndexLine,
-} from "@commentray/core/block-scroll-pickers";
+} from "@sidetrack/core/block-scroll-pickers";
 
 /**
  * Maps one pane’s scroll position to the other for **proportional** scroll sync

@@ -1,40 +1,40 @@
 import { describe, expect, it } from "vitest";
 import {
-  convertCommentraySourceMarkersToLanguage,
-  findCommentrayMarkerPairs,
+  convertSideTrackSourceMarkersToLanguage,
+  findSideTrackMarkerPairs,
   leadingIndentOfLine,
 } from "./region-marker-convert.js";
 
-describe("Finding paired Commentray region markers in source", () => {
+describe("Finding paired SideTrack region markers in source", () => {
   it("pairs generic // markers in order", () => {
-    const src = ["// commentray:start id=ab", "x", "// commentray:end id=ab"].join("\n");
-    expect(findCommentrayMarkerPairs(src)).toEqual([{ id: "ab", startLine0: 0, endLine0: 2 }]);
+    const src = ["// sidetrack:start id=ab", "x", "// sidetrack:end id=ab"].join("\n");
+    expect(findSideTrackMarkerPairs(src)).toEqual([{ id: "ab", startLine0: 0, endLine0: 2 }]);
   });
 
   it("pairs //#region style markers", () => {
-    const src = ["//#region commentray:zz", "y", "//#endregion commentray:zz"].join("\n");
-    expect(findCommentrayMarkerPairs(src)).toEqual([{ id: "zz", startLine0: 0, endLine0: 2 }]);
+    const src = ["//#region sidetrack:zz", "y", "//#endregion sidetrack:zz"].join("\n");
+    expect(findSideTrackMarkerPairs(src)).toEqual([{ id: "zz", startLine0: 0, endLine0: 2 }]);
   });
 
   it("pairs two blocks with different ids", () => {
     const src = [
-      "// commentray:start id=a",
+      "// sidetrack:start id=a",
       "1",
-      "// commentray:end id=a",
+      "// sidetrack:end id=a",
       "",
-      "//#region commentray:b",
+      "//#region sidetrack:b",
       "2",
-      "//#endregion commentray:b",
+      "//#endregion sidetrack:b",
     ].join("\n");
-    expect(findCommentrayMarkerPairs(src)).toEqual([
+    expect(findSideTrackMarkerPairs(src)).toEqual([
       { id: "a", startLine0: 0, endLine0: 2 },
       { id: "b", startLine0: 4, endLine0: 6 },
     ]);
   });
 
   it("ignores orphan end markers", () => {
-    const src = ["// commentray:end id=x"].join("\n");
-    expect(findCommentrayMarkerPairs(src)).toEqual([]);
+    const src = ["// sidetrack:end id=x"].join("\n");
+    expect(findSideTrackMarkerPairs(src)).toEqual([]);
   });
 });
 
@@ -44,46 +44,42 @@ describe("Detecting leading indentation on a source line", () => {
   });
 });
 
-describe("Converting Commentray region markers to another language style", () => {
+describe("Converting SideTrack region markers to another language style", () => {
   it("rewrites generic markers to TypeScript #region style", () => {
-    const before = ["// commentray:start id=aa", "const n = 1;", "// commentray:end id=aa"].join(
+    const before = ["// sidetrack:start id=aa", "const n = 1;", "// sidetrack:end id=aa"].join(
       "\n",
     );
-    const { sourceText, changed, convertedPairs } = convertCommentraySourceMarkersToLanguage(
+    const { sourceText, changed, convertedPairs } = convertSideTrackSourceMarkersToLanguage(
       before,
       "typescript",
     );
     expect(convertedPairs).toBe(1);
     expect(changed).toBe(true);
     expect(sourceText).toBe(
-      ["//#region commentray:aa", "const n = 1;", "//#endregion commentray:aa"].join("\n"),
+      ["//#region sidetrack:aa", "const n = 1;", "//#endregion sidetrack:aa"].join("\n"),
     );
   });
 
   it("preserves indentation from the opening line", () => {
-    const before = ["  // commentray:start id=bb", "  x();", "  // commentray:end id=bb"].join(
-      "\n",
-    );
-    const { sourceText } = convertCommentraySourceMarkersToLanguage(before, "typescript");
+    const before = ["  // sidetrack:start id=bb", "  x();", "  // sidetrack:end id=bb"].join("\n");
+    const { sourceText } = convertSideTrackSourceMarkersToLanguage(before, "typescript");
     expect(sourceText).toBe(
-      ["  //#region commentray:bb", "  x();", "  //#endregion commentray:bb"].join("\n"),
+      ["  //#region sidetrack:bb", "  x();", "  //#endregion sidetrack:bb"].join("\n"),
     );
   });
 
   it("converts TypeScript regions to Rust-style generic comments", () => {
-    const before = ["//#region commentray:cc", "fn f() {}", "//#endregion commentray:cc"].join(
-      "\n",
-    );
-    const { sourceText, convertedPairs } = convertCommentraySourceMarkersToLanguage(before, "rust");
+    const before = ["//#region sidetrack:cc", "fn f() {}", "//#endregion sidetrack:cc"].join("\n");
+    const { sourceText, convertedPairs } = convertSideTrackSourceMarkersToLanguage(before, "rust");
     expect(convertedPairs).toBe(1);
     expect(sourceText).toBe(
-      ["// commentray:start id=cc", "fn f() {}", "// commentray:end id=cc"].join("\n"),
+      ["// sidetrack:start id=cc", "fn f() {}", "// sidetrack:end id=cc"].join("\n"),
     );
   });
 
   it("does not count a replacement when the target style already matches", () => {
-    const before = ["//#region commentray:dd", "x", "//#endregion commentray:dd"].join("\n");
-    const { sourceText, changed, convertedPairs } = convertCommentraySourceMarkersToLanguage(
+    const before = ["//#region sidetrack:dd", "x", "//#endregion sidetrack:dd"].join("\n");
+    const { sourceText, changed, convertedPairs } = convertSideTrackSourceMarkersToLanguage(
       before,
       "typescript",
     );
@@ -93,10 +89,10 @@ describe("Converting Commentray region markers to another language style", () =>
   });
 
   it("normalises CRLF to LF in the output", () => {
-    const before = "// commentray:start id=e\r\nbody\r\n// commentray:end id=e";
-    const { sourceText, changed } = convertCommentraySourceMarkersToLanguage(before, "typescript");
+    const before = "// sidetrack:start id=e\r\nbody\r\n// sidetrack:end id=e";
+    const { sourceText, changed } = convertSideTrackSourceMarkersToLanguage(before, "typescript");
     expect(changed).toBe(true);
     expect(sourceText).not.toContain("\r");
-    expect(sourceText).toContain("//#region commentray:e");
+    expect(sourceText).toContain("//#region sidetrack:e");
   });
 });

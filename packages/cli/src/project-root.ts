@@ -1,9 +1,9 @@
 import path from "node:path";
 
-import { pathExists } from "@commentray/core";
+import { pathExists } from "@sidetrack/core";
 
 /**
- * How a project root was located. `config` means a `.commentray.toml` was
+ * How a project root was located. `config` means a `.sidetrack.toml` was
  * found; `git` means a `.git` directory; `cwd` means no marker was found
  * and the starting directory itself is used (useful for first-time `init`).
  */
@@ -25,17 +25,17 @@ async function walkUpFor(startDir: string, marker: string): Promise<string | nul
 }
 
 /**
- * Locate a Commentray project root from `startDir`, in priority order:
+ * Locate a SideTrack project root from `startDir`, in priority order:
  *
- *   1. Nearest ancestor containing `.commentray.toml` (the declarative marker).
+ *   1. Nearest ancestor containing `.sidetrack.toml` (the declarative marker).
  *   2. Nearest ancestor containing a `.git` directory (natural project boundary).
- *   3. `startDir` itself — so `commentray init` can bootstrap a fresh directory.
+ *   3. `startDir` itself — so `sidetrack init` can bootstrap a fresh directory.
  *
  * Never throws: callers decide whether the resolved source is acceptable for
  * their command (e.g. `init scm` insists on a git checkout).
  */
 export async function findProjectRoot(startDir: string): Promise<ProjectRoot> {
-  const configRoot = await walkUpFor(startDir, ".commentray.toml");
+  const configRoot = await walkUpFor(startDir, ".sidetrack.toml");
   if (configRoot) return { dir: configRoot, source: "config" };
 
   const gitRoot = await walkUpFor(startDir, ".git");

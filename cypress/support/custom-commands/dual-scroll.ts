@@ -36,7 +36,7 @@ Cypress.Commands.add("ApplyDualPaneScrollTestViewport", () => {
 
 Cypress.Commands.add("CurrentPageShouldDisplayDualPaneCodeBrowserChrome", () => {
   cy.get(shellA11y.panes.source).should("be.visible");
-  cy.get(shellA11y.panes.commentray).should("be.visible");
+  cy.get(shellA11y.panes.sidetrack).should("be.visible");
   cy.get(shellA11y.resizeSplitter).should("be.visible");
 });
 

@@ -3,7 +3,7 @@ set -euo pipefail
 
 cd "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/.."
 
-BASE_URL="${1:-https://d-led.github.io/commentray/}"
+BASE_URL="${1:-https://d-led.github.io/sidetrack/}"
 SPEC_GLOB="${2:-cypress/e2e/{accessibility.cy.ts,static-pages.cy.ts,static-site-mobile.cy.ts}}"
 shift || true
 

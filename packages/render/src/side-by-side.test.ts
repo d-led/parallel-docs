@@ -7,11 +7,11 @@ describe("renderSideBySideHtml", () => {
     const html = await renderSideBySideHtml({
       code: "const x = 1;",
       language: "ts",
-      commentrayMarkdown: "Hello **world**.",
+      sidetrackMarkdown: "Hello **world**.",
     });
     expect(html).toContain(".layout");
     expect(html).toContain("grid-template-columns");
-    expect(html).toContain(">Commentray<");
+    expect(html).toContain(">SideTrack<");
     expect(html).toContain(">Code<");
   });
 });

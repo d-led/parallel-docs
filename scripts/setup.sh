@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# One-shot setup for a fresh checkout of Commentray:
+# One-shot setup for a fresh checkout of SideTrack:
 #   1. install npm dependencies
 #   2. build all workspaces
-#   3. initialize .commentray/ storage + default .commentray.toml
-#   4. run `commentray doctor` as a health check
+#   3. initialize .sidetrack/ storage + default .sidetrack.toml
+#   4. run `sidetrack doctor` as a health check
 #
 # Idempotent — safe to rerun.
 
@@ -18,8 +18,8 @@ npm install
 echo "== Building all workspaces =="
 npm run build
 
-echo "== Initializing Commentray workspace =="
-npm run commentray -- init
+echo "== Initializing SideTrack workspace =="
+npm run sidetrack -- init
 
-echo "== Running commentray doctor =="
-npm run commentray -- doctor
+echo "== Running sidetrack doctor =="
+npm run sidetrack -- doctor

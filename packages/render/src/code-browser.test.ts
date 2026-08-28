@@ -2,11 +2,11 @@ import { Buffer } from "node:buffer";
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
 
-import { CURRENT_SCHEMA_VERSION } from "@commentray/core";
+import { CURRENT_SCHEMA_VERSION } from "@sidetrack/core";
 import { describe, expect, it } from "vitest";
 
 import { mkTempRepoWithBrowsePairHtmlLayout } from "./browse-pair-html-test-fixtures.js";
-import { COMMENTRAY_COLOR_THEME_STORAGE_KEY } from "./code-browser-color-theme.js";
+import { SIDETRACK_COLOR_THEME_STORAGE_KEY } from "./code-browser-color-theme.js";
 import { type CodeBrowserPageOptions, renderCodeBrowserHtml } from "./code-browser.js";
 
 function textContentWithoutTags(html: string): string {
@@ -52,15 +52,15 @@ function decodeShellDataAttr(html: string, attr: string): string {
 function readmeTwoAngleStretchIndex(mainPath: string, altPath: string) {
   return {
     schemaVersion: CURRENT_SCHEMA_VERSION,
-    byCommentrayPath: {
+    bySideTrackPath: {
       [mainPath]: {
         sourcePath: "README.md",
-        commentrayPath: mainPath,
+        sidetrackPath: mainPath,
         blocks: [{ id: "b1", anchor: "lines:1-2" }],
       },
       [altPath]: {
         sourcePath: "README.md",
-        commentrayPath: altPath,
+        sidetrackPath: altPath,
         blocks: [{ id: "b1", anchor: "lines:1-2" }],
       },
     },
@@ -72,22 +72,22 @@ function readmeStretchAngle(
   id: string,
   title: string,
   markdown: string,
-  commentrayPathRel: string,
+  sidetrackPathRel: string,
 ) {
   return {
     id,
     title,
     markdown,
-    commentrayPathRel,
+    sidetrackPathRel,
     blockStretchRows: {
       index,
       sourceRelative: "README.md",
-      commentrayPathRel,
+      sidetrackPathRel,
     },
   };
 }
 
-function commentrayOutputUrlsForReadmeSourcePane(
+function sidetrackOutputUrlsForReadmeSourcePane(
   repoRoot: string,
   storageRoot: string,
   outHtml: string,
@@ -95,13 +95,13 @@ function commentrayOutputUrlsForReadmeSourcePane(
   repoRootAbs: string;
   htmlOutputFileAbs: string;
   markdownUrlBaseDirAbs: string;
-  commentrayStorageRootAbs: string;
+  sidetrackStorageRootAbs: string;
 } {
   return {
     repoRootAbs: repoRoot,
     htmlOutputFileAbs: outHtml,
     markdownUrlBaseDirAbs: path.join(storageRoot, "source", "README.md"),
-    commentrayStorageRootAbs: storageRoot,
+    sidetrackStorageRootAbs: storageRoot,
   };
 }
 
@@ -117,8 +117,8 @@ async function renderReadmeInstallLinkSourcePaneHtml(
     filePath: "README.md",
     code: readmeWithRelativeInstallLink,
     language: "md",
-    commentrayMarkdown: "Companion docs",
-    commentrayOutputUrls: commentrayOutputUrlsForReadmeSourcePane(repoRoot, storageRoot, outHtml),
+    sidetrackMarkdown: "Companion docs",
+    sidetrackOutputUrls: sidetrackOutputUrlsForReadmeSourcePane(repoRoot, storageRoot, outHtml),
     ...extra,
   });
 }
@@ -128,7 +128,7 @@ describe("Code browser page — layout shell and search", () => {
     const html = await renderCodeBrowserHtml({
       code: "x",
       language: "txt",
-      commentrayMarkdown: "body",
+      sidetrackMarkdown: "body",
     });
     expect(html).toMatch(/<link rel="icon" href="data:image\/svg\+xml,/);
     const m = /<link rel="icon" href="(data:image\/svg\+xml,[^"]+)"/.exec(html);
@@ -137,15 +137,16 @@ describe("Code browser page — layout shell and search", () => {
       throw new Error("expected favicon data URI");
     }
     const raw = decodeURIComponent(m[1].slice("data:image/svg+xml,".length));
-    expect(raw).toContain("M36 20 Q36 14.5 43 14.5");
-    expect(raw).toContain("#e8ba26");
+    expect(raw).toContain('fill="#e8ba26"');
+    expect(raw).toContain('fill="#13203b"');
+    expect(raw).toContain('fill="#ffffff"');
   });
 
   it("should embed raw payloads on the shell element for the client bundle", async () => {
     const html = await renderCodeBrowserHtml({
       code: "x",
       language: "txt",
-      commentrayMarkdown: "body",
+      sidetrackMarkdown: "body",
     });
     const shell = shellOpenTag(html);
     expect(shell.length).toBeGreaterThan(0);
@@ -160,20 +161,20 @@ describe("Code browser page — layout shell and search", () => {
     expect(html).not.toContain('id="source-markdown-pane-flip"');
   });
 
-  it("should narrow search to commentray paths when staticSearchScope requests it", async () => {
+  it("should narrow search to sidetrack paths when staticSearchScope requests it", async () => {
     const html = await renderCodeBrowserHtml({
       code: "const secret = 1;",
       language: "ts",
-      commentrayMarkdown: "## Notes\n",
+      sidetrackMarkdown: "## Notes\n",
       filePath: "src/a.ts",
-      commentrayPathForSearch: ".commentray/source/src/a.ts.md",
-      staticSearchScope: "commentray-and-paths",
+      sidetrackPathForSearch: ".sidetrack/source/src/a.ts.md",
+      staticSearchScope: "sidetrack-and-paths",
     });
     expect(html).toContain('placeholder="Filename, path, or keywords…"');
-    expect(html).toContain("commentray-nav-search.json");
-    expect(html).toContain('data-search-scope="commentray-and-paths"');
+    expect(html).toContain("sidetrack-nav-search.json");
+    expect(html).toContain('data-search-scope="sidetrack-and-paths"');
     expect(html).toContain('data-search-file-path="src/a.ts"');
-    expect(html).toContain('data-search-commentray-path=".commentray/source/src/a.ts.md"');
+    expect(html).toContain('data-search-sidetrack-path=".sidetrack/source/src/a.ts.md"');
   });
 
   it("should expose appearance controls and a head script so the first paint matches saved theme", async () => {
@@ -181,7 +182,7 @@ describe("Code browser page — layout shell and search", () => {
       title: "Demo",
       code: "x",
       language: "ts",
-      commentrayMarkdown: "y",
+      sidetrackMarkdown: "y",
     });
     const banner = bannerRegionHtml(html);
     expect(banner).toMatch(/aria-haspopup="menu"/);
@@ -189,11 +190,11 @@ describe("Code browser page — layout shell and search", () => {
     expect(banner).toMatch(/role="menuitemradio"[^>]*>System</);
     expect(banner).toMatch(/role="menuitemradio"[^>]*>Light</);
     expect(banner).toMatch(/role="menuitemradio"[^>]*>Dark</);
-    expect(banner).toContain('id="commentray-share-link"');
+    expect(banner).toContain('id="sidetrack-share-link"');
     expect(banner).toContain('aria-label="Copy shareable permalink"');
-    expect(banner).toMatch(/id="commentray-share-link"[\s\S]*id="commentray-theme-trigger"/);
-    expect(html).toMatch(/<html[^>]*data-commentray-theme="system"/i);
-    expect(html).toContain(COMMENTRAY_COLOR_THEME_STORAGE_KEY);
+    expect(banner).toMatch(/id="sidetrack-share-link"[\s\S]*id="sidetrack-theme-trigger"/);
+    expect(html).toMatch(/<html[^>]*data-sidetrack-theme="system"/i);
+    expect(html).toContain(SIDETRACK_COLOR_THEME_STORAGE_KEY);
   });
 });
 
@@ -203,12 +204,12 @@ describe("Code browser page — document shell and chrome", () => {
       title: "Demo",
       code: "const x = 1;",
       language: "ts",
-      commentrayMarkdown: "## Notes\n",
+      sidetrackMarkdown: "## Notes\n",
       hljsTheme: "github-dark",
     });
     expect(html).not.toContain("cdn.jsdelivr.net");
-    expect(html).toContain('id="commentray-hljs-light" media="(prefers-color-scheme: light)"');
-    expect(html).toContain('id="commentray-hljs-dark" media="(prefers-color-scheme: dark)"');
+    expect(html).toContain('id="sidetrack-hljs-light" media="(prefers-color-scheme: light)"');
+    expect(html).toContain('id="sidetrack-hljs-dark" media="(prefers-color-scheme: dark)"');
     expect(html).toContain("Theme: GitHub Dark");
   });
 
@@ -217,7 +218,7 @@ describe("Code browser page — document shell and chrome", () => {
       title: "Demo",
       code: "const x = 1;",
       language: "ts",
-      commentrayMarkdown: "## Notes\n\nHello.",
+      sidetrackMarkdown: "## Notes\n\nHello.",
     });
     const banner = bannerRegionHtml(html);
     const plain = textContentWithoutTags(html);
@@ -232,17 +233,17 @@ describe("Code browser page — document shell and chrome", () => {
     expect(html).toContain('for="search-q"');
     expect(banner).toContain("Wrap lines");
     expect(banner).toContain("toolbar-wrap-lines__box");
-    expect(banner).toContain('id="commentray-share-link"');
+    expect(banner).toContain('id="sidetrack-share-link"');
     expect(html).toContain('id="mobile-pane-flip"');
     expect(html).toContain('id="mobile-pane-flip-scroll"');
-    expect(html).toContain('aria-label="Switch between source code and commentary"');
+    expect(html).toContain('aria-label="Switch between source code and sidetrack"');
 
     expect(plain).toContain("const x = 1;");
     expect(plain).toContain("Notes");
     expect(html).toMatch(/hljs|language-ts/);
 
     expect(html).toMatch(
-      /<meta\s+name="description"\s+content="Demo — Side-by-side source and commentray documentation."\s*\/>/,
+      /<meta\s+name="description"\s+content="Demo — Side-by-side source and sidetrack documentation."\s*\/>/,
     );
     expect(html).toMatch(/<main\b[^>]*id="main-content"/);
     expect(html).toMatch(/<a[^>]+href="#main-content"[^>]*>\s*Skip to main content\s*</i);
@@ -253,7 +254,7 @@ describe("Code browser page — document shell and chrome", () => {
       title: "Demo",
       code: "x",
       language: "ts",
-      commentrayMarkdown: "body",
+      sidetrackMarkdown: "body",
       metaDescription: "Custom summary for listings.",
     });
     expect(html).toContain('<meta name="description" content="Custom summary for listings." />');
@@ -261,15 +262,15 @@ describe("Code browser page — document shell and chrome", () => {
 
   it("should preserve markdown content after block markers in shell payload", async () => {
     const md =
-      "# Title\n\n<!-- commentray:block id=blk -->\n\n_Italic lede_ and **bold** after the marker.\n";
+      "# Title\n\n<!-- sidetrack:block id=blk -->\n\n_Italic lede_ and **bold** after the marker.\n";
     const html = await renderCodeBrowserHtml({
       title: "Demo",
       code: "//",
       language: "ts",
-      commentrayMarkdown: md,
+      sidetrackMarkdown: md,
     });
     const rawMd = decodeShellDataAttr(html, "data-raw-md-b64");
-    expect(rawMd).toContain("<!-- commentray:block id=blk -->");
+    expect(rawMd).toContain("<!-- sidetrack:block id=blk -->");
     expect(rawMd).toContain("_Italic lede_");
     expect(rawMd).toContain("**bold**");
   });
@@ -279,11 +280,11 @@ describe("Code browser page — document shell and chrome", () => {
       title: "Demo",
       code: "x",
       language: "ts",
-      commentrayMarkdown: "body",
-      generatorLabel: "Commentray @commentray/render@9.9.9-test",
+      sidetrackMarkdown: "body",
+      generatorLabel: "SideTrack @sidetrack/render@9.9.9-test",
     });
     expect(html).toContain(
-      '<meta name="generator" content="Commentray @commentray/render@9.9.9-test" />',
+      '<meta name="generator" content="SideTrack @sidetrack/render@9.9.9-test" />',
     );
   });
 });
@@ -295,7 +296,7 @@ describe("Code browser page — companion GFM tables in HTML shell", () => {
       title: "Demo",
       code: "//",
       language: "ts",
-      commentrayMarkdown: md,
+      sidetrackMarkdown: md,
     });
     expect(html).toMatch(/<table[\s\S]*<\/table>/);
     expect(html).toContain("<thead");
@@ -304,7 +305,7 @@ describe("Code browser page — companion GFM tables in HTML shell", () => {
     expect(html).toContain(".pane--doc .doc-pane-body :where(thead th)");
     expect(html).toContain("tbody tr:nth-child(even)");
     /** Per-line anchors must not be injected into table rows (would break remark-gfm table parse). */
-    expect(html).not.toMatch(/\| --- \| --- \|<span class="commentray-line-anchor"/);
+    expect(html).not.toMatch(/\| --- \| --- \|<span class="sidetrack-line-anchor"/);
   });
 
   it("given a wide three-column GFM table like the VS Code README, should still parse as HTML table", async () => {
@@ -317,7 +318,7 @@ describe("Code browser page — companion GFM tables in HTML shell", () => {
       title: "Demo",
       code: "//",
       language: "ts",
-      commentrayMarkdown: md,
+      sidetrackMarkdown: md,
     });
     expect(html).toMatch(/<table[\s\S]*<\/table>/);
     expect(html).toContain("extension:vscode-readme-screenshots:desktop");
@@ -330,7 +331,7 @@ describe("Code browser page — toolbar chrome", () => {
       title: "Demo",
       code: "x",
       language: "ts",
-      commentrayMarkdown: "body",
+      sidetrackMarkdown: "body",
       relatedGithubNav: [
         { label: "CONTRIBUTING", href: "https://github.com/acme/demo/blob/main/CONTRIBUTING.md" },
       ],
@@ -340,15 +341,15 @@ describe("Code browser page — toolbar chrome", () => {
     expect(html).toContain('href="https://github.com/acme/demo/blob/main/CONTRIBUTING.md"');
   });
 
-  it("should expose GitHub blob links and the Comment-rayed files hub with nav JSON hooks", async () => {
+  it("should expose GitHub blob links and the Side-tracked files hub with nav JSON hooks", async () => {
     const pairsB64 = Buffer.from(
       JSON.stringify([
         {
           sourcePath: "README.md",
-          commentrayPath: ".commentray/source/README.md.md",
+          sidetrackPath: ".sidetrack/source/README.md.md",
           sourceOnGithub: "https://github.com/acme/demo/blob/main/README.md",
-          commentrayOnGithub:
-            "https://github.com/acme/demo/blob/main/.commentray/source/README.md.md",
+          sidetrackOnGithub:
+            "https://github.com/acme/demo/blob/main/.sidetrack/source/README.md.md",
         },
       ]),
       "utf8",
@@ -357,42 +358,39 @@ describe("Code browser page — toolbar chrome", () => {
       title: "Demo",
       code: "x",
       language: "ts",
-      commentrayMarkdown: "body",
+      sidetrackMarkdown: "body",
       filePath: "README.md",
-      commentrayPathForSearch: ".commentray/source/README.md.md",
+      sidetrackPathForSearch: ".sidetrack/source/README.md.md",
       sourceOnGithubUrl: "https://github.com/acme/demo/blob/main/README.md",
-      commentrayOnGithubUrl:
-        "https://github.com/acme/demo/blob/main/.commentray/source/README.md.md",
-      documentedNavJsonUrl: "./commentray-nav-search.json",
+      sidetrackOnGithubUrl: "https://github.com/acme/demo/blob/main/.sidetrack/source/README.md.md",
+      documentedNavJsonUrl: "./sidetrack-nav-search.json",
       documentedPairsEmbeddedB64: pairsB64,
     });
     expect(html).toContain('aria-label="Current documentation pair"');
     expect(html).toContain("README.md");
-    expect(html).toContain(".commentray/source/README.md.md");
-    expect(html).toContain('data-commentray-pair-source-path="README.md"');
+    expect(html).toContain(".sidetrack/source/README.md.md");
+    expect(html).toContain('data-sidetrack-pair-source-path="README.md"');
+    expect(html).toContain('data-sidetrack-pair-sidetrack-path=".sidetrack/source/README.md.md"');
     expect(html).toContain(
-      'data-commentray-pair-commentray-path=".commentray/source/README.md.md"',
+      'data-sidetrack-pair-browse-href="https://github.com/acme/demo/blob/main/.sidetrack/source/README.md.md"',
     );
-    expect(html).toContain(
-      'data-commentray-pair-browse-href="https://github.com/acme/demo/blob/main/.commentray/source/README.md.md"',
-    );
-    expect(html).toContain("Comment-rayed files");
+    expect(html).toContain("Side-tracked files");
     expect(html).toContain('placeholder="Filename, path, or keywords…"');
     expect(html).toContain('placeholder="Filter by path…"');
     expect(html).toContain('role="tree"');
-    expect(html).toContain('data-nav-json-url="./commentray-nav-search.json"');
-    expect(html).toContain('data-nav-search-json-url="./commentray-nav-search.json"');
+    expect(html).toContain('data-nav-json-url="./sidetrack-nav-search.json"');
+    expect(html).toContain('data-nav-search-json-url="./sidetrack-nav-search.json"');
     expect(html).toContain('data-documented-pairs-b64="');
   });
 
-  it("should hydrate the Comment-rayed files tree from embedded pairs alone", async () => {
+  it("should hydrate the Side-tracked files tree from embedded pairs alone", async () => {
     const pairsB64 = Buffer.from(
       JSON.stringify([
         {
           sourcePath: "src/a.ts",
-          commentrayPath: ".commentray/source/src/a.ts.md",
+          sidetrackPath: ".sidetrack/source/src/a.ts.md",
           sourceOnGithub: "https://github.com/acme/w/blob/main/src/a.ts",
-          commentrayOnGithub: "https://github.com/acme/w/blob/main/.commentray/source/src/a.ts.md",
+          sidetrackOnGithub: "https://github.com/acme/w/blob/main/.sidetrack/source/src/a.ts.md",
         },
       ]),
       "utf8",
@@ -401,10 +399,10 @@ describe("Code browser page — toolbar chrome", () => {
       title: "Demo",
       code: "x",
       language: "ts",
-      commentrayMarkdown: "body",
+      sidetrackMarkdown: "body",
       documentedPairsEmbeddedB64: pairsB64,
     });
-    expect(html).toContain("Comment-rayed files");
+    expect(html).toContain("Side-tracked files");
     expect(html).toContain('placeholder="Filter by path…"');
     expect(html).toContain('data-nav-json-url=""');
     expect(html).toContain('data-documented-pairs-b64="');
@@ -417,7 +415,7 @@ describe("Code browser page — source line chrome", () => {
       title: "Demo",
       code: "one\ntwo\nthree",
       language: "txt",
-      commentrayMarkdown: "body",
+      sidetrackMarkdown: "body",
     });
     expect(html).toContain(">1</span>");
     expect(html).toContain(">2</span>");
@@ -431,7 +429,7 @@ describe("Code browser page — source line chrome", () => {
       title: "Demo",
       code,
       language: "ts",
-      commentrayMarkdown: "body",
+      sidetrackMarkdown: "body",
     });
     expect(html).toMatch(/>100<\/span>/);
     expect(html).toMatch(/--code-ln-min-ch:\s*3/);
@@ -444,7 +442,7 @@ describe("Code browser page — file path display", () => {
       filePath: "packages/render/src/code-browser.ts",
       code: "export {};",
       language: "ts",
-      commentrayMarkdown: "body",
+      sidetrackMarkdown: "body",
     });
     expect(html).toContain('aria-label="Current documentation pair"');
     expect(html).toContain("packages/render/src/code-browser.ts");
@@ -455,7 +453,7 @@ describe("Code browser page — file path display", () => {
       filePath: "README.md",
       code: "# hi\n",
       language: "md",
-      commentrayMarkdown: "body",
+      sidetrackMarkdown: "body",
     });
     expect(html).toContain("README.md");
     expect(html).toContain('data-source-pane-mode="source"');
@@ -469,7 +467,7 @@ describe("Code browser page — file path display", () => {
       filePath: "<script>x</script>/evil.ts",
       code: "x",
       language: "ts",
-      commentrayMarkdown: "body",
+      sidetrackMarkdown: "body",
     });
     expect(html).not.toContain("<script>x</script>/evil.ts");
     expect(html).toContain("&lt;script&gt;x&lt;/script&gt;/");
@@ -485,7 +483,7 @@ describe("Code browser page — source markdown link resolution", () => {
     const html = await renderReadmeInstallLinkSourcePaneHtml(repoRoot, storageRoot, outHtml);
 
     expect(html).toContain('href="../../docs/user/install.md"');
-    expect(html).not.toContain(".commentray/source/README.md/docs/user/install.md");
+    expect(html).not.toContain(".sidetrack/source/README.md/docs/user/install.md");
   });
 
   it("keeps pair browse links stable while resolving source-markdown links from source tree", async () => {
@@ -495,33 +493,33 @@ describe("Code browser page — source markdown link resolution", () => {
     await writeFile(path.join(repoRoot, "README.md"), readmeWithRelativeInstallLink, "utf8");
 
     const html = await renderReadmeInstallLinkSourcePaneHtml(repoRoot, storageRoot, outHtml, {
-      commentrayPathForSearch: ".commentray/source/README.md/main.md",
-      commentrayOnGithubUrl:
-        "https://github.com/acme/demo/blob/main/.commentray/source/README.md/main.md",
-      commentrayStaticBrowseUrl: "./browse/README.md/main/index.html",
+      sidetrackPathForSearch: ".sidetrack/source/README.md/main.md",
+      sidetrackOnGithubUrl:
+        "https://github.com/acme/demo/blob/main/.sidetrack/source/README.md/main.md",
+      sidetrackStaticBrowseUrl: "./browse/README.md/main/index.html",
     });
 
     expect(html).toContain('href="../../docs/user/install.md"');
-    expect(html).toContain('data-commentray-pair-browse-href="./browse/README.md/main/index.html"');
+    expect(html).toContain('data-sidetrack-pair-browse-href="./browse/README.md/main/index.html"');
     expect(html).not.toContain(
-      'data-commentray-pair-browse-href="https://github.com/acme/demo/blob/main/.commentray/source/README.md/main.md"',
+      'data-sidetrack-pair-browse-href="https://github.com/acme/demo/blob/main/.sidetrack/source/README.md/main.md"',
     );
   });
 });
 
 describe("Code browser page — toolbar link policy", () => {
-  it("should emit Octocat and Commentray links only for safe http(s) URLs", async () => {
+  it("should emit Octocat and SideTrack links only for safe http(s) URLs", async () => {
     const html = await renderCodeBrowserHtml({
       title: "Demo",
       code: "x",
       language: "ts",
-      commentrayMarkdown: "body",
+      sidetrackMarkdown: "body",
       githubRepoUrl: "https://github.com/example/demo",
-      toolHomeUrl: "https://github.com/d-led/commentray",
+      toolHomeUrl: "https://github.com/d-led/sidetrack",
     });
     expect(html).toContain('aria-label="View repository on GitHub"');
     expect(html).toContain('href="https://github.com/example/demo"');
-    expect(html).toContain('href="https://github.com/d-led/commentray"');
+    expect(html).toContain('href="https://github.com/d-led/sidetrack"');
     expect(html).toMatch(/<footer[\s\S]*Rendered with[\s\S]*v\d+\.\d+\.\d+[\s\S]*<\/footer>/);
   });
 
@@ -530,15 +528,15 @@ describe("Code browser page — toolbar link policy", () => {
       title: "Demo",
       code: "x",
       language: "ts",
-      commentrayMarkdown: "body",
+      sidetrackMarkdown: "body",
       siteHubUrl: "./",
       githubRepoUrl: "https://github.com/example/demo",
-      toolHomeUrl: "https://github.com/d-led/commentray",
+      toolHomeUrl: "https://github.com/d-led/sidetrack",
     });
     expect(html).toContain('aria-label="Documentation home"');
     expect(html).toContain('href="./"');
     expect(html).not.toContain('aria-label="View repository on GitHub"');
-    expect(html).toContain('href="https://github.com/d-led/commentray"');
+    expect(html).toContain('href="https://github.com/d-led/sidetrack"');
   });
 
   it("should include a footer with ISO and local wall-clock when no tool home URL is set", async () => {
@@ -546,20 +544,20 @@ describe("Code browser page — toolbar link policy", () => {
       title: "Demo",
       code: "x",
       language: "ts",
-      commentrayMarkdown: "body",
+      sidetrackMarkdown: "body",
       builtAt: new Date("2026-05-01T12:00:00.000Z"),
     });
     expect(html).toContain("HTML generated");
     expect(html).toContain('datetime="2026-05-01T12:00:00.000Z"');
   });
 
-  it("should put Commentray attribution in the footer with version and the same build timestamp", async () => {
+  it("should put SideTrack attribution in the footer with version and the same build timestamp", async () => {
     const html = await renderCodeBrowserHtml({
       title: "Demo",
       code: "x",
       language: "ts",
-      commentrayMarkdown: "body",
-      toolHomeUrl: "https://github.com/d-led/commentray",
+      sidetrackMarkdown: "body",
+      toolHomeUrl: "https://github.com/d-led/sidetrack",
       builtAt: new Date("2026-05-01T12:00:00.000Z"),
     });
     expect(html).toMatch(/<footer[\s\S]*Rendered with[\s\S]*v\d+\.\d+\.\d+<\/span>\s*:\s*<time/);
@@ -573,8 +571,8 @@ describe("Code browser page — toolbar link policy", () => {
       title: "Demo",
       code: "x",
       language: "ts",
-      commentrayMarkdown: "body",
-      toolHomeUrl: "https://github.com/d-led/commentray",
+      sidetrackMarkdown: "body",
+      toolHomeUrl: "https://github.com/d-led/sidetrack",
       builtAt: new Date("2026-05-01T12:00:00.000Z"),
       pagesBuildCommitSha: sha,
     });
@@ -587,8 +585,8 @@ describe("Code browser page — toolbar link policy", () => {
       title: "Demo",
       code: "x",
       language: "ts",
-      commentrayMarkdown: "body",
-      toolHomeUrl: "https://github.com/d-led/commentray",
+      sidetrackMarkdown: "body",
+      toolHomeUrl: "https://github.com/d-led/sidetrack",
       pagesBuildCommitSha: "main",
     });
     expect(html).not.toContain('class="app__footer-attribution__sha"');
@@ -599,7 +597,7 @@ describe("Code browser page — toolbar link policy", () => {
       title: "Demo",
       code: "x",
       language: "ts",
-      commentrayMarkdown: "body",
+      sidetrackMarkdown: "body",
       githubRepoUrl: "javascript:alert(1)",
       toolHomeUrl: "data:text/html,hi",
     });
@@ -624,7 +622,7 @@ describe("Code browser page — companion Markdown rendering basics", () => {
     const html = await renderCodeBrowserHtml({
       code: "x",
       language: "txt",
-      commentrayMarkdown: md,
+      sidetrackMarkdown: md,
     });
     expect(html).toMatch(/<h1[^>]*>\s*Title/);
     expect(html).toContain("<strong>bold</strong>");
@@ -636,11 +634,11 @@ describe("Code browser page — companion Markdown rendering basics", () => {
     const html = await renderCodeBrowserHtml({
       code: "x",
       language: "txt",
-      commentrayMarkdown: "Use `commentray validate` first.\n\n```bash\ncommentray validate\n```",
+      sidetrackMarkdown: "Use `sidetrack validate` first.\n\n```bash\nsidetrack validate\n```",
     });
     expect(html).toContain(":where(p, li, blockquote, td, th, h1, h2, h3, h4, h5, h6) > code");
     const styleFlat = html.replace(/\s+/g, " ");
-    expect(styleFlat).toContain(':root[data-commentray-theme="dark"] .pane--doc .doc-pane-body');
+    expect(styleFlat).toContain(':root[data-sidetrack-theme="dark"] .pane--doc .doc-pane-body');
     expect(html).toContain("#doc-pane-body.wrap pre code");
   });
 });
@@ -652,7 +650,7 @@ describe("Code browser page — companion Markdown page-break rendering", () => 
       "",
       "Lead in.",
       "",
-      "<!-- commentray:page-break -->",
+      "<!-- sidetrack:page-break -->",
       "",
       "## Chapter two",
       "",
@@ -661,22 +659,22 @@ describe("Code browser page — companion Markdown page-break rendering", () => 
     const html = await renderCodeBrowserHtml({
       code: "x",
       language: "txt",
-      commentrayMarkdown: md,
+      sidetrackMarkdown: md,
     });
     const rawMd = decodeShellDataAttr(html, "data-raw-md-b64");
-    expect(rawMd).toContain("<!-- commentray:page-break -->");
+    expect(rawMd).toContain("<!-- sidetrack:page-break -->");
     expect(rawMd).toContain("## Chapter two");
     expect(rawMd).toContain("Continuation.");
   });
 
   it("annotates page breaks with next block metadata when block links are available", async () => {
-    const crPath = ".commentray/source/pkg/x.txt.md";
+    const crPath = ".sidetrack/source/pkg/x.txt.md";
     const index = {
       schemaVersion: CURRENT_SCHEMA_VERSION,
-      byCommentrayPath: {
+      bySideTrackPath: {
         [crPath]: {
           sourcePath: "pkg/x.txt",
-          commentrayPath: crPath,
+          sidetrackPath: crPath,
           blocks: [
             { id: "b1", anchor: "lines:1-4" },
             { id: "b2", anchor: "lines:20-25" },
@@ -685,42 +683,42 @@ describe("Code browser page — companion Markdown page-break rendering", () => 
       },
     };
     const md = [
-      "<!-- commentray:block id=b1 -->",
+      "<!-- sidetrack:block id=b1 -->",
       "",
       "one",
       "",
-      "<!-- commentray:page-break -->",
+      "<!-- sidetrack:page-break -->",
       "",
-      "<!-- commentray:block id=b2 -->",
+      "<!-- sidetrack:block id=b2 -->",
       "",
       "two",
     ].join("\n");
     const html = await renderCodeBrowserHtml({
       code: "a\nb\nc\nd",
       language: "txt",
-      commentrayMarkdown: md,
+      sidetrackMarkdown: md,
       codeBrowserLayout: "dual",
       blockStretchRows: {
         index,
         sourceRelative: "pkg/x.txt",
-        commentrayPathRel: crPath,
+        sidetrackPathRel: crPath,
       },
     });
-    expect(html).toContain('class="commentray-page-break"');
-    expect(html).toContain('data-next-commentray-line="6"');
+    expect(html).toContain('class="sidetrack-page-break"');
+    expect(html).toContain('data-next-sidetrack-line="6"');
     expect(html).toContain('data-next-source-viewport-line="20"');
   });
 });
 
 describe("Code browser page — page-break next-block alignment and fenced-text guard", () => {
   it("aligns the page-break next-block target with the marker viewport top line, not the inner source start", async () => {
-    const crPath = ".commentray/source/x.toml.md";
+    const crPath = ".sidetrack/source/x.toml.md";
     const index = {
       schemaVersion: CURRENT_SCHEMA_VERSION,
-      byCommentrayPath: {
+      bySideTrackPath: {
         [crPath]: {
           sourcePath: "x.toml",
-          commentrayPath: crPath,
+          sidetrackPath: crPath,
           blocks: [
             { id: "first", anchor: "marker:first" },
             { id: "second", anchor: "marker:second" },
@@ -729,51 +727,51 @@ describe("Code browser page — page-break next-block alignment and fenced-text 
       },
     };
     const md = [
-      "<!-- commentray:block id=first -->",
+      "<!-- sidetrack:block id=first -->",
       "",
       "lede",
       "",
-      "<!-- commentray:page-break -->",
+      "<!-- sidetrack:page-break -->",
       "",
-      "<!-- commentray:block id=second -->",
+      "<!-- sidetrack:block id=second -->",
       "",
       "more",
     ].join("\n");
     const source = [
-      "# commentray:start id=first",
+      "# sidetrack:start id=first",
       "[first]",
-      "# commentray:end id=first",
+      "# sidetrack:end id=first",
       "",
-      "# commentray:start id=second",
+      "# sidetrack:start id=second",
       "[second]",
-      "# commentray:end id=second",
+      "# sidetrack:end id=second",
     ].join("\n");
     const html = await renderCodeBrowserHtml({
       code: source,
       language: "toml",
       filePath: "x.toml",
-      commentrayMarkdown: md,
+      sidetrackMarkdown: md,
       codeBrowserLayout: "dual",
       blockStretchRows: {
         index,
         sourceRelative: "x.toml",
-        commentrayPathRel: crPath,
+        sidetrackPathRel: crPath,
       },
     });
-    expect(html).toContain('class="commentray-page-break"');
+    expect(html).toContain('class="sidetrack-page-break"');
     expect(html).toContain('data-next-source-viewport-line="4"');
     expect(html).not.toContain('data-next-source-viewport-line="6"');
   });
 
-  it("does not turn fenced commentray:page-break text into layout separators", async () => {
-    const md = ["```md", "<!-- commentray:page-break -->", "```"].join("\n");
+  it("does not turn fenced sidetrack:page-break text into layout separators", async () => {
+    const md = ["```md", "<!-- sidetrack:page-break -->", "```"].join("\n");
     const html = await renderCodeBrowserHtml({
       code: "x",
       language: "txt",
-      commentrayMarkdown: md,
+      sidetrackMarkdown: md,
     });
-    expect(html).not.toContain('class="commentray-page-break"');
-    expect(html).toContain("commentray:page-break -->");
+    expect(html).not.toContain('class="sidetrack-page-break"');
+    expect(html).toContain("sidetrack:page-break -->");
   });
 });
 
@@ -782,7 +780,7 @@ describe("Code browser page — multi-angle browsing", () => {
     const html = await renderCodeBrowserHtml({
       code: "// x",
       language: "ts",
-      commentrayMarkdown: "## Default pane\n",
+      sidetrackMarkdown: "## Default pane\n",
       multiAngleBrowsing: {
         defaultAngleId: "main",
         angles: [
@@ -790,25 +788,25 @@ describe("Code browser page — multi-angle browsing", () => {
             id: "main",
             title: "Main",
             markdown: "## Main angle\n\nBody **one**.",
-            commentrayPathRel: ".commentray/source/README.md/main.md",
-            commentrayOnGithubUrl:
-              "https://github.com/acme/r/blob/main/.commentray/source/README.md/main.md",
+            sidetrackPathRel: ".sidetrack/source/README.md/main.md",
+            sidetrackOnGithubUrl:
+              "https://github.com/acme/r/blob/main/.sidetrack/source/README.md/main.md",
           },
           {
             id: "architecture",
             title: "Architecture",
             markdown: "## Architecture angle\n\nBody **two**.",
-            commentrayPathRel: ".commentray/source/README.md/architecture.md",
-            commentrayOnGithubUrl:
-              "https://github.com/acme/r/blob/main/.commentray/source/README.md/architecture.md",
+            sidetrackPathRel: ".sidetrack/source/README.md/architecture.md",
+            sidetrackOnGithubUrl:
+              "https://github.com/acme/r/blob/main/.sidetrack/source/README.md/architecture.md",
           },
         ],
       },
     });
-    expect(html).toContain('aria-label="Commentray angle"');
+    expect(html).toContain('aria-label="SideTrack angle"');
     expect(html).toContain('value="main"');
     expect(html).toContain('value="architecture"');
-    expect(html).toContain('id="commentray-multi-angle-b64"');
+    expect(html).toContain('id="sidetrack-multi-angle-b64"');
     expect(html).toContain("Main angle");
     expect(html).toContain("<strong>one</strong>");
   });
@@ -818,19 +816,19 @@ describe("Code browser page — multi-angle browsing", () => {
       filePath: "README.md",
       code: "# Source title\n\nSome text.",
       language: "md",
-      commentrayMarkdown: "## Default pane\n",
+      sidetrackMarkdown: "## Default pane\n",
       multiAngleBrowsing: {
         defaultAngleId: "main",
         angles: [
           {
             id: "main",
             markdown: "## Main\n",
-            commentrayPathRel: ".commentray/source/README.md/main.md",
+            sidetrackPathRel: ".sidetrack/source/README.md/main.md",
           },
           {
             id: "alt",
             markdown: "## Alt\n",
-            commentrayPathRel: ".commentray/source/README.md/alt.md",
+            sidetrackPathRel: ".sidetrack/source/README.md/alt.md",
           },
         ],
       },
@@ -844,14 +842,14 @@ describe("Code browser page — multi-angle browsing", () => {
 
 describe("Code browser page — multi-angle block stretch", () => {
   it("should use stretch when every angle has a block table that builds", async () => {
-    const mainPath = ".commentray/source/README.md/main.md";
-    const altPath = ".commentray/source/README.md/alt.md";
+    const mainPath = ".sidetrack/source/README.md/main.md";
+    const altPath = ".sidetrack/source/README.md/alt.md";
     const index = readmeTwoAngleStretchIndex(mainPath, altPath);
     const html = await renderCodeBrowserHtml({
       filePath: "README.md",
       code: "a\nb",
       language: "txt",
-      commentrayMarkdown: "",
+      sidetrackMarkdown: "",
       multiAngleBrowsing: {
         defaultAngleId: "main",
         angles: [
@@ -859,14 +857,14 @@ describe("Code browser page — multi-angle block stretch", () => {
             index,
             "main",
             "Main",
-            "<!-- commentray:block id=b1 -->\n## M\n",
+            "<!-- sidetrack:block id=b1 -->\n## M\n",
             mainPath,
           ),
           readmeStretchAngle(
             index,
             "alt",
             "Alt",
-            "<!-- commentray:block id=b1 -->\n## A\n",
+            "<!-- sidetrack:block id=b1 -->\n## A\n",
             altPath,
           ),
         ],
@@ -879,7 +877,7 @@ describe("Code browser page — multi-angle block stretch", () => {
     expect(html).toContain('class="shell__pair-context"');
     expect(html).toContain('title="README.md"');
     expect(html).toContain(`title="${mainPath}"`);
-    const script = /<script[^>]*id="commentray-multi-angle-b64"[^>]*>([^<]*)<\/script>/i.exec(html);
+    const script = /<script[^>]*id="sidetrack-multi-angle-b64"[^>]*>([^<]*)<\/script>/i.exec(html);
     expect(script?.[1]).toBeDefined();
     const payload = JSON.parse(Buffer.from(script?.[1] ?? "", "base64").toString("utf8")) as {
       layoutMode?: string;
@@ -897,14 +895,14 @@ describe("Code browser page — multi-angle block stretch", () => {
   });
 
   it("keeps stretch for markdown sources while preserving the source markdown toggle", async () => {
-    const mainPath = ".commentray/source/README.md/main.md";
-    const altPath = ".commentray/source/README.md/alt.md";
+    const mainPath = ".sidetrack/source/README.md/main.md";
+    const altPath = ".sidetrack/source/README.md/alt.md";
     const index = readmeTwoAngleStretchIndex(mainPath, altPath);
     const html = await renderCodeBrowserHtml({
       filePath: "README.md",
       code: "# Title\n\nBody\n",
       language: "md",
-      commentrayMarkdown: "",
+      sidetrackMarkdown: "",
       multiAngleBrowsing: {
         defaultAngleId: "main",
         angles: [
@@ -912,14 +910,14 @@ describe("Code browser page — multi-angle block stretch", () => {
             index,
             "main",
             "Main",
-            "<!-- commentray:block id=b1 -->\n## Main\n",
+            "<!-- sidetrack:block id=b1 -->\n## Main\n",
             mainPath,
           ),
           readmeStretchAngle(
             index,
             "alt",
             "Alt",
-            "<!-- commentray:block id=b1 -->\n## Alt\n",
+            "<!-- sidetrack:block id=b1 -->\n## Alt\n",
             altPath,
           ),
         ],
@@ -935,14 +933,14 @@ describe("Code browser page — multi-angle block stretch", () => {
 
 describe("Code browser page — multi-angle index isolation", () => {
   it("should omit scroll links for an angle when blockStretchRows targets another companion path", async () => {
-    const mainPath = ".commentray/source/README.md/main.md";
-    const archPath = ".commentray/source/README.md/architecture.md";
+    const mainPath = ".sidetrack/source/README.md/main.md";
+    const archPath = ".sidetrack/source/README.md/architecture.md";
     const index = {
       schemaVersion: CURRENT_SCHEMA_VERSION,
-      byCommentrayPath: {
+      bySideTrackPath: {
         [mainPath]: {
           sourcePath: "README.md",
-          commentrayPath: mainPath,
+          sidetrackPath: mainPath,
           blocks: [{ id: "readme-lede", anchor: "lines:1-3" }],
         },
       },
@@ -951,34 +949,34 @@ describe("Code browser page — multi-angle index isolation", () => {
       filePath: "README.md",
       code: "a\nb\nc\n",
       language: "txt",
-      commentrayMarkdown: "",
+      sidetrackMarkdown: "",
       multiAngleBrowsing: {
         defaultAngleId: "main",
         angles: [
           {
             id: "main",
-            markdown: "<!-- commentray:block id=readme-lede -->\n## Lede\n",
-            commentrayPathRel: mainPath,
+            markdown: "<!-- sidetrack:block id=readme-lede -->\n## Lede\n",
+            sidetrackPathRel: mainPath,
             blockStretchRows: {
               index,
               sourceRelative: "README.md",
-              commentrayPathRel: mainPath,
+              sidetrackPathRel: mainPath,
             },
           },
           {
             id: "architecture",
-            markdown: "<!-- commentray:block id=readme-lede -->\n## Arch\n",
-            commentrayPathRel: archPath,
+            markdown: "<!-- sidetrack:block id=readme-lede -->\n## Arch\n",
+            sidetrackPathRel: archPath,
             blockStretchRows: {
               index,
               sourceRelative: "README.md",
-              commentrayPathRel: mainPath,
+              sidetrackPathRel: mainPath,
             },
           },
         ],
       },
     });
-    const script = /<script[^>]*id="commentray-multi-angle-b64"[^>]*>([^<]*)<\/script>/i.exec(html);
+    const script = /<script[^>]*id="sidetrack-multi-angle-b64"[^>]*>([^<]*)<\/script>/i.exec(html);
     expect(script?.[1]).toBeDefined();
     const payload = JSON.parse(Buffer.from(script?.[1] ?? "", "base64").toString("utf8")) as {
       angles: Array<{ id: string; scrollBlockLinksB64: string }>;
@@ -995,39 +993,39 @@ describe("Code browser page — block markers", () => {
     const html = await renderCodeBrowserHtml({
       code: "x",
       language: "txt",
-      commentrayMarkdown: "<!-- commentray:block id=myblock -->\n\n## Title\n",
+      sidetrackMarkdown: "<!-- sidetrack:block id=myblock -->\n\n## Title\n",
     });
     const rawMd = decodeShellDataAttr(html, "data-raw-md-b64");
-    expect(rawMd).toContain("<!-- commentray:block id=myblock -->");
+    expect(rawMd).toContain("<!-- sidetrack:block id=myblock -->");
     expect(rawMd).toContain("## Title");
   });
 });
 
 async function expectDualPaneBlockScrollLinksPayload(): Promise<void> {
-  const crPath = ".commentray/source/pkg/x.txt.md";
+  const crPath = ".sidetrack/source/pkg/x.txt.md";
   const index = {
     schemaVersion: CURRENT_SCHEMA_VERSION,
-    byCommentrayPath: {
+    bySideTrackPath: {
       [crPath]: {
         sourcePath: "pkg/x.txt",
-        commentrayPath: crPath,
+        sidetrackPath: crPath,
         blocks: [{ id: "b1", anchor: "lines:1-2" }],
       },
     },
   };
-  const md = "<!-- commentray:block id=b1 -->\n\n## Hi\n";
+  const md = "<!-- sidetrack:block id=b1 -->\n\n## Hi\n";
   const html = await renderCodeBrowserHtml({
     code: "a\nb",
     language: "txt",
-    commentrayMarkdown: md,
+    sidetrackMarkdown: md,
     codeBrowserLayout: "dual",
     blockStretchRows: {
       index,
       sourceRelative: "pkg/x.txt",
-      commentrayPathRel: crPath,
+      sidetrackPathRel: crPath,
     },
   });
-  expect(html).toContain('data-commentray-line="0"');
+  expect(html).toContain('data-sidetrack-line="0"');
   expect(html).toContain('data-source-start="1"');
   const m = /data-scroll-block-links-b64="([^"]*)"/.exec(html);
   expect(m).not.toBeNull();
@@ -1038,7 +1036,7 @@ async function expectDualPaneBlockScrollLinksPayload(): Promise<void> {
   expect(links).toEqual([
     {
       id: "b1",
-      commentrayLine: 0,
+      sidetrackLine: 0,
       sourceStart: 1,
       sourceEnd: 2,
       markerViewportHalfOpen1Based: { lo: 1, hiExclusive: 3 },
@@ -1052,26 +1050,26 @@ describe("Code browser page — scroll sync payload", () => {
   });
 
   it("should choose stretch layout with one shared scroll when the block table can be built", async () => {
-    const crPath = ".commentray/source/pkg/readme.md.md";
+    const crPath = ".sidetrack/source/pkg/readme.md.md";
     const index = {
       schemaVersion: CURRENT_SCHEMA_VERSION,
-      byCommentrayPath: {
+      bySideTrackPath: {
         [crPath]: {
           sourcePath: "pkg/readme.md",
-          commentrayPath: crPath,
+          sidetrackPath: crPath,
           blocks: [{ id: "b1", anchor: "lines:1-2" }],
         },
       },
     };
-    const md = "<!-- commentray:block id=b1 -->\n\n## Sync\n";
+    const md = "<!-- sidetrack:block id=b1 -->\n\n## Sync\n";
     const html = await renderCodeBrowserHtml({
       code: "one\ntwo",
       language: "txt",
-      commentrayMarkdown: md,
+      sidetrackMarkdown: md,
       blockStretchRows: {
         index,
         sourceRelative: "pkg/readme.md",
-        commentrayPathRel: crPath,
+        sidetrackPathRel: crPath,
       },
     });
     expect(html).toContain('data-layout="stretch"');
@@ -1082,33 +1080,33 @@ describe("Code browser page — scroll sync payload", () => {
     expect(html).toContain('title="pkg/readme.md"');
     expect(html).toContain(`title="${crPath}"`);
     expect(blockStretchTableHtml(html)).toContain("stretch-cell-measure");
-    expect(blockStretchTableHtml(html)).toContain('data-commentray-stretch-sync-id="b1"');
+    expect(blockStretchTableHtml(html)).toContain('data-sidetrack-stretch-sync-id="b1"');
     expect(html).not.toContain('id="doc-pane"');
     expect(html).toContain('id="mobile-pane-flip"');
     expect(html).toContain('id="mobile-pane-flip-scroll"');
   });
 
   it("legacy stretch omits flow-synchronizer shell flag when stretchBufferSync is table", async () => {
-    const crPath = ".commentray/source/pkg/readme.md.md";
+    const crPath = ".sidetrack/source/pkg/readme.md.md";
     const index = {
       schemaVersion: CURRENT_SCHEMA_VERSION,
-      byCommentrayPath: {
+      bySideTrackPath: {
         [crPath]: {
           sourcePath: "pkg/readme.md",
-          commentrayPath: crPath,
+          sidetrackPath: crPath,
           blocks: [{ id: "b1", anchor: "lines:1-2" }],
         },
       },
     };
-    const md = "<!-- commentray:block id=b1 -->\n\n## Sync\n";
+    const md = "<!-- sidetrack:block id=b1 -->\n\n## Sync\n";
     const html = await renderCodeBrowserHtml({
       code: "one\ntwo",
       language: "txt",
-      commentrayMarkdown: md,
+      sidetrackMarkdown: md,
       blockStretchRows: {
         index,
         sourceRelative: "pkg/readme.md",
-        commentrayPathRel: crPath,
+        sidetrackPathRel: crPath,
       },
       stretchBufferSync: "table",
     });
@@ -1118,13 +1116,13 @@ describe("Code browser page — scroll sync payload", () => {
   });
 
   it("keeps markdown sources in stretch layout while preserving the markdown render toggle", async () => {
-    const crPath = ".commentray/source/README.md/main.md";
+    const crPath = ".sidetrack/source/README.md/main.md";
     const index = {
       schemaVersion: CURRENT_SCHEMA_VERSION,
-      byCommentrayPath: {
+      bySideTrackPath: {
         [crPath]: {
           sourcePath: "README.md",
-          commentrayPath: crPath,
+          sidetrackPath: crPath,
           blocks: [{ id: "b1", anchor: "lines:1-2" }],
         },
       },
@@ -1133,11 +1131,11 @@ describe("Code browser page — scroll sync payload", () => {
       code: "# Title\n\nHello\n",
       language: "md",
       filePath: "README.md",
-      commentrayMarkdown: "<!-- commentray:block id=b1 -->\n\n## Notes\n",
+      sidetrackMarkdown: "<!-- sidetrack:block id=b1 -->\n\n## Notes\n",
       blockStretchRows: {
         index,
         sourceRelative: "README.md",
-        commentrayPathRel: crPath,
+        sidetrackPathRel: crPath,
       },
     });
     expect(html).toContain('data-layout="stretch"');

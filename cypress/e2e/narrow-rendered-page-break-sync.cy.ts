@@ -1,6 +1,6 @@
 import { shellA11y } from "../support/shell-a11y";
 
-const WIDE_MODE_INTRO_STORAGE_KEY = "commentray.codeCommentrayStatic.wideModeIntro.v1";
+const WIDE_MODE_INTRO_STORAGE_KEY = "sidetrack.codeSideTrackStatic.wideModeIntro.v1";
 
 function visitNarrowHomeWithWideIntroDismissed(): void {
   cy.viewport(390, 844);
@@ -38,7 +38,7 @@ describe("Narrow rendered-markdown sync with page breaks", () => {
       cy.get(shellA11y.shell)
         .should("have.attr", "data-source-pane-mode", "rendered-markdown")
         .and("have.attr", "data-dual-mobile-pane", "doc");
-      cy.get(`${shellA11y.docPaneBody} .commentray-page-break`).should("have.length.at.least", 1);
+      cy.get(`${shellA11y.docPaneBody} .sidetrack-page-break`).should("have.length.at.least", 1);
 
       cy.get(shellA11y.mobilePaneFlip).click();
       cy.get(shellA11y.shell).should("have.attr", "data-dual-mobile-pane", "code");

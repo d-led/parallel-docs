@@ -1,10 +1,10 @@
 import { escapeHtml } from "./html-utils.js";
-import { COMMENTRAY_FAVICON_LINK_HTML } from "./inline-favicon.js";
+import { SIDETRACK_FAVICON_LINK_HTML } from "./inline-favicon.js";
 import { hljsThemeCss } from "./hljs-theme-css.js";
 import { hljsStylesheetThemes } from "./hljs-stylesheet-themes.js";
 import { SIDE_BY_SIDE_LAYOUT_CSS } from "./side-by-side-layout-css.js";
 import {
-  type CommentrayOutputUrlOptions,
+  type SideTrackOutputUrlOptions,
   renderFencedCode,
   renderMarkdownToHtml,
 } from "./markdown-pipeline.js";
@@ -16,24 +16,24 @@ export type SideBySideOptions = {
   code: string;
   /** Highlight.js / common language id, e.g. ts, go, json */
   language: string;
-  /** Commentray markdown body. */
-  commentrayMarkdown: string;
+  /** SideTrack markdown body. */
+  sidetrackMarkdown: string;
   /** Highlight.js theme base name (e.g. `github`, `github-dark`); matches static code browser. */
   hljsTheme?: string;
   /** When true, include the Mermaid runtime (vendored or `mermaidRuntimePath`) in the footer. */
   includeMermaidRuntime?: boolean;
   /** Absolute path to a local Mermaid UMD build, used instead of the vendored one. */
   mermaidRuntimePath?: string;
-  /** Optional static URL rewriting for the commentray pane (images, local links, GitHub blob). */
-  commentrayOutputUrls?: CommentrayOutputUrlOptions;
+  /** Optional static URL rewriting for the sidetrack pane (images, local links, GitHub blob). */
+  sidetrackOutputUrls?: SideTrackOutputUrlOptions;
 };
 
 export async function renderSideBySideHtml(opts: SideBySideOptions): Promise<string> {
   const fence = "```" + opts.language + "\n" + opts.code + "\n```\n";
-  const [codeHtml, commentrayHtml] = await Promise.all([
+  const [codeHtml, sidetrackHtml] = await Promise.all([
     renderFencedCode(fence),
-    renderMarkdownToHtml(opts.commentrayMarkdown, {
-      commentrayOutputUrls: opts.commentrayOutputUrls,
+    renderMarkdownToHtml(opts.sidetrackMarkdown, {
+      sidetrackOutputUrls: opts.sidetrackOutputUrls,
     }),
   ]);
 
@@ -42,7 +42,7 @@ export async function renderSideBySideHtml(opts: SideBySideOptions): Promise<str
     opts.mermaidRuntimePath,
   );
 
-  const title = opts.title ?? "Commentray";
+  const title = opts.title ?? "SideTrack";
   const { hljsLight, hljsDark } = hljsStylesheetThemes(opts.hljsTheme);
   const hljsLightCss = hljsThemeCss(hljsLight);
   const hljsDarkCss = hljsThemeCss(hljsDark);
@@ -52,7 +52,7 @@ export async function renderSideBySideHtml(opts: SideBySideOptions): Promise<str
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    ${COMMENTRAY_FAVICON_LINK_HTML}
+    ${SIDETRACK_FAVICON_LINK_HTML}
     <title>${escapeHtml(title)}</title>
     <style media="(prefers-color-scheme: light)">${hljsLightCss}</style>
     <style media="(prefers-color-scheme: dark)">${hljsDarkCss}</style>
@@ -66,9 +66,9 @@ ${SIDE_BY_SIDE_LAYOUT_CSS}
         <h2>Code</h2>
         ${codeHtml}
       </section>
-      <section class="pane commentray" aria-label="Commentray">
-        <h2>Commentray</h2>
-        ${commentrayHtml}
+      <section class="pane sidetrack" aria-label="SideTrack">
+        <h2>SideTrack</h2>
+        ${sidetrackHtml}
       </section>
     </div>
     ${mermaidScript}

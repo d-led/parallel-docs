@@ -22,10 +22,10 @@ export function resolvePathUnderRepoRoot(repoRootAbs: string, repoRelative: stri
   return resolved;
 }
 
-/** Commentray Markdown path for a repo-relative source file (implicit default angle, flat layout). */
-export function commentrayMarkdownPath(
+/** SideTrack Markdown path for a repo-relative source file (implicit default angle, flat layout). */
+export function sidetrackMarkdownPath(
   sourceRepoRelativePath: string,
-  storageDir = ".commentray",
+  storageDir = ".sidetrack",
 ): string {
   const normalized = normalizeRepoRelativePath(sourceRepoRelativePath);
   const root = normalizeRepoRelativePath(storageDir.replaceAll("\\", "/"));
@@ -37,7 +37,7 @@ export function commentrayMarkdownPath(
  * the storage root, the repository opts into per-source **Angles** layout (see `docs/spec/storage.md`).
  * When absent, the flat `{storage}/source/{P}.md` layout is the only supported shape.
  */
-export function commentrayAnglesSentinelPath(storageDir = ".commentray"): string {
+export function sidetrackAnglesSentinelPath(storageDir = ".sidetrack"): string {
   const root = normalizeRepoRelativePath(storageDir.replaceAll("\\", "/"));
   return path.posix.join(root, "source", ".default");
 }
@@ -46,23 +46,20 @@ export function commentrayAnglesSentinelPath(storageDir = ".commentray"): string
  * Returns true when the repository opts into **Angles** layout: `{storage}/source/.default` exists
  * (file or directory). When false, only the flat `{storage}/source/{P}.md` mapping applies.
  */
-export function commentrayAnglesLayoutEnabled(
-  repoRoot: string,
-  storageDir = ".commentray",
-): boolean {
-  const sentinel = commentrayAnglesSentinelPath(storageDir);
+export function sidetrackAnglesLayoutEnabled(repoRoot: string, storageDir = ".sidetrack"): boolean {
+  const sentinel = sidetrackAnglesSentinelPath(storageDir);
   const absolute = path.join(repoRoot, ...sentinel.split("/"));
   return fs.existsSync(absolute);
 }
 
 /**
- * Repo-relative path to commentray for `sourceRepoRelativePath` at a named **Angle** (multi-angle layout).
- * Example: `README.md` + `architecture` → `.commentray/source/README.md/architecture.md` (with default storage dir).
+ * Repo-relative path to sidetrack for `sourceRepoRelativePath` at a named **Angle** (multi-angle layout).
+ * Example: `README.md` + `architecture` → `.sidetrack/source/README.md/architecture.md` (with default storage dir).
  */
-export function commentrayMarkdownPathForAngle(
+export function sidetrackMarkdownPathForAngle(
   sourceRepoRelativePath: string,
   angleId: string,
-  storageDir = ".commentray",
+  storageDir = ".sidetrack",
 ): string {
   const normalized = normalizeRepoRelativePath(sourceRepoRelativePath);
   const sid = assertValidAngleId(angleId);
@@ -72,5 +69,5 @@ export function commentrayMarkdownPathForAngle(
 
 /** Default metadata index location (repo-relative). */
 export function defaultMetadataIndexPath(): string {
-  return path.posix.join(".commentray", "metadata", "index.json");
+  return path.posix.join(".sidetrack", "metadata", "index.json");
 }

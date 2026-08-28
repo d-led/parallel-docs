@@ -1,5 +1,5 @@
 /**
- * Read base64-embedded raw source + commentray markdown from the static HTML shell.
+ * Read base64-embedded raw source + side-track markdown from the static HTML shell.
  *
  * Older pages put `data-raw-*-b64` on `#code-pane`; current markup puts them on `#shell`.
  */

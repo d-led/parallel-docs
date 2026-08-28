@@ -16,56 +16,56 @@ import { visit } from "unist-util-visit";
 import { escapeHtml } from "./html-utils.js";
 
 /**
- * When generating static HTML (Pages, `commentray render`), rewrites `img[src]` and `a[href]`
+ * When generating static HTML (Pages, `sidetrack render`), rewrites `img[src]` and `a[href]`
  * so local assets work from the output file location.
  *
- * **URL rules** (same commentray file as in the editor):
+ * **URL rules** (same sidetrack file as in the editor):
  * - **`/path/to/file`** — resolved from the **repository root** (leading slash), POSIX-style,
  *   after `..` normalization; must stay **inside** `repoRootAbs`.
  * - **`./` / `../` / `figures/a.png`** — resolved with `path.resolve(markdownUrlBaseDirAbs, …)`;
  *   must stay **inside** `repoRootAbs`.
  *
- * **Images (`img[src]`)** — resolved path must also lie **inside** `commentrayStorageRootAbs`
- * (typically `{repo}/.commentray`). Raster or SVG assets for commentray belong next to the
+ * **Images (`img[src]`)** — resolved path must also lie **inside** `sidetrackStorageRootAbs`
+ * (typically `{repo}/.sidetrack`). Raster or SVG assets for sidetrack belong next to the
  * Markdown under storage; repo-root images are **not** emitted (src removed) so static pages
  * cannot pull arbitrary repo files as image bytes.
  *
  * **Links (`a[href]`)** — any in-repo file under `repoRootAbs` may still be linked (e.g. specs
  * under `docs/`). Only images are restricted to storage.
  *
- * **Static publish (`staticSiteOutDirAbs`)** — GitHub Pages and `commentray serve` only deploy
+ * **Static publish (`staticSiteOutDirAbs`)** — GitHub Pages and `sidetrack serve` only deploy
  * files under the output site root (e.g. `_site/`). Local `img[src]` that would point outside
- * that tree (typically `../.commentray/…`) are rewritten to
- * `{@link COMMENTRAY_STATIC_COMPANION_ASSETS_SEGMENT}/…` **under the site root**, and the
- * pipeline records copies in {@link CommentrayOutputUrlOptions.companionStaticAssetCopies} for
+ * that tree (typically `../.sidetrack/…`) are rewritten to
+ * `{@link SIDETRACK_STATIC_COMPANION_ASSETS_SEGMENT}/…` **under the site root**, and the
+ * pipeline records copies in {@link SideTrackOutputUrlOptions.companionStaticAssetCopies} for
  * the build step to materialize on disk.
  */
-export const COMMENTRAY_STATIC_COMPANION_ASSETS_SEGMENT = "commentray-static-assets";
+export const SIDETRACK_STATIC_COMPANION_ASSETS_SEGMENT = "sidetrack-static-assets";
 
-export type CommentrayStaticAssetCopy = { fromAbs: string; toAbs: string };
+export type SideTrackStaticAssetCopy = { fromAbs: string; toAbs: string };
 
-export type CommentrayOutputUrlOptions = {
+export type SideTrackOutputUrlOptions = {
   repoRootAbs: string;
   htmlOutputFileAbs: string;
   markdownUrlBaseDirAbs: string;
   /**
-   * Absolute path to Commentray storage (e.g. `{repoRoot}/.commentray`). Used to sandbox
+   * Absolute path to SideTrack storage (e.g. `{repoRoot}/.sidetrack`). Used to sandbox
    * **local image** URLs; see package JSDoc above.
    */
-  commentrayStorageRootAbs: string;
+  sidetrackStorageRootAbs: string;
   /** When set, `https://github.com/<owner>/<repo>/blob|tree/<branch>/…` becomes a `/…` repo path. */
   githubBlobRepo?: { owner: string; repo: string };
   /**
    * Absolute path to the deployed static site root (e.g. `{repo}/_site`). When set, companion
    * images under storage that are not already inside this directory are emitted as URLs under
-   * {@link COMMENTRAY_STATIC_COMPANION_ASSETS_SEGMENT} and listed for copying.
+   * {@link SIDETRACK_STATIC_COMPANION_ASSETS_SEGMENT} and listed for copying.
    */
   staticSiteOutDirAbs?: string;
   /**
    * When {@link staticSiteOutDirAbs} is set, populated with `{ fromAbs, toAbs }` for each mirrored
    * image so the HTML writer can `copyFile` after render.
    */
-  companionStaticAssetCopies?: CommentrayStaticAssetCopy[];
+  companionStaticAssetCopies?: SideTrackStaticAssetCopy[];
   /**
    * Optional prefix for local repo file links when static hosting does not serve the source tree.
    * Supported forms: absolute `http(s)` URL prefix or absolute path prefix (`/...`).
@@ -74,7 +74,7 @@ export type CommentrayOutputUrlOptions = {
 };
 
 export type MarkdownPipelineOptions = {
-  commentrayOutputUrls?: CommentrayOutputUrlOptions;
+  sidetrackOutputUrls?: SideTrackOutputUrlOptions;
 };
 
 function escapeRegExp(s: string): string {
@@ -213,9 +213,9 @@ function resolveRepoLocalFilesystemTarget(
   return resolved;
 }
 
-type MirrorCopyList = NonNullable<CommentrayOutputUrlOptions["companionStaticAssetCopies"]>;
+type MirrorCopyList = NonNullable<SideTrackOutputUrlOptions["companionStaticAssetCopies"]>;
 
-/** When publishing under `siteRootAbs`, storage-only images outside the site tree map into {@link COMMENTRAY_STATIC_COMPANION_ASSETS_SEGMENT}. */
+/** When publishing under `siteRootAbs`, storage-only images outside the site tree map into {@link SIDETRACK_STATIC_COMPANION_ASSETS_SEGMENT}. */
 function mirroredAbsoluteTargetForSitePublish(
   resolved: string,
   storageRoot: string,
@@ -227,7 +227,7 @@ function mirroredAbsoluteTargetForSitePublish(
   const mirrorRel = path.relative(storageRoot, resolved);
   if (mirrorRel.startsWith("..") || path.isAbsolute(mirrorRel)) return "blocked";
   const toAbs = path.normalize(
-    path.join(siteRootAbs, COMMENTRAY_STATIC_COMPANION_ASSETS_SEGMENT, mirrorRel),
+    path.join(siteRootAbs, SIDETRACK_STATIC_COMPANION_ASSETS_SEGMENT, mirrorRel),
   );
   if (!isResolvedPathInsideRoot(toAbs, siteRootAbs)) return "blocked";
   if (!mirroredToAbs.has(toAbs)) {
@@ -237,9 +237,9 @@ function mirroredAbsoluteTargetForSitePublish(
   return toAbs;
 }
 
-function rehypeCommentrayOutputUrls(ctx: CommentrayOutputUrlOptions) {
+function rehypeSideTrackOutputUrls(ctx: SideTrackOutputUrlOptions) {
   const repoRoot = path.resolve(ctx.repoRootAbs);
-  const storageRoot = path.resolve(ctx.commentrayStorageRootAbs);
+  const storageRoot = path.resolve(ctx.sidetrackStorageRootAbs);
   const htmlDir = path.dirname(path.resolve(ctx.htmlOutputFileAbs));
   const baseDir = path.resolve(ctx.markdownUrlBaseDirAbs);
   const siteRootAbs = ctx.staticSiteOutDirAbs ? path.resolve(ctx.staticSiteOutDirAbs) : null;
@@ -318,7 +318,7 @@ function remarkMermaidPlaceholders() {
       const html: Html = {
         type: "html",
         /** Diagram text must end up as direct text under `<pre class="mermaid">` (see {@link rehypeMermaidUnwrapInnerCode}). */
-        value: `<div class="commentray-mermaid"><pre class="mermaid">${escapeHtml(
+        value: `<div class="sidetrack-mermaid"><pre class="mermaid">${escapeHtml(
           value,
         )}</pre></div>`,
       };
@@ -365,7 +365,7 @@ function rehypeMermaidUnwrapInnerCode() {
 
 const sanitizeSchema = structuredClone(defaultSchema);
 
-/** Companion Markdown is repo-controlled; keep `id` unprefixed so `commentray-block-*` anchors are stable. */
+/** Companion Markdown is repo-controlled; keep `id` unprefixed so `sidetrack-block-*` anchors are stable. */
 sanitizeSchema.clobber = ["ariaDescribedBy", "ariaLabelledBy", "name"];
 
 sanitizeSchema.attributes = {
@@ -378,11 +378,11 @@ sanitizeSchema.attributes = {
     "className",
     "id",
     "ariaHidden",
-    /** Block scroll sync markers from `injectCommentrayDocAnchors` (hast property names). */
+    /** Block scroll sync markers from `injectSideTrackDocAnchors` (hast property names). */
     "dataSourceStart",
-    "dataCommentrayLine",
-    "dataCommentrayPageBreak",
-    "dataNextCommentrayLine",
+    "dataSidetrackLine",
+    "dataSidetrackPageBreak",
+    "dataNextSidetrackLine",
     "dataNextSourceViewportLine",
   ],
 };
@@ -391,7 +391,7 @@ export async function renderMarkdownToHtml(
   markdown: string,
   options?: MarkdownPipelineOptions,
 ): Promise<string> {
-  const outUrls = options?.commentrayOutputUrls;
+  const outUrls = options?.sidetrackOutputUrls;
   const file = await unified()
     .use(remarkParse)
     /** GFM: autolink literals, footnotes, strikethrough, tables, task lists (see `remark-gfm`). */
@@ -411,7 +411,7 @@ export async function renderMarkdownToHtml(
     .use(function rehypeOutputUrlsMaybe() {
       return (tree: HastRoot) => {
         if (!outUrls) return;
-        rehypeCommentrayOutputUrls(outUrls)(tree);
+        rehypeSideTrackOutputUrls(outUrls)(tree);
       };
     })
     .use(rehypeHighlight, { plainText: ["mermaid"] })

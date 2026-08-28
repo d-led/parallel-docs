@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it } from "vitest";
 
-import { formatCommentrayBuiltAtLocal } from "./build-stamp.js";
+import { formatSideTrackBuiltAtLocal } from "./build-stamp.js";
 
-describe("formatCommentrayBuiltAtLocal", () => {
+describe("formatSideTrackBuiltAtLocal", () => {
   const origTz = process.env.TZ;
 
   afterEach(() => {
@@ -12,7 +12,7 @@ describe("formatCommentrayBuiltAtLocal", () => {
 
   it("given TZ is UTC, includes calendar fields and a zone hint for a fixed instant", () => {
     process.env.TZ = "UTC";
-    const s = formatCommentrayBuiltAtLocal(new Date("2026-06-15T14:30:45.000Z"));
+    const s = formatSideTrackBuiltAtLocal(new Date("2026-06-15T14:30:45.000Z"));
     expect(s).toMatch(/2026/);
     expect(s).toMatch(/Jun/);
     expect(s).toMatch(/15/);

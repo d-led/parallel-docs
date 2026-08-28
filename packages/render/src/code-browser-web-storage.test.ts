@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { readWebStorageItem, writeWebStorageItem } from "./code-browser-web-storage.js";
 
-describe("Reading Commentray keys from web storage", () => {
+describe("Reading SideTrack keys from web storage", () => {
   it("returns null when getItem throws (e.g. file URL / hardened storage)", () => {
     const storage = {
       getItem: vi.fn(() => {
@@ -30,7 +30,7 @@ describe("Reading Commentray keys from web storage", () => {
   });
 });
 
-describe("Writing Commentray keys to web storage", () => {
+describe("Writing SideTrack keys to web storage", () => {
   it("ignores when setItem throws", () => {
     const setItem = vi.fn(() => {
       throw new DOMException("nope", "QuotaExceededError");

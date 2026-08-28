@@ -1,12 +1,12 @@
 /**
  * Behavior-driven coverage of keyboard navigation for the static code browser:
- * chrome search hit lists (browse preview + token query) and the Comment-rayed files tree.
+ * chrome search hit lists (browse preview + token query) and the Side-tracked files tree.
  *
  * Selectors and shared steps live in `cypress/support/shell-a11y.ts` and
  * `cypress/support/custom-commands/code-browser-keyboard.ts` so specs stay readable.
  *
  * Ordering note: indexed browse rows are sorted by `sourcePath` (`uniqueSourceFilePreviewRows` in
- * `@commentray/render`). On the default README@main home, the first row is therefore not README,
+ * `@sidetrack/render`). On the default README@main home, the first row is therefore not README,
  * so Enter from the search field is expected to change `location.pathname` (navigate to another pair).
  */
 describe("Code browser keyboard usability on the static site", () => {
@@ -76,7 +76,7 @@ describe("Code browser keyboard usability on the static site", () => {
       describe("when they type a token query and wait for merged hits", () => {
         beforeEach(() => {
           cy.FocusOnSearchField();
-          cy.TypeTextInSearchField("commentray");
+          cy.TypeTextInSearchField("sidetrack");
           cy.SearchResultsPanelShouldBeVisible();
           cy.SearchResultsHitButtonsShouldExist();
         });
@@ -93,54 +93,54 @@ describe("Code browser keyboard usability on the static site", () => {
       });
     });
 
-    describe("the Comment-rayed files hub", () => {
+    describe("the Side-tracked files hub", () => {
       describe("when they open it and the tree has finished loading", () => {
         beforeEach(() => {
-          cy.OpenCommentRayedFilesHubWithTreeVisible();
+          cy.OpenSideTrackedFilesHubWithTreeVisible();
         });
 
         it("then ArrowDown from the filter moves focus onto the first file link", () => {
-          cy.MoveKeyboardFocusFromCommentRayedFilterToFirstTreeLink();
-          cy.FirstCommentRayedTreeFileLinkShouldBeFocused();
+          cy.MoveKeyboardFocusFromSideTrackedFilterToFirstTreeLink();
+          cy.FirstSideTrackedTreeFileLinkShouldBeFocused();
         });
 
         it("then ArrowUp from the first file link returns focus to the filter", () => {
-          cy.MoveKeyboardFocusFromCommentRayedFilterToFirstTreeLink();
-          cy.FirstCommentRayedTreeFileLinkShouldBeFocused();
+          cy.MoveKeyboardFocusFromSideTrackedFilterToFirstTreeLink();
+          cy.FirstSideTrackedTreeFileLinkShouldBeFocused();
           cy.PressArrowUpInFocusedElement();
-          cy.CommentRayedFilesFilterShouldBeFocused();
+          cy.SideTrackedFilesFilterShouldBeFocused();
         });
 
         describe("and the tree exposes at least two file links", () => {
           beforeEach(() => {
-            cy.CommentRayedFilesTreeFileLinksShouldBeAtLeast(2);
-            cy.MoveKeyboardFocusFromCommentRayedFilterToFirstTreeLink();
-            cy.FirstCommentRayedTreeFileLinkShouldBeFocused();
+            cy.SideTrackedFilesTreeFileLinksShouldBeAtLeast(2);
+            cy.MoveKeyboardFocusFromSideTrackedFilterToFirstTreeLink();
+            cy.FirstSideTrackedTreeFileLinkShouldBeFocused();
           });
 
           it("then ArrowDown moves focus to the second file link", () => {
             cy.PressArrowDownInFocusedElement();
-            cy.CommentRayedTreeFileLinkAtIndexShouldBeFocused(1);
+            cy.SideTrackedTreeFileLinkAtIndexShouldBeFocused(1);
           });
 
           it("then ArrowUp from the second link focuses the first link again", () => {
             cy.PressArrowDownInFocusedElement();
-            cy.CommentRayedTreeFileLinkAtIndexShouldBeFocused(1);
+            cy.SideTrackedTreeFileLinkAtIndexShouldBeFocused(1);
             cy.PressArrowUpInFocusedElement();
-            cy.CommentRayedTreeFileLinkAtIndexShouldBeFocused(0);
+            cy.SideTrackedTreeFileLinkAtIndexShouldBeFocused(0);
           });
 
           it("then ArrowDown through the list scrolls the tree so the focused link stays visible", () => {
-            cy.ConstrainCommentRayedFilesTreeHeightForScrollCoverage();
+            cy.ConstrainSideTrackedFilesTreeHeightForScrollCoverage();
             cy.TreeKeyboardNavigateFromFirstLinkToLastLink();
-            cy.CommentRayedFilesTreeScrollTopShouldBeGreaterThan(0);
+            cy.SideTrackedFilesTreeScrollTopShouldBeGreaterThan(0);
           });
         });
 
         it("then clicking outside the hub on the page footer closes the tree", () => {
-          cy.CommentRayedFilesHubOpenPropShouldBe(true);
-          cy.ClickPageFooterToDismissCommentRayedFilesHub();
-          cy.CommentRayedFilesHubOpenPropShouldBe(false);
+          cy.SideTrackedFilesHubOpenPropShouldBe(true);
+          cy.ClickPageFooterToDismissSideTrackedFilesHub();
+          cy.SideTrackedFilesHubOpenPropShouldBe(false);
         });
       });
     });
@@ -152,14 +152,14 @@ describe("Code browser keyboard usability on the static site", () => {
       cy.GoToStaticSiteHome();
     });
 
-    describe("the Comment-rayed files hub", () => {
+    describe("the Side-tracked files hub", () => {
       it("then the reader can still move between the filter and the first tree link with the arrow keys", () => {
-        cy.OpenCommentRayedFilesHubWithTreeVisible();
-        cy.CommentRayedFilesTreeShouldContainReadmeLink();
-        cy.MoveKeyboardFocusFromCommentRayedFilterToFirstTreeLink();
-        cy.FirstCommentRayedTreeFileLinkShouldBeFocused();
+        cy.OpenSideTrackedFilesHubWithTreeVisible();
+        cy.SideTrackedFilesTreeShouldContainReadmeLink();
+        cy.MoveKeyboardFocusFromSideTrackedFilterToFirstTreeLink();
+        cy.FirstSideTrackedTreeFileLinkShouldBeFocused();
         cy.PressArrowUpInFocusedElement();
-        cy.CommentRayedFilesFilterShouldBeFocused();
+        cy.SideTrackedFilesFilterShouldBeFocused();
       });
     });
   });

@@ -3,12 +3,12 @@ import path from "node:path";
 
 import {
   assertValidAngleId,
-  commentrayMarkdownPathForAngle,
+  sidetrackMarkdownPathForAngle,
   ensureAnglesSentinelFile,
-  loadCommentrayConfig,
+  loadSideTrackConfig,
   normalizeRepoRelativePath,
-  upsertAngleDefinitionInCommentrayToml,
-} from "@commentray/core";
+  upsertAngleDefinitionInSideTrackToml,
+} from "@sidetrack/core";
 
 import { findProjectRoot } from "./project-root.js";
 
@@ -22,7 +22,7 @@ export type RunAnglesAddFromCwdInput = {
 export async function runAnglesAddFromCwd(input: RunAnglesAddFromCwdInput): Promise<number> {
   const repoRoot = (await findProjectRoot(process.cwd())).dir;
   const id = assertValidAngleId(input.angleId.trim());
-  const cfg = await loadCommentrayConfig(repoRoot);
+  const cfg = await loadSideTrackConfig(repoRoot);
   await ensureAnglesSentinelFile(repoRoot, cfg.storageDir);
 
   const sourceRaw = (input.sourcePath ?? cfg.staticSite.sourceFile).trim();
@@ -40,7 +40,7 @@ export async function runAnglesAddFromCwd(input: RunAnglesAddFromCwdInput): Prom
   }
 
   try {
-    await upsertAngleDefinitionInCommentrayToml(repoRoot, {
+    await upsertAngleDefinitionInSideTrackToml(repoRoot, {
       id,
       title: input.title?.trim() || undefined,
       makeDefault: input.makeDefault ? true : undefined,
@@ -51,10 +51,10 @@ export async function runAnglesAddFromCwd(input: RunAnglesAddFromCwdInput): Prom
       console.error(msg);
       return 1;
     }
-    console.log(`angles add: angle "${id}" already listed in .commentray.toml`);
+    console.log(`angles add: angle "${id}" already listed in .sidetrack.toml`);
   }
 
-  const rel = commentrayMarkdownPathForAngle(source, id, cfg.storageDir);
+  const rel = sidetrackMarkdownPathForAngle(source, id, cfg.storageDir);
   const abs = path.join(repoRoot, ...rel.split("/"));
   await fs.mkdir(path.dirname(abs), { recursive: true });
   try {
@@ -72,7 +72,7 @@ export async function runAnglesAddFromCwd(input: RunAnglesAddFromCwdInput): Prom
       .filter(Boolean)
       .map((s) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase())
       .join(" ");
-  const body = `# ${heading}\n\n_(Commentray angle \`${id}\` for \`${source}\`)_\n`;
+  const body = `# ${heading}\n\n_(SideTrack angle \`${id}\` for \`${source}\`)_\n`;
   await fs.writeFile(abs, body, "utf8");
   console.log(`angles add: wrote ${rel}`);
   return 0;

@@ -154,23 +154,23 @@ export function dedupeBlockScrollLinksById(links: BlockScrollLink[]): BlockScrol
   return sortBlockLinksBySource([...byId.values()]);
 }
 
-export function sortBlockLinksByCommentrayLine(links: BlockScrollLink[]): BlockScrollLink[] {
+export function sortBlockLinksBySideTrackLine(links: BlockScrollLink[]): BlockScrollLink[] {
   return [...links].sort((a, b) =>
-    a.commentrayLine !== b.commentrayLine
-      ? a.commentrayLine - b.commentrayLine
+    a.sidetrackLine !== b.sidetrackLine
+      ? a.sidetrackLine - b.sidetrackLine
       : a.sourceStart - b.sourceStart,
   );
 }
 
 /**
- * Next block in companion document order (`commentrayLine`). Gutter doc bands must follow
+ * Next block in companion document order (`sidetrackLine`). Gutter doc bands must follow
  * rendered markdown order, which can differ from source line order (multi-file / inverted pairs).
  */
-export function nextBlockLinkInCommentrayOrder(
+export function nextBlockLinkInSideTrackOrder(
   all: ReadonlyArray<BlockScrollLink>,
   current: BlockScrollLink,
 ): BlockScrollLink | undefined {
-  const sorted = sortBlockLinksByCommentrayLine([...all]);
+  const sorted = sortBlockLinksBySideTrackLine([...all]);
   const idx = sorted.findIndex((l) => l.id === current.id);
   if (idx < 0) return undefined;
   return sorted[idx + 1];
@@ -186,22 +186,22 @@ export function activeBlockIdForViewport(
 }
 
 /**
- * Which index-backed block owns the companion line at/above `topCommentrayLine0Based`, in
- * markdown order. Matches {@link pickSourceLine0ForCommentrayScroll}’s block choice so gutter
+ * Which index-backed block owns the companion line at/above `topSideTrackLine0Based`, in
+ * markdown order. Matches {@link pickSourceLine0ForSideTrackScroll}’s block choice so gutter
  * “active” emphasis tracks the **doc** viewport (what the reader is reading), not only the code
  * pane’s top line — which can disagree briefly (e.g. tall page-break gaps).
  */
-export function activeBlockIdForCommentrayLine0(
+export function activeBlockIdForSideTrackLine0(
   links: BlockScrollLink[],
-  topCommentrayLine0Based: number,
+  topSideTrackLine0Based: number,
 ): string | null {
   if (links.length === 0) return null;
-  const sorted = sortBlockLinksByCommentrayLine([...links]);
+  const sorted = sortBlockLinksBySideTrackLine([...links]);
   const head = sorted[0];
   if (head === undefined) return null;
   let best = head;
   for (const b of sorted) {
-    if (b.commentrayLine <= topCommentrayLine0Based) best = b;
+    if (b.sidetrackLine <= topSideTrackLine0Based) best = b;
   }
   return best.id;
 }
@@ -211,7 +211,7 @@ export function codeLineDomIndex0(sourceLine1Based: number): number {
   return Math.max(0, sourceLine1Based - 1);
 }
 
-const PAGE_BREAK_HOST_SELECTOR = '.commentray-page-break[data-commentray-page-break="true"]';
+const PAGE_BREAK_HOST_SELECTOR = '.sidetrack-page-break[data-sidetrack-page-break="true"]';
 
 function elementFollowsInDocumentOrder(a: Element, b: Element): boolean {
   return (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
@@ -274,13 +274,13 @@ function maxContentBottomByElementWalk(
 
 /**
  * Lowest viewport Y of rendered companion content for one block, **excluding** synthetic
- * `.commentray-page-break` regions. Used so gutter splines do not extend through tall page-break
+ * `.sidetrack-page-break` regions. Used so gutter splines do not extend through tall page-break
  * gaps toward the next block.
  *
- * When `endExclusive` is the next block’s `commentray-block-*` anchor, ranges stop before that
+ * When `endExclusive` is the next block’s `sidetrack-block-*` anchor, ranges stop before that
  * node. When it is `null` (last block), the final segment runs to the end of `docScrollEl`.
  */
-export function maxRenderableCommentaryContentBottomViewport(
+export function maxRenderableSideTrackContentBottomViewport(
   docScrollEl: HTMLElement,
   docTop: HTMLElement,
   endExclusive: HTMLElement | null,
@@ -307,13 +307,13 @@ export function maxRenderableCommentaryContentBottomViewport(
  * Lower Y bound (viewport) for the **doc** side of gutter splines between this block and the next
  * indexed block, when dual-pane gutter “clip through page-break gaps” is enabled.
  *
- * Stops at the **first** `commentray-page-break` before `nextBlockEl` so interstitial companion
- * prose (headings and copy after a page break but before the next `<!-- commentray:block … -->`)
+ * Stops at the **first** `sidetrack-page-break` before `nextBlockEl` so interstitial companion
+ * prose (headings and copy after a page break but before the next `<!-- sidetrack:block … -->`)
  * is not visually tied to the prior source region. If a single authored block intentionally spans
- * a page break with more commentary after it, the band shows only the segment before that break
+ * a page break with more sidetrack after it, the band shows only the segment before that break
  * until the next block anchor (authors can split blocks if they need a longer ray).
  */
-export function commentaryGutterDocBandBottomViewport(
+export function sidetrackGutterDocBandBottomViewport(
   docScrollEl: HTMLElement,
   docTop: HTMLElement,
   nextBlockEl: HTMLElement,
@@ -323,15 +323,11 @@ export function commentaryGutterDocBandBottomViewport(
   const breaks = pageBreakHostsBetweenAnchors(docScrollEl, docTop, nextBlockEl);
   const firstPb = breaks[0];
   if (firstPb !== undefined) {
-    const segmentBottom = maxRenderableCommentaryContentBottomViewport(
-      docScrollEl,
-      docTop,
-      firstPb,
-    );
+    const segmentBottom = maxRenderableSideTrackContentBottomViewport(docScrollEl, docTop, firstPb);
     const pbTop = firstPb.getBoundingClientRect().top - 2;
     return Math.min(nextTop, pbTop, Math.max(docBandTop, segmentBottom));
   }
-  const contentBottom = maxRenderableCommentaryContentBottomViewport(
+  const contentBottom = maxRenderableSideTrackContentBottomViewport(
     docScrollEl,
     docTop,
     nextBlockEl,

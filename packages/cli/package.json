@@ -1,14 +1,14 @@
 {
-  "name": "commentray",
-  "version": "0.4.2",
+  "name": "sidetrack",
+  "version": "1.0.0",
   "publishConfig": {
     "access": "public"
   },
-  "description": "Commentray command-line interface. Run with npx commentray; npx commentray --help prints Usage: commentray [options] [command].",
+  "description": "SideTrack command-line interface. Run with npx sidetrack; npx sidetrack --help prints Usage: sidetrack [options] [command].",
   "license": "MPL-2.0",
   "type": "module",
   "bin": {
-    "commentray": "./dist/cli.js"
+    "sidetrack": "./dist/cli.js"
   },
   "files": [
     "dist",
@@ -18,13 +18,13 @@
     "build": "tsc -b tsconfig.build.json",
     "build:bundle": "npm run build && node ./esbuild.cli.mjs",
     "clean": "rm -rf dist",
-    "commentray": "node ./dist/cli.js"
+    "sidetrack": "node ./dist/cli.js"
   },
   "dependencies": {
-    "@commentray/code-commentray-static": "0.4.2",
-    "@commentray/core": "0.4.2",
-    "@commentray/mcp-server": "0.4.2",
-    "@commentray/render": "0.4.2",
+    "@sidetrack/code-sidetrack-static": "1.0.0",
+    "@sidetrack/core": "1.0.0",
+    "@sidetrack/mcp-server": "1.0.0",
+    "@sidetrack/render": "1.0.0",
     "chokidar": "^5.0.0",
     "commander": "^15.0.0",
     "ignore": "^7.0.5",

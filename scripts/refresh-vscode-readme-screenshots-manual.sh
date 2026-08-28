@@ -6,8 +6,8 @@ set -euo pipefail
 #
 # Opens Extension Development Host on the **monorepo root** so maintainers can
 # capture PNGs for the extension README companion:
-#   .commentray/source/packages/vscode/README.md/assets/
-# Walk-through + maintainer notes: .commentray/source/packages/vscode/README.md/main.md
+#   .sidetrack/source/packages/vscode/README.md/assets/
+# Walk-through + maintainer notes: .sidetrack/source/packages/vscode/README.md/main.md
 #
 # Usage (repository root):
 #   bash scripts/refresh-vscode-readme-screenshots-manual.sh
@@ -18,7 +18,7 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "$REPO_ROOT/scripts/lib/pick-editor-cli.sh"
 
 EXT_DEV_PATH="$REPO_ROOT/packages/vscode"
-ASSETS_DIR="$REPO_ROOT/.commentray/source/packages/vscode/README.md/assets"
+ASSETS_DIR="$REPO_ROOT/.sidetrack/source/packages/vscode/README.md/assets"
 
 mkdir -p "$ASSETS_DIR"
 
@@ -26,15 +26,15 @@ echo "VS Code extension README — manual screenshot helper"
 echo "---------------------------------------------------"
 echo "1. A new window opens on this repo (extension loaded from source):"
 echo "   $REPO_ROOT"
-echo "2. Open packages/vscode/README.md, then Command Palette (>) → Commentray →"
+echo "2. Open packages/vscode/README.md, then Command Palette (>) → SideTrack →"
 echo "   the flow you want to illustrate."
 echo "3. Save PNGs under (names should match the walk-through in main.md):"
 echo "   $ASSETS_DIR"
-echo "   e.g. vscode-palette-commentray.png, vscode-open-paired-beside.png, …"
+echo "   e.g. vscode-palette-sidetrack.png, vscode-open-paired-beside.png, …"
 echo "4. Ensure companion ./assets/ image lines in main.md match your filenames."
 echo ""
 
-editor_cli="$(commentray_pick_editor_cli)"
+editor_cli="$(sidetrack_pick_editor_cli)"
 
 set +e
 "$editor_cli" --extensionDevelopmentPath="$EXT_DEV_PATH" "$REPO_ROOT"

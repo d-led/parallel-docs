@@ -1,8 +1,8 @@
 # Source region delimiters (by editor language)
 
-When a block uses a **`marker:<id>`** anchor, the **primary file** must contain a **paired start and end** so tools can find the span without fragile line numbers. The **VS Code / Cursor extension** command **“Add commentary block from selection”** wraps the selected **full lines** using the active document’s **`languageId`** (same rule as `commentray convert-source-markers --language …`).
+When a block uses a **`marker:<id>`** anchor, the **primary file** must contain a **paired start and end** so tools can find the span without fragile line numbers. The **VS Code / Cursor extension** command **“Add side-track block from selection”** wraps the selected **full lines** using the active document’s **`languageId`** (same rule as `sidetrack convert-source-markers --language …`).
 
-**Normative implementation:** [`commentrayRegionInsertions`](../../packages/core/src/source-markers.ts) in `@commentray/core` — this page is a human-readable map; if they disagree, the code wins.
+**Normative implementation:** [`sidetrackRegionInsertions`](../../packages/core/src/source-markers.ts) in `@sidetrack/core` — this page is a human-readable map; if they disagree, the code wins.
 
 ## What you see in the Markdown heading
 
@@ -12,20 +12,20 @@ The companion file may show a heading like **`lines 10–20`**. That is **author
 
 Each row is one **region convention**. The **“Typical `languageId` values”** column lists common VS Code language identifiers that pick that row (case-insensitive). Anything **not** listed falls through to **generic `//` markers** (`generic-line`).
 
-| Convention                    | Typical VS Code `languageId` values                                                                                                                    | Start delimiter                    | End delimiter                         |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------- | ------------------------------------- |
-| **HTML comments**             | `html`, `xml`, `markdown`, `md`, `handlebars`, `vue-html`                                                                                              | `<!-- #region commentray:<id> -->` | `<!-- #endregion commentray:<id> -->` |
-| **`//` #region**              | `javascript`, `javascriptreact`, `typescript`, `typescriptreact`, `js`, `jsx`, `tsx`, `mjs`, `cjs`, `vue`, `svelte`, `astro`, `scss`, `less`, `stylus` | `//#region commentray:<id>`        | `//#endregion commentray:<id>`        |
-| **`#region` (hash)**          | `ruby`, `csharp`, `coffeescript`, `powershell`, `perl`, `raku`, `crystal`                                                                              | `#region commentray:<id>`          | `#endregion commentray:<id>`          |
-| **`#pragma region`**          | `c`, `cpp`, `cuda-cpp`, `objective-c`, `objective-cpp`                                                                                                 | `#pragma region commentray:<id>`   | `#pragma endregion commentray:<id>`   |
-| **VB**                        | `vb`                                                                                                                                                   | `#Region commentray:<id>`          | `#End Region commentray:<id>`         |
-| **Python**                    | `python`, `jupyter`                                                                                                                                    | `# region commentray:<id>`         | `# endregion commentray:<id>`         |
-| **Lua**                       | `lua`                                                                                                                                                  | `--#region commentray:<id>`        | `--#endregion commentray:<id>`        |
-| **Generic `#` line comment**  | `toml`, `yaml`, `yml`, `dockerfile`, `makefile`, `cmake`, `ini`, `properties`, `git-commit`, `sql`, `r`, `shellscript`, `bash`, `sh`, `zsh`, `fish`    | `# commentray:start id=<id>`       | `# commentray:end id=<id>`            |
-| **CSS block comment**         | `css`                                                                                                                                                  | `/* commentray:start id=<id> */`   | `/* commentray:end id=<id> */`        |
-| **Generic `//` line comment** | _default_ (e.g. `rust`, `go`, `java`, `kotlin`, …)                                                                                                     | `// commentray:start id=<id>`      | `// commentray:end id=<id>`           |
+| Convention                    | Typical VS Code `languageId` values                                                                                                                    | Start delimiter                   | End delimiter                        |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------- | ------------------------------------ |
+| **HTML comments**             | `html`, `xml`, `markdown`, `md`, `handlebars`, `vue-html`                                                                                              | `<!-- #region sidetrack:<id> -->` | `<!-- #endregion sidetrack:<id> -->` |
+| **`//` #region**              | `javascript`, `javascriptreact`, `typescript`, `typescriptreact`, `js`, `jsx`, `tsx`, `mjs`, `cjs`, `vue`, `svelte`, `astro`, `scss`, `less`, `stylus` | `//#region sidetrack:<id>`        | `//#endregion sidetrack:<id>`        |
+| **`#region` (hash)**          | `ruby`, `csharp`, `coffeescript`, `powershell`, `perl`, `raku`, `crystal`                                                                              | `#region sidetrack:<id>`          | `#endregion sidetrack:<id>`          |
+| **`#pragma region`**          | `c`, `cpp`, `cuda-cpp`, `objective-c`, `objective-cpp`                                                                                                 | `#pragma region sidetrack:<id>`   | `#pragma endregion sidetrack:<id>`   |
+| **VB**                        | `vb`                                                                                                                                                   | `#Region sidetrack:<id>`          | `#End Region sidetrack:<id>`         |
+| **Python**                    | `python`, `jupyter`                                                                                                                                    | `# region sidetrack:<id>`         | `# endregion sidetrack:<id>`         |
+| **Lua**                       | `lua`                                                                                                                                                  | `--#region sidetrack:<id>`        | `--#endregion sidetrack:<id>`        |
+| **Generic `#` line comment**  | `toml`, `yaml`, `yml`, `dockerfile`, `makefile`, `cmake`, `ini`, `properties`, `git-commit`, `sql`, `r`, `shellscript`, `bash`, `sh`, `zsh`, `fish`    | `# sidetrack:start id=<id>`       | `# sidetrack:end id=<id>`            |
+| **CSS block comment**         | `css`                                                                                                                                                  | `/* sidetrack:start id=<id> */`   | `/* sidetrack:end id=<id> */`        |
+| **Generic `//` line comment** | _default_ (e.g. `rust`, `go`, `java`, `kotlin`, …)                                                                                                     | `// sidetrack:start id=<id>`      | `// sidetrack:end id=<id>`           |
 
-Replace **`<id>`** with the same token as **`marker:<id>`** in `index.json` and `<!-- commentray:block id=<id> -->` in the companion Markdown.
+Replace **`<id>`** with the same token as **`marker:<id>`** in `index.json` and `<!-- sidetrack:block id=<id> -->` in the companion Markdown.
 
 **Indentation:** the extension copies **leading spaces/tabs from the first selected line** and applies it to both delimiter lines so nested code stays aligned.
 

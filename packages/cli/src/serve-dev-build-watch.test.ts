@@ -10,16 +10,16 @@ import {
 
 describe("serve dev build watch HTML injection", () => {
   it("adds the poll client before the closing body", () => {
-    const html = "<!doctype html><body><main>Commentray</main></body>";
+    const html = "<!doctype html><body><main>SideTrack</main></body>";
 
     const next = injectServeDevBuildWatch(html, "abc123");
 
-    expect(next).toContain("<script data-commentray-serve-watch>");
+    expect(next).toContain("<script data-sidetrack-serve-watch>");
     expect(next).toContain('const expect = "abc123"');
-    expect(next).toContain("/__commentray/dev/build-id");
+    expect(next).toContain("/__sidetrack/dev/build-id");
     expect(next).toContain("if (!r.ok) return");
     expect(next).toContain("location.reload()");
-    expect(next).toContain('searchParams.delete("_commentray_bust")');
+    expect(next).toContain('searchParams.delete("_sidetrack_bust")');
     expect(next).toMatch(/<\/script>\n<\/body>$/);
   });
 
@@ -32,7 +32,7 @@ describe("serve dev build watch HTML injection", () => {
   });
 
   it("updates every generated HTML page and ignores non-HTML assets", async () => {
-    const site = await mkdtemp(path.join(tmpdir(), "commentray-dev-watch-"));
+    const site = await mkdtemp(path.join(tmpdir(), "sidetrack-dev-watch-"));
     try {
       await mkdir(path.join(site, "browse"), { recursive: true });
       await writeFile(path.join(site, "index.html"), "<body>Hub</body>", "utf8");
@@ -42,7 +42,7 @@ describe("serve dev build watch HTML injection", () => {
       await injectServeDevBuildWatchIntoSite(site, "deadbeef");
 
       expect(await readFile(path.join(site, "index.html"), "utf8")).toContain(
-        "data-commentray-serve-watch",
+        "data-sidetrack-serve-watch",
       );
       expect(await readFile(path.join(site, "browse", "readme.html"), "utf8")).toContain(
         "deadbeef",

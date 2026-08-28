@@ -51,7 +51,7 @@ export default tseslint.config(
       "**/.vscode-test/**",
       "**/cypress/**",
       "cypress.config.ts",
-      "packages/code-commentray-static/site/**",
+      "packages/code-sidetrack-static/site/**",
       "packages/vscode/fixtures/**",
     ],
   },

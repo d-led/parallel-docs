@@ -1,18 +1,18 @@
 import {
   type BlockScrollLink,
-  type CommentrayIndex,
+  type SideTrackIndex,
   DEFAULT_STRETCH_BUFFER_SYNC,
   MARKER_ID_BODY,
   buildBlockScrollLinks,
-} from "@commentray/core";
+} from "@sidetrack/core";
 
 import { escapeHtml } from "./html-utils.js";
 import { renderHighlightedCodeLineRows } from "./highlighted-code-lines.js";
 import { injectSourceMarkdownAnchors } from "./inject-md-line-anchors.js";
-import { type CommentrayOutputUrlOptions, renderMarkdownToHtml } from "./markdown-pipeline.js";
+import { type SideTrackOutputUrlOptions, renderMarkdownToHtml } from "./markdown-pipeline.js";
 
 const BLOCK_MARKER_LINE = new RegExp(
-  `^<!--\\s*commentray:block\\s+id=(${MARKER_ID_BODY})\\s*-->$`,
+  `^<!--\\s*sidetrack:block\\s+id=(${MARKER_ID_BODY})\\s*-->$`,
   "i",
 );
 
@@ -26,13 +26,13 @@ export type StretchBufferSyncStrategy = "table" | "flow-synchronizer";
 export type BlockStretchTableOptions = {
   code: string;
   language: string;
-  commentrayMarkdown: string;
-  index: CommentrayIndex;
+  sidetrackMarkdown: string;
+  index: SideTrackIndex;
   sourceRelative: string;
-  commentrayPathRel: string;
-  commentrayOutputUrls?: CommentrayOutputUrlOptions;
-  sourceMarkdownOutputUrls?: CommentrayOutputUrlOptions;
-  /** Omitted uses `DEFAULT_STRETCH_BUFFER_SYNC` from `@commentray/core` (`flow-synchronizer`). */
+  sidetrackPathRel: string;
+  sidetrackOutputUrls?: SideTrackOutputUrlOptions;
+  sourceMarkdownOutputUrls?: SideTrackOutputUrlOptions;
+  /** Omitted uses `DEFAULT_STRETCH_BUFFER_SYNC` from `@sidetrack/core` (`flow-synchronizer`). */
   stretchBufferSync?: StretchBufferSyncStrategy;
 };
 
@@ -42,7 +42,7 @@ type StretchRenderContext = {
   mode: StretchBufferSyncStrategy;
   gapSyncSeq: { n: number } | null;
   sourceMarkdownSlicesEnabled: boolean;
-  sourceMarkdownOutputUrls?: CommentrayOutputUrlOptions;
+  sourceMarkdownOutputUrls?: SideTrackOutputUrlOptions;
   renderedById: Map<string, string>;
 };
 
@@ -55,12 +55,12 @@ async function renderSourceMarkdownSlice(
   lines: string[],
   startLine0: number,
   endLine0: number,
-  outputUrls: CommentrayOutputUrlOptions | undefined,
+  outputUrls: SideTrackOutputUrlOptions | undefined,
 ): Promise<string> {
   const markdown = lines.slice(startLine0, endLine0 + 1).join("\n");
   const anchored = injectSourceMarkdownAnchors(markdown, startLine0);
   const rendered = await renderMarkdownToHtml(anchored.trim().length > 0 ? anchored : " ", {
-    commentrayOutputUrls: outputUrls,
+    sidetrackOutputUrls: outputUrls,
   });
   return `<div class="source-pane source-pane--rendered-md stretch-source-markdown-body" data-source-markdown-body="true">${rendered}</div>`;
 }
@@ -75,7 +75,7 @@ function wrapStretchSourceCell(
   return mode === "flow-synchronizer" ? `<div class="stretch-cell-measure">${inner}</div>` : inner;
 }
 
-export function splitCommentrayMarkdownSegments(markdown: string): {
+export function splitSideTrackMarkdownSegments(markdown: string): {
   preamble: string;
   segments: { id: string; body: string }[];
 } {
@@ -123,11 +123,11 @@ async function renderCodeLineStack(
   return `<div class="stretch-code-stack">${inner}</div>`;
 }
 
-async function renderCommentraySegmentBodies(
+async function renderSideTrackSegmentBodies(
   segments: { id: string; body: string }[],
-  outputUrls: CommentrayOutputUrlOptions | undefined,
+  outputUrls: SideTrackOutputUrlOptions | undefined,
 ): Promise<Map<string, string>> {
-  const mdOpts = { commentrayOutputUrls: outputUrls };
+  const mdOpts = { sidetrackOutputUrls: outputUrls };
   const renderedById = new Map<string, string>();
   for (const s of segments) {
     renderedById.set(
@@ -186,7 +186,7 @@ async function buildStretchGapRowHtml(
   const gapId = ctx.mode === "flow-synchronizer" ? nextGapSyncId(ctx.gapSyncSeq) : null;
   if (gapId !== null) {
     return (
-      `<tr class="stretch-row stretch-row--gap" data-commentray-stretch-sync-id="${escapeHtml(gapId)}">` +
+      `<tr class="stretch-row stretch-row--gap" data-sidetrack-stretch-sync-id="${escapeHtml(gapId)}">` +
       `<td class="stretch-code">${sourceCellInner}</td>` +
       `<td class="stretch-doc stretch-doc--gap"><div class="stretch-cell-measure"></div></td></tr>`
     );
@@ -208,10 +208,10 @@ async function buildStretchBlockRowHtml(
   const sourceCellInner = wrapStretchSourceCell(stackHtml, renderedSourceMarkdownHtml, ctx.mode);
   const docInner =
     ctx.renderedById.get(block.id) ??
-    `<p class="stretch-doc-missing"><em>No commentary segment for block <code>${escapeHtml(block.id)}</code>.</em></p>`;
+    `<p class="stretch-doc-missing"><em>No sidetrack segment for block <code>${escapeHtml(block.id)}</code>.</em></p>`;
   if (ctx.mode === "flow-synchronizer") {
     return (
-      `<tr class="stretch-row stretch-row--block" data-commentray-stretch-sync-id="${escapeHtml(block.id)}">` +
+      `<tr class="stretch-row stretch-row--block" data-sidetrack-stretch-sync-id="${escapeHtml(block.id)}">` +
       `<td class="stretch-code">${sourceCellInner}</td>` +
       `<td class="stretch-doc"><div class="stretch-cell-measure"><div class="stretch-doc-inner">${docInner}</div></div></td></tr>`
     );
@@ -259,16 +259,16 @@ export async function tryBuildBlockStretchTableHtml(
   const links = buildBlockScrollLinks(
     opts.index,
     opts.sourceRelative,
-    opts.commentrayPathRel,
-    opts.commentrayMarkdown,
+    opts.sidetrackPathRel,
+    opts.sidetrackMarkdown,
     opts.code,
   );
 
-  const { preamble, segments } = splitCommentrayMarkdownSegments(opts.commentrayMarkdown);
+  const { preamble, segments } = splitSideTrackMarkdownSegments(opts.sidetrackMarkdown);
   const lines = opts.code.split("\n");
   const lnMinCh = Math.max(2, String(Math.max(1, lines.length)).length);
-  const mdOpts = { commentrayOutputUrls: opts.commentrayOutputUrls };
-  const renderedById = await renderCommentraySegmentBodies(segments, opts.commentrayOutputUrls);
+  const mdOpts = { sidetrackOutputUrls: opts.sidetrackOutputUrls };
+  const renderedById = await renderSideTrackSegmentBodies(segments, opts.sidetrackOutputUrls);
   const ctx: StretchRenderContext = {
     lines,
     language: opts.language,

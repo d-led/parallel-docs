@@ -5,9 +5,9 @@
 
 export type DocumentedPairNavLike = {
   sourcePath: string;
-  commentrayPath: string;
+  sidetrackPath: string;
   staticBrowseUrl?: string;
-  commentrayOnGithub?: string;
+  sidetrackOnGithub?: string;
 };
 
 export function normPosixPath(s: string): string {
@@ -80,7 +80,7 @@ export function resolveStaticBrowseHref(
 }
 
 /**
- * Value for `#shell` `data-commentray-pair-browse-href`: keep portable `./browse/…` hub-relative
+ * Value for `#shell` `data-sidetrack-pair-browse-href`: keep portable `./browse/…` hub-relative
  * URLs when the static site emits them (`*.html` or `…/index.html`); otherwise resolve like
  * {@link resolveStaticBrowseHref} for anchors and odd relative forms.
  */
@@ -100,13 +100,13 @@ export function staticBrowseHrefForShellDataAttribute(
 
 export function findDocumentedPair<T extends DocumentedPairNavLike>(
   pairs: readonly T[],
-  commentrayPath: string,
+  sidetrackPath: string,
   sourcePath: string,
 ): T | undefined {
-  const cr = normPosixPath(commentrayPath);
+  const cr = normPosixPath(sidetrackPath);
   const sp = normPosixPath(sourcePath);
   if (cr.length > 0) {
-    const hit = pairs.find((x) => normPosixPath(x.commentrayPath) === cr);
+    const hit = pairs.find((x) => normPosixPath(x.sidetrackPath) === cr);
     if (hit) return hit;
   }
   if (sp.length > 0) {
@@ -146,10 +146,10 @@ export function appendHtmlToOpaqueBrowseRequestUrl(rawUrl: string): string {
 export function isSameDocumentedPair(
   a: DocumentedPairNavLike,
   curSourcePath: string,
-  curCommentrayPath: string,
+  curSideTrackPath: string,
 ): boolean {
   return (
     normPosixPath(a.sourcePath) === normPosixPath(curSourcePath) &&
-    normPosixPath(a.commentrayPath) === normPosixPath(curCommentrayPath)
+    normPosixPath(a.sidetrackPath) === normPosixPath(curSideTrackPath)
   );
 }

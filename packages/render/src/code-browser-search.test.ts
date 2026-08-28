@@ -36,15 +36,15 @@ describe("Ordered in-line search token matching", () => {
   });
 
   it("should match ASCII tokens without regard to letter case", () => {
-    const spans = findOrderedTokenSpans("# Commentray quick-start\n", ["commentray"]);
+    const spans = findOrderedTokenSpans("# SideTrack quick-start\n", ["sidetrack"]);
     expect(spans.length).toBeGreaterThan(0);
   });
 });
 
 describe("Documented-files tree path filter", () => {
   const pairs = [
-    { sourcePath: "packages/foo/src/a.ts", commentrayPath: "c1" },
-    { sourcePath: "packages/bar/b.ts", commentrayPath: "c2" },
+    { sourcePath: "packages/foo/src/a.ts", sidetrackPath: "c1" },
+    { sourcePath: "packages/bar/b.ts", sidetrackPath: "c2" },
   ];
 
   it("should return all pairs when the filter is empty or whitespace", () => {
@@ -62,7 +62,7 @@ describe("Documented-files tree path filter", () => {
   });
 
   it("should normalize backslashes before matching", () => {
-    const mixed = [{ sourcePath: "pkg\\x\\y.ts", commentrayPath: "c" }];
+    const mixed = [{ sourcePath: "pkg\\x\\y.ts", sidetrackPath: "c" }];
     expect(filterPairsByDocumentedTreeQuery(mixed, "pkg x").length).toBe(1);
   });
 });
@@ -90,8 +90,8 @@ describe("Search snippet HTML with safe highlighting", () => {
   });
 
   it("should highlight ASCII hits case-insensitively", () => {
-    const html = escapeHtmlHighlightingSearchTokens("Commentray on GitHub", ["commentray"]);
-    expect(html).toMatch(/<mark class="search-hit">Commentray<\/mark>/i);
+    const html = escapeHtmlHighlightingSearchTokens("SideTrack on GitHub", ["sidetrack"]);
+    expect(html).toMatch(/<mark class="search-hit">SideTrack<\/mark>/i);
   });
 
   it("should escape the snippet and emit no marks when there are no real tokens", () => {
@@ -105,40 +105,40 @@ describe("Hub path rows from documented pairs", () => {
     const pairs = [
       {
         sourcePath: "README.md",
-        commentrayPath: ".commentray/source/README.md/architecture.md",
+        sidetrackPath: ".sidetrack/source/README.md/architecture.md",
       },
       {
         sourcePath: "README.md",
-        commentrayPath: ".commentray/source/README.md/main.md",
+        sidetrackPath: ".sidetrack/source/README.md/main.md",
       },
     ];
     const rows = pathRowsFromDocumentedPairs(pairs);
     const readmeRows = rows.filter((r) => r.text === "README.md");
     expect(readmeRows).toHaveLength(2);
     expect(readmeRows.map((r) => r.crPath)).toEqual([
-      ".commentray/source/README.md/architecture.md",
-      ".commentray/source/README.md/main.md",
+      ".sidetrack/source/README.md/architecture.md",
+      ".sidetrack/source/README.md/main.md",
     ]);
   });
 });
 
 describe("Empty-search browse preview rows (distinct source files)", () => {
-  it("should collapse multi-angle pairs to one row per source with the smallest commentray path", () => {
+  it("should collapse multi-angle pairs to one row per source with the smallest sidetrack path", () => {
     const { rows, totalUnique } = uniqueSourceFilePreviewRows(
       [
-        { sourcePath: "README.md", commentrayPath: "b.md" },
-        { sourcePath: "README.md", commentrayPath: "a.md" },
+        { sourcePath: "README.md", sidetrackPath: "b.md" },
+        { sourcePath: "README.md", sidetrackPath: "a.md" },
       ],
       80,
     );
     expect(totalUnique).toBe(1);
-    expect(rows).toEqual([{ sourcePath: "README.md", commentrayPath: "a.md" }]);
+    expect(rows).toEqual([{ sourcePath: "README.md", sidetrackPath: "a.md" }]);
   });
 
   it("should sort by source path and cap the list", () => {
     const many = Array.from({ length: 85 }, (_, i) => ({
       sourcePath: `f/${String(i).padStart(3, "0")}.ts`,
-      commentrayPath: `c/${String(i)}.md`,
+      sidetrackPath: `c/${String(i)}.md`,
     }));
     const { rows, totalUnique } = uniqueSourceFilePreviewRows(many, 80);
     expect(totalUnique).toBe(85);

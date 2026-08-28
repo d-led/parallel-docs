@@ -6,40 +6,37 @@ import { describe, expect, it, vi } from "vitest";
 
 import { SERVE_ROUTE_GENERATE_ENTRY, SERVE_ROUTE_INIT, runServeAction } from "./serve.js";
 
-async function readIndexByCommentrayPath(repo: string): Promise<
+async function readIndexBySideTrackPath(repo: string): Promise<
   Record<
     string,
     {
       sourcePath: string;
-      commentrayPath: string;
+      sidetrackPath: string;
       blocks?: unknown[];
     }
   >
 > {
-  const indexRaw = await readFile(path.join(repo, ".commentray", "metadata", "index.json"), "utf8");
+  const indexRaw = await readFile(path.join(repo, ".sidetrack", "metadata", "index.json"), "utf8");
   const index = JSON.parse(indexRaw) as {
-    byCommentrayPath: Record<
+    bySideTrackPath: Record<
       string,
       {
         sourcePath: string;
-        commentrayPath: string;
+        sidetrackPath: string;
         blocks?: unknown[];
       }
     >;
   };
-  return index.byCommentrayPath;
+  return index.bySideTrackPath;
 }
 
 describe("serve actions", () => {
-  it("init action creates Commentray bootstrap files and triggers rebuild", async () => {
-    const repo = await mkdtemp(path.join(tmpdir(), "commentray-serve-init-"));
+  it("init action creates SideTrack bootstrap files and triggers rebuild", async () => {
+    const repo = await mkdtemp(path.join(tmpdir(), "sidetrack-serve-init-"));
     const rebuild = vi.fn(async () => {});
     try {
       await runServeAction(SERVE_ROUTE_INIT, { repoRoot: repo, rebuild });
-      const index = await readFile(
-        path.join(repo, ".commentray", "metadata", "index.json"),
-        "utf8",
-      );
+      const index = await readFile(path.join(repo, ".sidetrack", "metadata", "index.json"), "utf8");
       expect(index).toContain("schemaVersion");
       expect(rebuild).toHaveBeenCalledWith(true);
     } finally {
@@ -48,36 +45,36 @@ describe("serve actions", () => {
   });
 
   it("generate-entry creates companion markdown for static_site.source_file and rebuilds", async () => {
-    const repo = await mkdtemp(path.join(tmpdir(), "commentray-serve-entry-"));
+    const repo = await mkdtemp(path.join(tmpdir(), "sidetrack-serve-entry-"));
     const rebuild = vi.fn(async () => {});
     try {
       await writeFile(
-        path.join(repo, ".commentray.toml"),
+        path.join(repo, ".sidetrack.toml"),
         ["[static_site]", 'source_file = "docs/overview.md"', ""].join("\n"),
         "utf8",
       );
       await runServeAction(SERVE_ROUTE_GENERATE_ENTRY, { repoRoot: repo, rebuild });
 
       const generated = await readFile(
-        path.join(repo, ".commentray", "source", "docs", "overview.md", "main.md"),
+        path.join(repo, ".sidetrack", "source", "docs", "overview.md", "main.md"),
         "utf8",
       );
       expect(generated).toContain("docs/overview.md");
 
       const indexRaw = await readFile(
-        path.join(repo, ".commentray", "metadata", "index.json"),
+        path.join(repo, ".sidetrack", "metadata", "index.json"),
         "utf8",
       );
       const index = JSON.parse(indexRaw) as {
-        byCommentrayPath: Record<
+        bySideTrackPath: Record<
           string,
-          { sourcePath: string; commentrayPath: string; blocks: unknown[] }
+          { sourcePath: string; sidetrackPath: string; blocks: unknown[] }
         >;
       };
-      const key = ".commentray/source/docs/overview.md/main.md";
-      expect(index.byCommentrayPath[key]).toEqual({
+      const key = ".sidetrack/source/docs/overview.md/main.md";
+      expect(index.bySideTrackPath[key]).toEqual({
         sourcePath: "docs/overview.md",
-        commentrayPath: key,
+        sidetrackPath: key,
         blocks: [],
       });
       expect(rebuild).toHaveBeenCalledWith(true);
@@ -87,11 +84,11 @@ describe("serve actions", () => {
   });
 
   it("generate-entry uses angle layout after init action", async () => {
-    const repo = await mkdtemp(path.join(tmpdir(), "commentray-serve-entry-init-first-"));
+    const repo = await mkdtemp(path.join(tmpdir(), "sidetrack-serve-entry-init-first-"));
     const rebuild = vi.fn(async () => {});
     try {
       await writeFile(
-        path.join(repo, ".commentray.toml"),
+        path.join(repo, ".sidetrack.toml"),
         ["[static_site]", 'source_file = "docs/overview.md"', ""].join("\n"),
         "utf8",
       );
@@ -100,7 +97,7 @@ describe("serve actions", () => {
       await runServeAction(SERVE_ROUTE_GENERATE_ENTRY, { repoRoot: repo, rebuild });
 
       const generated = await readFile(
-        path.join(repo, ".commentray", "source", "docs", "overview.md", "main.md"),
+        path.join(repo, ".sidetrack", "source", "docs", "overview.md", "main.md"),
         "utf8",
       );
       expect(generated).toContain("docs/overview.md");
@@ -111,16 +108,16 @@ describe("serve actions", () => {
 });
 
 describe("serve actions (explicit static companion path)", () => {
-  it("generate-entry honors explicit static_site.commentray_markdown path", async () => {
-    const repo = await mkdtemp(path.join(tmpdir(), "commentray-serve-entry-explicit-"));
+  it("generate-entry honors explicit static_site.sidetrack_markdown path", async () => {
+    const repo = await mkdtemp(path.join(tmpdir(), "sidetrack-serve-entry-explicit-"));
     const rebuild = vi.fn(async () => {});
     try {
       await writeFile(
-        path.join(repo, ".commentray.toml"),
+        path.join(repo, ".sidetrack.toml"),
         [
           "[static_site]",
           'source_file = "README.md"',
-          'commentray_markdown = "commentray.md"',
+          'sidetrack_markdown = "sidetrack.md"',
           "",
         ].join("\n"),
         "utf8",
@@ -128,13 +125,13 @@ describe("serve actions (explicit static companion path)", () => {
 
       await runServeAction(SERVE_ROUTE_GENERATE_ENTRY, { repoRoot: repo, rebuild });
 
-      const generated = await readFile(path.join(repo, "commentray.md"), "utf8");
+      const generated = await readFile(path.join(repo, "sidetrack.md"), "utf8");
       expect(generated).toContain("README.md");
 
-      const byCommentrayPath = await readIndexByCommentrayPath(repo);
-      const entry = byCommentrayPath["commentray.md"];
+      const bySideTrackPath = await readIndexBySideTrackPath(repo);
+      const entry = bySideTrackPath["sidetrack.md"];
       expect(entry?.sourcePath).toBe("README.md");
-      expect(entry?.commentrayPath).toBe("commentray.md");
+      expect(entry?.sidetrackPath).toBe("sidetrack.md");
       expect(Array.isArray(entry?.blocks)).toBe(true);
     } finally {
       await rm(repo, { recursive: true, force: true });

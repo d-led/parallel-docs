@@ -1,4 +1,4 @@
-import type { CommentrayBlock } from "./model.js";
+import type { SideTrackBlock } from "./model.js";
 import type { ScmProvider } from "./scm/scm-provider.js";
 import { parseAnchor } from "./anchors.js";
 
@@ -14,7 +14,7 @@ export async function diagnoseBlock(args: {
   sourceRepoRelativePath: string;
   headCommit: string;
   blobAtHead: string | null;
-  block: CommentrayBlock;
+  block: SideTrackBlock;
   scm: ScmProvider;
 }): Promise<BlockDiagnostic | null> {
   const { block, scm, repoRoot, headCommit, blobAtHead } = args;

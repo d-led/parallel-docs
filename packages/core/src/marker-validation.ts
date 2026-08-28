@@ -1,18 +1,18 @@
 import { parseAnchor } from "./anchors.js";
 import { assertValidMarkerId, MARKER_ID_BODY } from "./marker-ids.js";
-import type { CommentrayIndex } from "./model.js";
+import type { SideTrackIndex } from "./model.js";
 import { normalizeRepoRelativePath } from "./paths.js";
-import { findCommentrayMarkerPairs } from "./region-marker-convert.js";
-import { parseCommentrayRegionBoundary, sourceLineRangeForMarkerId } from "./source-markers.js";
+import { findSideTrackMarkerPairs } from "./region-marker-convert.js";
+import { parseSideTrackRegionBoundary, sourceLineRangeForMarkerId } from "./source-markers.js";
 
 export type MarkerValidationIssue = { level: "error" | "warn"; message: string };
 
 /**
- * Block ids declared in companion markdown via `<!-- commentray:block id=… -->` (valid ids only).
+ * Block ids declared in companion markdown via `<!-- sidetrack:block id=… -->` (valid ids only).
  */
-export function extractCommentrayBlockIdsFromMarkdown(markdown: string): Set<string> {
+export function extractSideTrackBlockIdsFromMarkdown(markdown: string): Set<string> {
   const out = new Set<string>();
-  const re = new RegExp(`<!--\\s*commentray:block\\s+id=(${MARKER_ID_BODY})\\s*-->`, "gi");
+  const re = new RegExp(`<!--\\s*sidetrack:block\\s+id=(${MARKER_ID_BODY})\\s*-->`, "gi");
   for (const m of markdown.matchAll(re)) {
     const raw = m[1];
     if (raw === undefined) continue;
@@ -28,9 +28,9 @@ export function extractCommentrayBlockIdsFromMarkdown(markdown: string): Set<str
 /**
  * Block ids declared in companion markdown, preserving appearance order.
  */
-export function extractCommentrayBlockIdsInMarkdownOrder(markdown: string): string[] {
+export function extractSideTrackBlockIdsInMarkdownOrder(markdown: string): string[] {
   const out: string[] = [];
-  const re = new RegExp(`<!--\\s*commentray:block\\s+id=(${MARKER_ID_BODY})\\s*-->`, "gi");
+  const re = new RegExp(`<!--\\s*sidetrack:block\\s+id=(${MARKER_ID_BODY})\\s*-->`, "gi");
   for (const m of markdown.matchAll(re)) {
     const raw = m[1];
     if (raw === undefined) continue;
@@ -52,7 +52,7 @@ export function validateOverlappingMarkerInnerRangesInSource(
   sourcePath: string,
 ): MarkerValidationIssue[] {
   const text = sourceText.replaceAll("\r\n", "\n");
-  const pairs = findCommentrayMarkerPairs(text);
+  const pairs = findSideTrackMarkerPairs(text);
   type Rng = { id: string; start: number; end: number };
   const ranges: Rng[] = [];
   for (const pair of pairs) {
@@ -71,7 +71,7 @@ export function validateOverlappingMarkerInnerRangesInSource(
       issues.push({
         level: "error",
         message:
-          `${sourcePath}: commentray regions "${a.id}" (inner lines ${a.start}–${a.end}) and "${b.id}" ` +
+          `${sourcePath}: sidetrack regions "${a.id}" (inner lines ${a.start}–${a.end}) and "${b.id}" ` +
           `(${b.start}–${b.end}) overlap. Regions in the same primary file must not share source lines — ` +
           `close one region before the other begins, or split the file.`,
       });
@@ -81,7 +81,7 @@ export function validateOverlappingMarkerInnerRangesInSource(
 }
 
 /**
- * Scans a single source file for Commentray region / marker boundaries and reports:
+ * Scans a single source file for SideTrack region / marker boundaries and reports:
  * - invalid ids (syntax that matched but fails `assertValidMarkerId` — rare),
  * - duplicate **start** for the same id before its `end`,
  * - orphan **end** lines,
@@ -96,7 +96,7 @@ export function validateMarkerBoundariesInSource(
   const pendingStartLine = new Map<string, number>();
 
   for (let line0 = 0; line0 < lines.length; line0++) {
-    const hit = parseCommentrayRegionBoundary(lines[line0] ?? "");
+    const hit = parseSideTrackRegionBoundary(lines[line0] ?? "");
     if (!hit) continue;
     try {
       assertValidMarkerId(hit.id);
@@ -114,7 +114,7 @@ export function validateMarkerBoundariesInSource(
         const prev = priorStart + 1;
         issues.push({
           level: "error",
-          message: `${loc}: duplicate commentray start for id "${hit.id}" (also opened at line ${prev}). Close the previous region first, or use a unique id per region.`,
+          message: `${loc}: duplicate sidetrack start for id "${hit.id}" (also opened at line ${prev}). Close the previous region first, or use a unique id per region.`,
         });
         continue;
       }
@@ -125,7 +125,7 @@ export function validateMarkerBoundariesInSource(
     if (start0 === undefined) {
       issues.push({
         level: "error",
-        message: `${loc}: commentray end for id "${hit.id}" has no matching start in this file.`,
+        message: `${loc}: sidetrack end for id "${hit.id}" has no matching start in this file.`,
       });
       continue;
     }
@@ -135,7 +135,7 @@ export function validateMarkerBoundariesInSource(
   for (const [id, line0] of pendingStartLine) {
     issues.push({
       level: "error",
-      message: `${sourcePath}:${line0 + 1}: commentray start for id "${id}" has no matching end in this file.`,
+      message: `${sourcePath}:${line0 + 1}: sidetrack start for id "${id}" has no matching end in this file.`,
     });
   }
 
@@ -152,9 +152,9 @@ function tryParseMarkerAnchorId(anchor: string): string | null {
   }
 }
 
-function claimedMarkerIdsByNormalizedSource(index: CommentrayIndex): Map<string, Set<string>> {
+function claimedMarkerIdsByNormalizedSource(index: SideTrackIndex): Map<string, Set<string>> {
   const claimedBySourceNorm = new Map<string, Set<string>>();
-  for (const entry of Object.values(index.byCommentrayPath)) {
+  for (const entry of Object.values(index.bySideTrackPath)) {
     const norm = normalizeRepoRelativePath(entry.sourcePath);
     let set = claimedBySourceNorm.get(norm);
     if (!set) {
@@ -170,11 +170,11 @@ function claimedMarkerIdsByNormalizedSource(index: CommentrayIndex): Map<string,
 }
 
 function unresolvedMarkerAnchorIssues(
-  index: CommentrayIndex,
+  index: SideTrackIndex,
   indexedSourceTexts: Map<string, string>,
 ): MarkerValidationIssue[] {
   const issues: MarkerValidationIssue[] = [];
-  for (const [commentrayPath, entry] of Object.entries(index.byCommentrayPath)) {
+  for (const [sidetrackPath, entry] of Object.entries(index.bySideTrackPath)) {
     const norm = normalizeRepoRelativePath(entry.sourcePath);
     const text = indexedSourceTexts.get(norm);
     if (text === undefined) continue;
@@ -186,24 +186,24 @@ function unresolvedMarkerAnchorIssues(
       issues.push({
         level: "error",
         message:
-          `Block "${block.id}" in ${commentrayPath} uses anchor "marker:${markerId}" but ` +
-          `primary "${entry.sourcePath}" has no resolvable paired commentray region for that id ` +
-          `(see docs/spec/blocks.md — e.g. Markdown/HTML: <!-- #region commentray:${markerId} --> … <!-- #endregion commentray:${markerId} -->).`,
+          `Block "${block.id}" in ${sidetrackPath} uses anchor "marker:${markerId}" but ` +
+          `primary "${entry.sourcePath}" has no resolvable paired sidetrack region for that id ` +
+          `(see docs/spec/blocks.md — e.g. Markdown/HTML: <!-- #region sidetrack:${markerId} --> … <!-- #endregion sidetrack:${markerId} -->).`,
       });
     }
   }
   return issues;
 }
 
-function displaySourcePathForNorm(index: CommentrayIndex, norm: string): string {
-  const hit = Object.values(index.byCommentrayPath).find(
+function displaySourcePathForNorm(index: SideTrackIndex, norm: string): string {
+  const hit = Object.values(index.bySideTrackPath).find(
     (e) => normalizeRepoRelativePath(e.sourcePath) === norm,
   );
   return hit?.sourcePath ?? norm;
 }
 
 function orphanRegionIssues(
-  index: CommentrayIndex,
+  index: SideTrackIndex,
   indexedSourceTexts: Map<string, string>,
   claimedBySourceNorm: Map<string, Set<string>>,
   markdownBlockIdsBySourceNorm: Map<string, Set<string>> | undefined,
@@ -211,7 +211,7 @@ function orphanRegionIssues(
   const issues: MarkerValidationIssue[] = [];
   const orphanWarned = new Set<string>();
   for (const [norm, text] of indexedSourceTexts) {
-    const pairs = findCommentrayMarkerPairs(text);
+    const pairs = findSideTrackMarkerPairs(text);
     const claimed = claimedBySourceNorm.get(norm) ?? new Set();
     const mdIds = markdownBlockIdsBySourceNorm?.get(norm);
     const displayPath = displaySourcePathForNorm(index, norm);
@@ -226,14 +226,14 @@ function orphanRegionIssues(
         const indexed = claimed.has(pair.id);
         const tail = indexed
           ? ` An indexed block uses anchor marker:${pair.id}, but no companion markdown line ` +
-            `\`<!-- commentray:block id=${pair.id} -->\` was found for this primary (add the marker or fix the path).`
+            `\`<!-- sidetrack:block id=${pair.id} -->\` was found for this primary (add the marker or fix the path).`
           : ` No indexed block uses anchor marker:${pair.id}, and no companion markdown references this id.`;
         issues.push({
           level: "warn",
           message:
-            `Primary "${displayPath}" has a commentray region "${pair.id}" (delimiter lines ` +
+            `Primary "${displayPath}" has a sidetrack region "${pair.id}" (delimiter lines ` +
             `${pair.startLine0 + 1} and ${pair.endLine0 + 1}) that is not referenced by any ` +
-            `\`<!-- commentray:block id=${pair.id} -->\` line in companion markdown for this primary.${tail}`,
+            `\`<!-- sidetrack:block id=${pair.id} -->\` line in companion markdown for this primary.${tail}`,
         });
         continue;
       }
@@ -243,9 +243,9 @@ function orphanRegionIssues(
       issues.push({
         level: "warn",
         message:
-          `Primary "${displayPath}" has a commentray region "${pair.id}" (delimiter lines ` +
+          `Primary "${displayPath}" has a sidetrack region "${pair.id}" (delimiter lines ` +
           `${pair.startLine0 + 1} and ${pair.endLine0 + 1}) that no indexed block claims ` +
-          `(expected a block with anchor marker:${pair.id} and matching <!-- commentray:block id=${pair.id} -->). ` +
+          `(expected a block with anchor marker:${pair.id} and matching <!-- sidetrack:block id=${pair.id} -->). ` +
           `Remove the delimiters or add the block to index.json.`,
       });
     }
@@ -258,15 +258,15 @@ function orphanRegionIssues(
  * region that resolves to a non-empty span.
  *
  * When `markdownBlockIdsBySourceNorm` is set (repo validation), warns for **orphan** regions: a
- * paired delimiter id in the primary that has no matching `<!-- commentray:block id=… -->` in any
+ * paired delimiter id in the primary that has no matching `<!-- sidetrack:block id=… -->` in any
  * indexed companion markdown for that primary. When it is omitted (tests), the legacy rule
  * applies: warn only when no indexed block claims `marker:<id>`.
  */
 export function validateMarkerRegionsAgainstIndexedSources(
-  index: CommentrayIndex,
+  index: SideTrackIndex,
   indexedSourceTexts: Map<string, string>,
   markdownBlockIdsBySourceNorm?: Map<string, Set<string>>,
-  markdownBlockOrderByCommentrayPath?: Map<string, string[]>,
+  markdownBlockOrderBySideTrackPath?: Map<string, string[]>,
 ): MarkerValidationIssue[] {
   const claimed = claimedMarkerIdsByNormalizedSource(index);
   return [
@@ -275,20 +275,20 @@ export function validateMarkerRegionsAgainstIndexedSources(
     ...unsortedCompanionBlockOrderIssues(
       index,
       indexedSourceTexts,
-      markdownBlockOrderByCommentrayPath,
+      markdownBlockOrderBySideTrackPath,
     ),
   ];
 }
 
 function unsortedCompanionBlockOrderIssues(
-  index: CommentrayIndex,
+  index: SideTrackIndex,
   indexedSourceTexts: Map<string, string>,
-  markdownBlockOrderByCommentrayPath: Map<string, string[]> | undefined,
+  markdownBlockOrderBySideTrackPath: Map<string, string[]> | undefined,
 ): MarkerValidationIssue[] {
-  if (markdownBlockOrderByCommentrayPath === undefined) return [];
+  if (markdownBlockOrderBySideTrackPath === undefined) return [];
   const issues: MarkerValidationIssue[] = [];
-  for (const [commentrayPath, entry] of Object.entries(index.byCommentrayPath)) {
-    const mdOrder = markdownBlockOrderByCommentrayPath.get(commentrayPath);
+  for (const [sidetrackPath, entry] of Object.entries(index.bySideTrackPath)) {
+    const mdOrder = markdownBlockOrderBySideTrackPath.get(sidetrackPath);
     if (mdOrder === undefined || mdOrder.length < 2) continue;
 
     const sourceNorm = normalizeRepoRelativePath(entry.sourcePath);
@@ -306,10 +306,10 @@ function unsortedCompanionBlockOrderIssues(
         issues.push({
           level: "warn",
           message:
-            `Companion "${commentrayPath}" lists block id "${id}" before "${lastId ?? "(unknown)"}", ` +
+            `Companion "${sidetrackPath}" lists block id "${id}" before "${lastId ?? "(unknown)"}", ` +
             `but source "${entry.sourcePath}" orders their regions the other way around. ` +
             `Reorder companion sections to match source region order, or re-create misplaced blocks via ` +
-            `“Commentray: Start new block from selection” to auto-place them by source flow.`,
+            `“SideTrack: Start new block from selection” to auto-place them by source flow.`,
         });
         break;
       }
@@ -325,12 +325,12 @@ function markerStartOrderMap(sourceText: string): Map<string, number> {
   let next = 0;
   const lines = sourceText.replaceAll("\r\n", "\n").split("\n");
   for (const line of lines) {
-    const hit = parseCommentrayRegionBoundary(line);
+    const hit = parseSideTrackRegionBoundary(line);
     if (!hit || hit.kind !== "start") continue;
     if (order.has(hit.id)) continue;
     order.set(hit.id, next++);
   }
-  for (const pair of findCommentrayMarkerPairs(sourceText)) {
+  for (const pair of findSideTrackMarkerPairs(sourceText)) {
     if (order.has(pair.id)) continue;
     order.set(pair.id, next++);
   }
@@ -361,20 +361,20 @@ function markerIdFromBlock(block: { anchor: string; markerId?: string }): string
  * - **Warn** if the same marker id string is reused across **different** source files
  *   (repo-wide ambiguity for links and search — allowed, but noisy).
  */
-export function validateIndexMarkerSemantics(index: CommentrayIndex): MarkerValidationIssue[] {
+export function validateIndexMarkerSemantics(index: SideTrackIndex): MarkerValidationIssue[] {
   const issues: MarkerValidationIssue[] = [];
-  type Loc = { sourcePath: string; commentrayPath: string; blockId: string };
+  type Loc = { sourcePath: string; sidetrackPath: string; blockId: string };
   const bySourceAndMarker = new Map<string, Loc[]>();
   const byMarkerRepoWide = new Map<string, Set<string>>();
 
-  for (const [commentrayPath, entry] of Object.entries(index.byCommentrayPath)) {
+  for (const [sidetrackPath, entry] of Object.entries(index.bySideTrackPath)) {
     for (const block of entry.blocks) {
       const mid = markerIdFromBlock(block);
       if (mid === null) continue;
       const key = `${entry.sourcePath}\0${mid}`;
       const loc: Loc = {
         sourcePath: entry.sourcePath,
-        commentrayPath,
+        sidetrackPath,
         blockId: block.id,
       };
       const list = bySourceAndMarker.get(key) ?? [];
@@ -394,7 +394,7 @@ export function validateIndexMarkerSemantics(index: CommentrayIndex): MarkerVali
     const mid = composite.slice(sep + 1);
     const blockIds = new Set(locs.map((l) => l.blockId));
     if (blockIds.size > 1) {
-      const detail = locs.map((l) => `${l.blockId} (${l.commentrayPath})`).join(", ");
+      const detail = locs.map((l) => `${l.blockId} (${l.sidetrackPath})`).join(", ");
       issues.push({
         level: "error",
         message:

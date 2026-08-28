@@ -1,14 +1,14 @@
 import { assertValidMarkerId, MARKER_ID_BODY } from "./marker-ids.js";
 
 /**
- * Source delimiters for block anchors (region `commentray:<id>` vs generic
- * `commentray:start` / `end`). Full taxonomy and viewport geometry: companion
- * `.commentray/source/.../source-markers.ts/main.md`.
+ * Source delimiters for block anchors (region `sidetrack:<id>` vs generic
+ * `sidetrack:start` / `end`). Full taxonomy and viewport geometry: companion
+ * `.sidetrack/source/.../source-markers.ts/main.md`.
  */
 
-const COMMENTRAY_TAG = (id: string) => `commentray:${id.trim().toLowerCase()}`;
+const SIDETRACK_TAG = (id: string) => `sidetrack:${id.trim().toLowerCase()}`;
 
-/** `//#region commentray:<id>` — JS/TS ecosystem & CSS preprocessors that use `//`. */
+/** `//#region sidetrack:<id>` — JS/TS ecosystem & CSS preprocessors that use `//`. */
 const SLASH_REGION_LANGUAGES = new Set([
   "javascript",
   "javascriptreact",
@@ -27,7 +27,7 @@ const SLASH_REGION_LANGUAGES = new Set([
   "stylus",
 ]);
 
-/** `#region commentray:<id>` — same shape as Region Marker for these ids. */
+/** `#region sidetrack:<id>` — same shape as Region Marker for these ids. */
 const HASH_REGION_LANGUAGES = new Set([
   "ruby",
   "csharp",
@@ -44,7 +44,7 @@ const VB_REGION = new Set(["vb"]);
 
 const LUA_REGION = new Set(["lua"]);
 
-/** Includes Markdown so `commentrayRegionInsertions("markdown", …)` matches README `<!-- #region commentray:… -->`. */
+/** Includes Markdown so `sidetrackRegionInsertions("markdown", …)` matches README `<!-- #region sidetrack:… -->`. */
 const HTML_FAMILY = new Set(["html", "xml", "handlebars", "vue-html", "markdown", "md"]);
 
 const PYTHONIC = new Set(["python", "jupyter"]);
@@ -96,7 +96,7 @@ function regionConvention(languageId: string): RegionConvention {
 }
 
 /**
- * Line comment leader for **generic** `commentray:start` / `end` markers
+ * Line comment leader for **generic** `sidetrack:start` / `end` markers
  * (`// …`, `# …`, etc.). Not used for `#region` family languages.
  */
 export function lineCommentLeaderForLanguage(languageId: string): string {
@@ -112,13 +112,13 @@ export function lineCommentLeaderForLanguage(languageId: string): string {
  * **start**, so stable offsets). Pass the same indentation string Region Marker
  * uses (leading whitespace of the first selected line).
  */
-export function commentrayRegionInsertions(
+export function sidetrackRegionInsertions(
   languageId: string,
   markerId: string,
   indent = "",
 ): { start: string; end: string } {
   const id = assertValidMarkerId(markerId);
-  const tag = COMMENTRAY_TAG(id);
+  const tag = SIDETRACK_TAG(id);
   const ind = indent;
   const conv = regionConvention(languageId);
   switch (conv) {
@@ -159,15 +159,15 @@ export function commentrayRegionInsertions(
       };
     case "generic-block-css":
       return {
-        start: `${ind}/* commentray:start id=${id} */\n`,
-        end: `\n${ind}/* commentray:end id=${id} */`,
+        start: `${ind}/* sidetrack:start id=${id} */\n`,
+        end: `\n${ind}/* sidetrack:end id=${id} */`,
       };
     case "generic-hash":
     case "generic-line": {
       const leader = lineCommentLeaderForLanguage(languageId);
       return {
-        start: `${ind}${leader}commentray:start id=${id}\n`,
-        end: `\n${ind}${leader}commentray:end id=${id}`,
+        start: `${ind}${leader}sidetrack:start id=${id}\n`,
+        end: `\n${ind}${leader}sidetrack:end id=${id}`,
       };
     }
   }
@@ -175,33 +175,33 @@ export function commentrayRegionInsertions(
 
 export type RegionBoundaryKind = "start" | "end";
 
-/** Detect a Commentray region, generic marker, or legacy marker line; id is lower-case. */
-export function parseCommentrayRegionBoundary(
+/** Detect a SideTrack region, generic marker, or legacy marker line; id is lower-case. */
+export function parseSideTrackRegionBoundary(
   line: string,
 ): { kind: RegionBoundaryKind; id: string } | null {
   const probe = line.trim();
   const mid = MARKER_ID_BODY;
   const startPatterns: RegExp[] = [
-    new RegExp(`^//#region\\s+commentray:(${mid})\\s*$`, "i"),
-    new RegExp(`^#region\\s+commentray:(${mid})\\s*$`, "i"),
-    new RegExp(`^#pragma\\s+region\\s+commentray:(${mid})\\s*$`, "i"),
-    new RegExp(`^#Region\\s+commentray:(${mid})\\s*$`, "i"),
-    new RegExp(`^#\\s*region\\s+commentray:(${mid})\\s*$`, "i"),
-    new RegExp(`^<!--\\s*#region\\s+commentray:(${mid})\\s*-->\\s*$`, "i"),
-    new RegExp(`^--#region\\s+commentray:(${mid})\\s*$`, "i"),
-    new RegExp(`^/\\*\\s*commentray:start\\s+id=(${mid})\\s*\\*/\\s*$`, "i"),
-    new RegExp(`commentray:start\\s+id=(${mid})\\b`, "i"),
+    new RegExp(`^//#region\\s+sidetrack:(${mid})\\s*$`, "i"),
+    new RegExp(`^#region\\s+sidetrack:(${mid})\\s*$`, "i"),
+    new RegExp(`^#pragma\\s+region\\s+sidetrack:(${mid})\\s*$`, "i"),
+    new RegExp(`^#Region\\s+sidetrack:(${mid})\\s*$`, "i"),
+    new RegExp(`^#\\s*region\\s+sidetrack:(${mid})\\s*$`, "i"),
+    new RegExp(`^<!--\\s*#region\\s+sidetrack:(${mid})\\s*-->\\s*$`, "i"),
+    new RegExp(`^--#region\\s+sidetrack:(${mid})\\s*$`, "i"),
+    new RegExp(`^/\\*\\s*sidetrack:start\\s+id=(${mid})\\s*\\*/\\s*$`, "i"),
+    new RegExp(`sidetrack:start\\s+id=(${mid})\\b`, "i"),
   ];
   const endPatterns: RegExp[] = [
-    new RegExp(`^//#endregion\\s+commentray:(${mid})\\s*$`, "i"),
-    new RegExp(`^#endregion\\s+commentray:(${mid})\\s*$`, "i"),
-    new RegExp(`^#pragma\\s+endregion\\s+commentray:(${mid})\\s*$`, "i"),
-    new RegExp(`^#End\\s+Region\\s+commentray:(${mid})\\s*$`, "i"),
-    new RegExp(`^#\\s*endregion\\s+commentray:(${mid})\\s*$`, "i"),
-    new RegExp(`^<!--\\s*#endregion\\s+commentray:(${mid})\\s*-->\\s*$`, "i"),
-    new RegExp(`^--#endregion\\s+commentray:(${mid})\\s*$`, "i"),
-    new RegExp(`^/\\*\\s*commentray:end\\s+id=(${mid})\\s*\\*/\\s*$`, "i"),
-    new RegExp(`commentray:end\\s+id=(${mid})\\b`, "i"),
+    new RegExp(`^//#endregion\\s+sidetrack:(${mid})\\s*$`, "i"),
+    new RegExp(`^#endregion\\s+sidetrack:(${mid})\\s*$`, "i"),
+    new RegExp(`^#pragma\\s+endregion\\s+sidetrack:(${mid})\\s*$`, "i"),
+    new RegExp(`^#End\\s+Region\\s+sidetrack:(${mid})\\s*$`, "i"),
+    new RegExp(`^#\\s*endregion\\s+sidetrack:(${mid})\\s*$`, "i"),
+    new RegExp(`^<!--\\s*#endregion\\s+sidetrack:(${mid})\\s*-->\\s*$`, "i"),
+    new RegExp(`^--#endregion\\s+sidetrack:(${mid})\\s*$`, "i"),
+    new RegExp(`^/\\*\\s*sidetrack:end\\s+id=(${mid})\\s*\\*/\\s*$`, "i"),
+    new RegExp(`sidetrack:end\\s+id=(${mid})\\b`, "i"),
   ];
   for (const re of startPatterns) {
     const m = re.exec(probe);
@@ -235,7 +235,7 @@ function findFirstMarkerPairBoundaryIndices(
   let startIdx = -1;
   let endIdx = -1;
   for (let i = 0; i < lines.length; i++) {
-    const hit = parseCommentrayRegionBoundary(lines[i]);
+    const hit = parseSideTrackRegionBoundary(lines[i]);
     if (hit?.id !== id) continue;
     if (hit.kind === "start" && startIdx < 0) startIdx = i;
     else if (hit.kind === "end" && startIdx >= 0 && endIdx < 0) endIdx = i;
@@ -263,7 +263,7 @@ export function sourceLineRangeForMarkerId(
   return { start, end };
 }
 
-/** Half-open viewport span for scroll sync; see source-markers commentray. */
+/** Half-open viewport span for scroll sync; see source-markers sidetrack. */
 export function markerViewportHalfOpen1Based(
   sourceText: string,
   markerId: string,

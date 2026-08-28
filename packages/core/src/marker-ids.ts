@@ -1,6 +1,6 @@
 /**
  * Marker / block ids used in `marker:<id>` anchors, `markerId` in the index, and
- * `commentray:<id>` / `commentray:start id=<id>` in source. Designed so authors
+ * `sidetrack:<id>` / `sidetrack:start id=<id>` in source. Designed so authors
  * can type **short slugs** (`intro`, `auth-flow`, `todo_1`) while tooling stays strict.
  */
 

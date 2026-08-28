@@ -2,13 +2,13 @@
 /**
  * Post-`npm run pages:build` checks for `_site/`:
  * - Optional GitHub blob URLs match `https://github.com/<owner>/<repo>/blob/<branch>/…` (no doubled `/blob/`).
- * - `#shell` carries `data-commentray-pair-browse-href` (same-site `./browse/…/index.html`, optional legacy flat `./browse/…@….html`, or GitHub blob). Host-root `/browse/…` is forbidden so static shells stay aligned with `commentray-nav-search.json` and work on GitHub Pages project URLs. Resolves without `/browse/browse/` stacking.
- * - `commentray-nav-search.json` `documentedPairs[].staticBrowseUrl`, when present, uses the same `./browse/…` prefix.
+ * - `#shell` carries `data-sidetrack-pair-browse-href` (same-site `./browse/…/index.html`, optional legacy flat `./browse/…@….html`, or GitHub blob). Host-root `/browse/…` is forbidden so static shells stay aligned with `sidetrack-nav-search.json` and work on GitHub Pages project URLs. Resolves without `/browse/browse/` stacking.
+ * - `sidetrack-nav-search.json` `documentedPairs[].staticBrowseUrl`, when present, uses the same `./browse/…` prefix.
  * - `_site/serve.json` sets `renderSingle: true` so local `serve` serves lone `index.html` in humane dirs (not directory listings).
  * - Every generated local `href` / `src` in each `.html` file under `_site/` (recursive) resolves to an existing static file.
  * - No generated HTML is a client-side redirect shim (meta refresh + `window.location.replace`).
  *
- * Optional live check (network): `COMMENTRAY_VALIDATE_PAGES_LIVE=1` sends HEAD to the first GitHub blob URL found in the hub index.
+ * Optional live check (network): `SIDETRACK_VALIDATE_PAGES_LIVE=1` sends HEAD to the first GitHub blob URL found in the hub index.
  */
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
@@ -94,13 +94,13 @@ function assertSameSiteStaticPairBrowseUsesNavJsonDotSlashPrefix(label, href) {
   if (!isHubRelativeBrowseHref(href)) return;
   if (!href.startsWith("./browse/")) {
     fail(
-      `${label}: same-site static pair browse must start with "./browse/" (same as commentray-nav-search.json staticBrowseUrl), not host-root "/browse/…". Got: ${href}`,
+      `${label}: same-site static pair browse must start with "./browse/" (same as sidetrack-nav-search.json staticBrowseUrl), not host-root "/browse/…". Got: ${href}`,
     );
   }
 }
 
 function validateNavSearchJsonStaticBrowseUrls() {
-  const p = join(siteDir, "commentray-nav-search.json");
+  const p = join(siteDir, "sidetrack-nav-search.json");
   if (!existsSync(p)) return;
   let doc;
   try {
@@ -117,11 +117,11 @@ function validateNavSearchJsonStaticBrowseUrls() {
     if (t.length === 0) continue;
     if (!isHubRelativeBrowseHref(t)) {
       fail(
-        `commentray-nav-search.json documentedPairs[${String(i)}].staticBrowseUrl: expected hub-relative browse or omit, got: ${t}`,
+        `sidetrack-nav-search.json documentedPairs[${String(i)}].staticBrowseUrl: expected hub-relative browse or omit, got: ${t}`,
       );
     }
     assertSameSiteStaticPairBrowseUsesNavJsonDotSlashPrefix(
-      `commentray-nav-search.json documentedPairs[${String(i)}].staticBrowseUrl`,
+      `sidetrack-nav-search.json documentedPairs[${String(i)}].staticBrowseUrl`,
       t,
     );
   }
@@ -137,7 +137,7 @@ function isBrowseRedirectShimHtml(html) {
 }
 
 async function maybeHeadGithub(url) {
-  if (process.env.COMMENTRAY_VALIDATE_PAGES_LIVE !== "1") return;
+  if (process.env.SIDETRACK_VALIDATE_PAGES_LIVE !== "1") return;
   const ac = new AbortController();
   const t = setTimeout(() => ac.abort(), 15000);
   try {
@@ -231,13 +231,13 @@ async function validateHubIndex(indexHtml) {
     await maybeHeadGithub(srcHref);
   }
 
-  const docHubHref = shellAttr(indexHtml, "data-commentray-pair-browse-href");
+  const docHubHref = shellAttr(indexHtml, "data-sidetrack-pair-browse-href");
   if (!docHubHref) {
-    fail('hub index.html: missing data-commentray-pair-browse-href on id="shell"');
+    fail('hub index.html: missing data-sidetrack-pair-browse-href on id="shell"');
   }
-  assertDocPairHref("hub shell data-commentray-pair-browse-href", docHubHref);
+  assertDocPairHref("hub shell data-sidetrack-pair-browse-href", docHubHref);
   assertSameSiteStaticPairBrowseUsesNavJsonDotSlashPrefix(
-    "hub shell data-commentray-pair-browse-href",
+    "hub shell data-sidetrack-pair-browse-href",
     docHubHref,
   );
 
@@ -245,9 +245,9 @@ async function validateHubIndex(indexHtml) {
   const flatSlug = /^(?:\.\/|\/)browse\/([^/]+\.html)$/.exec(docHubHref)?.[1];
   const indexedInner = /^(?:\.\/|\/)browse\/(.+)\/index\.html$/.exec(docHubHref)?.[1];
   const pathnames = flatSlug
-    ? [`/browse/${flatSlug}`, `/commentray/browse/${flatSlug}`]
+    ? [`/browse/${flatSlug}`, `/sidetrack/browse/${flatSlug}`]
     : indexedInner
-      ? [`/browse/${indexedInner}/index.html`, `/commentray/browse/${indexedInner}/index.html`]
+      ? [`/browse/${indexedInner}/index.html`, `/sidetrack/browse/${indexedInner}/index.html`]
       : [];
   if (pathnames.length > 0) {
     await assertBrowseMatrixResolves(docHubHref, pairNavPath, origins, pathnames);
@@ -256,16 +256,16 @@ async function validateHubIndex(indexHtml) {
 
 async function validateBrowsePage(name, html) {
   assertNoBrowseStack(html, `browse/${name}`);
-  const doc = shellAttr(html, "data-commentray-pair-browse-href");
+  const doc = shellAttr(html, "data-sidetrack-pair-browse-href");
   if (!doc) {
-    fail(`browse/${name}: missing data-commentray-pair-browse-href on #shell`);
+    fail(`browse/${name}: missing data-sidetrack-pair-browse-href on #shell`);
   }
 
   const src = firstGithubBlobHrefIn(html);
   if (src) assertGithubBlobUrl(`browse/${name} (first GitHub blob link)`, src);
-  assertDocPairHref(`browse/${name} shell data-commentray-pair-browse-href`, doc);
+  assertDocPairHref(`browse/${name} shell data-sidetrack-pair-browse-href`, doc);
   assertSameSiteStaticPairBrowseUsesNavJsonDotSlashPrefix(
-    `browse/${name} shell data-commentray-pair-browse-href`,
+    `browse/${name} shell data-sidetrack-pair-browse-href`,
     doc,
   );
 

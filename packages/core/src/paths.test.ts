@@ -5,10 +5,10 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 import {
-  commentrayAnglesLayoutEnabled,
-  commentrayAnglesSentinelPath,
-  commentrayMarkdownPath,
-  commentrayMarkdownPathForAngle,
+  sidetrackAnglesLayoutEnabled,
+  sidetrackAnglesSentinelPath,
+  sidetrackMarkdownPath,
+  sidetrackMarkdownPathForAngle,
   normalizeRepoRelativePath,
   resolvePathUnderRepoRoot,
 } from "./paths.js";
@@ -43,7 +43,7 @@ describe("Repo-relative path normalization", () => {
 });
 
 describe("Resolving paths strictly under the repository root", () => {
-  const root = path.join(os.tmpdir(), `commentray-root-${process.pid}`);
+  const root = path.join(os.tmpdir(), `sidetrack-root-${process.pid}`);
 
   it("should resolve an allowed repo-relative path inside the given root", () => {
     const got = resolvePathUnderRepoRoot(root, "src/a.ts");
@@ -56,42 +56,40 @@ describe("Resolving paths strictly under the repository root", () => {
 });
 
 describe("Default companion Markdown locations", () => {
-  it("should place companions as .md files under .commentray/source", () => {
-    expect(commentrayMarkdownPath("src/a.ts")).toBe(".commentray/source/src/a.ts.md");
+  it("should place companions as .md files under .sidetrack/source", () => {
+    expect(sidetrackMarkdownPath("src/a.ts")).toBe(".sidetrack/source/src/a.ts.md");
   });
 
   it("should respect a custom storage directory root", () => {
-    expect(commentrayMarkdownPath("src/a.ts", "var/commentray")).toBe(
-      "var/commentray/source/src/a.ts.md",
+    expect(sidetrackMarkdownPath("src/a.ts", "var/sidetrack")).toBe(
+      "var/sidetrack/source/src/a.ts.md",
     );
   });
 });
 
 describe("Angles layout paths", () => {
   it("should place the angles sentinel under storage/source/.default", () => {
-    expect(commentrayAnglesSentinelPath()).toBe(".commentray/source/.default");
-    expect(commentrayAnglesSentinelPath("var/commentray")).toBe("var/commentray/source/.default");
+    expect(sidetrackAnglesSentinelPath()).toBe(".sidetrack/source/.default");
+    expect(sidetrackAnglesSentinelPath("var/sidetrack")).toBe("var/sidetrack/source/.default");
   });
 
   it("should map each source file and angle id to source/<path>/<angle>.md", () => {
-    expect(commentrayMarkdownPathForAngle("README.md", "architecture")).toBe(
-      ".commentray/source/README.md/architecture.md",
+    expect(sidetrackMarkdownPathForAngle("README.md", "architecture")).toBe(
+      ".sidetrack/source/README.md/architecture.md",
     );
   });
 
   it("should reject angle ids outside the allowed slug rules", () => {
-    expect(() => commentrayMarkdownPathForAngle("README.md", "../evil")).toThrow(
-      /Invalid angle id/,
-    );
+    expect(() => sidetrackMarkdownPathForAngle("README.md", "../evil")).toThrow(/Invalid angle id/);
   });
 
   it("should treat angles layout as enabled only when the sentinel file exists", () => {
-    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "commentray-ang-"));
-    const storage = path.join(dir, ".commentray");
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "sidetrack-ang-"));
+    const storage = path.join(dir, ".sidetrack");
     fs.mkdirSync(path.join(storage, "source"), { recursive: true });
-    expect(commentrayAnglesLayoutEnabled(dir)).toBe(false);
+    expect(sidetrackAnglesLayoutEnabled(dir)).toBe(false);
     fs.writeFileSync(path.join(storage, "source", ".default"), "", "utf8");
-    expect(commentrayAnglesLayoutEnabled(dir)).toBe(true);
+    expect(sidetrackAnglesLayoutEnabled(dir)).toBe(true);
     fs.rmSync(dir, { recursive: true, force: true });
   });
 });

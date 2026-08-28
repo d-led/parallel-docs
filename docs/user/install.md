@@ -1,42 +1,42 @@
-# Install Commentray
+# Install SideTrack
 
-Pick one path: **release binary** (no Node — assets on [GitHub Releases](https://github.com/d-led/commentray/releases) under **`v*`** tags), **[Homebrew](#homebrew-d-led-tap-binary)** (macOS or Linux, same release binaries), **npm global** or **[`npx`](#npx-one-off-no-global-install)** (needs Node), or **clone the repo** for extension packaging / full development ([Development → Clone and workspace setup](../development.md#clone-and-workspace-setup)).
+Pick one path: **release binary** (no Node — assets on [GitHub Releases](https://github.com/d-led/sidetrack/releases) under **`v*`** tags), **[Homebrew](#homebrew-d-led-tap-binary)** (macOS or Linux, same release binaries), **npm global** or **[`npx`](#npx-one-off-no-global-install)** (needs Node), or **clone the repo** for extension packaging / full development ([Development → Clone and workspace setup](../development.md#clone-and-workspace-setup)).
 
 ## Homebrew (`d-led` tap, binary)
 
-If you use [Homebrew](https://brew.sh/), install from the maintainer tap [d-led/homebrew-d-led](https://github.com/d-led/homebrew-d-led) (formula `commentray.rb` installs the same standalone SEA builds as Releases — **darwin-arm64**, **darwin-x64**, **linux-arm64**, **linux-x64** only):
+If you use [Homebrew](https://brew.sh/), install from the maintainer tap [d-led/homebrew-d-led](https://github.com/d-led/homebrew-d-led) (formula `sidetrack.rb` installs the same standalone SEA builds as Releases — **darwin-arm64**, **darwin-x64**, **linux-arm64**, **linux-x64** only):
 
 ```bash
 brew tap d-led/d-led
-brew install commentray
-commentray --version
+brew install sidetrack
+sidetrack --version
 ```
 
-Upgrade after a new release: `brew update && brew upgrade commentray`.
+Upgrade after a new release: `brew update && brew upgrade sidetrack`.
 
 ## Standalone CLI binaries (GitHub Releases)
 
 Official builds ship from [`.github/workflows/binaries.yml`](../../.github/workflows/binaries.yml): one self-contained executable per OS/arch (Node SEA).
 
-**[GitHub Releases](https://github.com/d-led/commentray/releases)** publishes standalone CLI assets on **`v*`** tags. To install:
+**[GitHub Releases](https://github.com/d-led/sidetrack/releases)** publishes standalone CLI assets on **`v*`** tags. To install:
 
-1. Open the [releases page](https://github.com/d-led/commentray/releases) and download the binary for your platform (for example `commentray-darwin-arm64` on Apple Silicon).
+1. Open the [releases page](https://github.com/d-led/sidetrack/releases) and download the binary for your platform (for example `sidetrack-darwin-arm64` on Apple Silicon).
 2. Put the file on your `PATH` and mark it executable (`chmod +x …` on Unix).
-3. Run `commentray --version`.
+3. Run `sidetrack --version`.
 
-You can still use [npm global](#npm-global-commentray-on-path) or work from a [clone](../development.md#clone-and-workspace-setup). A local **SEA** binary from source is a maintainer-style build—see [Building binaries locally](../development.md#building-binaries-locally).
+You can still use [npm global](#npm-global-sidetrack-on-path) or work from a [clone](../development.md#clone-and-workspace-setup). A local **SEA** binary from source is a maintainer-style build—see [Building binaries locally](../development.md#building-binaries-locally).
 
 **Workflow run artifacts** (not Releases) expire after about two weeks—prefer **Release** assets for anything you rely on long term.
 
 If macOS blocks a downloaded binary (quarantine), see [Development → macOS quarantine](../development.md#macos-quarantine-standalone-cli).
 
-## npm global (`commentray` on PATH)
+## npm global (`sidetrack` on PATH)
 
 Requires a supported **Node.js** version (see repo CI matrices).
 
 ```bash
-npm install -g commentray
-commentray --version
+npm install -g sidetrack
+sidetrack --version
 ```
 
 Upgrade later with the same `npm install -g` command.
@@ -46,14 +46,14 @@ Upgrade later with the same `npm install -g` command.
 With Node/npm available, you can run the published CLI without a global install:
 
 ```bash
-npx commentray --help
+npx sidetrack --help
 ```
 
-That prints `Usage: commentray [options] [command]` and lists subcommands—the same surface as a global `commentray`. Examples: `npx commentray validate`, `npx commentray init`.
+That prints `Usage: sidetrack [options] [command]` and lists subcommands—the same surface as a global `sidetrack`. Examples: `npx sidetrack validate`, `npx sidetrack init`.
 
 ## VS Code / Cursor extension
 
-**Published:** install [`d-led.commentray-vscode`](https://marketplace.visualstudio.com/items?itemName=d-led.commentray-vscode) from the Marketplace (or your editor’s extensions UI). `commentray init` merges this id into `.vscode/extensions.json` when that file is mergeable JSON.
+**Published:** install [`d-led.sidetrack-vscode`](https://marketplace.visualstudio.com/items?itemName=d-led.sidetrack-vscode) from the Marketplace (or your editor’s extensions UI). `sidetrack init` merges this id into `.vscode/extensions.json` when that file is mergeable JSON.
 
 **From a built `.vsix` in this repo:**
 
@@ -69,10 +69,10 @@ Dogfood flow (fixture or repo): see **Editor extension workflows** in [`docs/dev
 If both `cursor` and `code` exist on `PATH`, scripts prefer **Cursor**. Override:
 
 ```bash
-COMMENTRAY_EDITOR=code npm run extension:dogfood
+SIDETRACK_EDITOR=code npm run extension:dogfood
 ```
 
 ## Next steps
 
-- [Quickstart](quickstart.md) — first commentray file and validate.
+- [Quickstart](quickstart.md) — first sidetrack file and validate.
 - [Keeping blocks in sync](keeping-blocks-in-sync.md) — index, markers, anchors.

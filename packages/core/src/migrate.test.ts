@@ -12,56 +12,56 @@ describe("In-memory index schema migration", () => {
     const { index, changed } = migrateIndex({ bySourceFile: {}, schemaVersion: 0 });
     expect(changed).toBe(true);
     expect(index.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
-    expect(index.byCommentrayPath).toEqual({});
+    expect(index.bySideTrackPath).toEqual({});
   });
 
   it("is a no-op when already current", () => {
-    const input = { schemaVersion: CURRENT_SCHEMA_VERSION, byCommentrayPath: {} };
+    const input = { schemaVersion: CURRENT_SCHEMA_VERSION, bySideTrackPath: {} };
     const { index, changed } = migrateIndex(input);
     expect(changed).toBe(false);
     expect(index).toEqual(input);
   });
 
   it("downgrades index versions newer than this library to the bundled schema", () => {
-    const cp = ".commentray/source/x.ts.md";
+    const cp = ".sidetrack/source/x.ts.md";
     const { index, changed } = migrateIndex({
       schemaVersion: CURRENT_SCHEMA_VERSION + 10,
-      byCommentrayPath: {
+      bySideTrackPath: {
         [cp]: {
           sourcePath: "x.ts",
-          commentrayPath: cp,
+          sidetrackPath: cp,
           blocks: [{ id: "b1", anchor: "lines:1-2" }],
         },
       },
     });
     expect(changed).toBe(true);
     expect(index.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
-    expect(index.byCommentrayPath[cp]?.blocks[0]?.id).toBe("b1");
+    expect(index.bySideTrackPath[cp]?.blocks[0]?.id).toBe("b1");
   });
 
-  it("renames commentaryPath to commentrayPath and keys by commentrayPath when migrating from v1", () => {
+  it("renames legacy commentaryPath to sidetrackPath and keys by sidetrackPath when migrating from v1", () => {
     const { index, changed } = migrateIndex({
       schemaVersion: 1,
       bySourceFile: {
         "src/a.ts": {
           sourcePath: "src/a.ts",
-          commentaryPath: ".commentray/source/src/a.ts.md",
+          commentaryPath: ".sidetrack/source/src/a.ts.md",
           blocks: [],
         },
       },
     });
     expect(changed).toBe(true);
     expect(index.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
-    const cp = ".commentray/source/src/a.ts.md";
-    expect(index.byCommentrayPath[cp]?.commentrayPath).toBe(cp);
-    expect("commentaryPath" in (index.byCommentrayPath[cp] as object)).toBe(false);
+    const cp = ".sidetrack/source/src/a.ts.md";
+    expect(index.bySideTrackPath[cp]?.sidetrackPath).toBe(cp);
+    expect("commentaryPath" in (index.bySideTrackPath[cp] as object)).toBe(false);
   });
 });
 
 describe("Loading index.json with automatic on-disk migration", () => {
   it("rewrites a v2 index on disk to schema v3", async () => {
-    const dir = await fs.mkdtemp(path.join(os.tmpdir(), "commentray-idx-"));
-    const meta = path.join(dir, ".commentray", "metadata");
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), "sidetrack-idx-"));
+    const meta = path.join(dir, ".sidetrack", "metadata");
     await fs.mkdir(meta, { recursive: true });
     const indexPath = path.join(meta, "index.json");
     const legacy = {
@@ -69,7 +69,7 @@ describe("Loading index.json with automatic on-disk migration", () => {
       bySourceFile: {
         "src/a.ts": {
           sourcePath: "src/a.ts",
-          commentrayPath: ".commentray/source/src/a.ts.md",
+          sidetrackPath: ".sidetrack/source/src/a.ts.md",
           blocks: [{ id: "b1", anchor: "lines:1-2" }],
         },
       },
@@ -77,30 +77,30 @@ describe("Loading index.json with automatic on-disk migration", () => {
     await fs.writeFile(indexPath, JSON.stringify(legacy, null, 2), "utf8");
     const idx = await readIndex(dir);
     expect(idx?.schemaVersion).toBe(CURRENT_SCHEMA_VERSION);
-    const cp = ".commentray/source/src/a.ts.md";
-    expect(idx?.byCommentrayPath[cp]?.blocks[0]?.id).toBe("b1");
+    const cp = ".sidetrack/source/src/a.ts.md";
+    expect(idx?.bySideTrackPath[cp]?.blocks[0]?.id).toBe("b1");
     const round = JSON.parse(await fs.readFile(indexPath, "utf8")) as {
-      byCommentrayPath?: unknown;
+      bySideTrackPath?: unknown;
     };
-    expect(round.byCommentrayPath).toBeDefined();
+    expect(round.bySideTrackPath).toBeDefined();
     await fs.rm(dir, { recursive: true, force: true });
   });
 });
 
 describe("Refreshing persisted index migrations on disk", () => {
   it("writes a JSON backup before downgrading a newer on-disk schemaVersion", async () => {
-    const dir = await fs.mkdtemp(path.join(os.tmpdir(), "commentray-idx-newer-"));
-    const meta = path.join(dir, ".commentray", "metadata");
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), "sidetrack-idx-newer-"));
+    const meta = path.join(dir, ".sidetrack", "metadata");
     await fs.mkdir(meta, { recursive: true });
     const indexPath = path.join(meta, "index.json");
-    const cp = ".commentray/source/z.ts.md";
+    const cp = ".sidetrack/source/z.ts.md";
     const futureVersion = CURRENT_SCHEMA_VERSION + 7;
     const onDisk = {
       schemaVersion: futureVersion,
-      byCommentrayPath: {
+      bySideTrackPath: {
         [cp]: {
           sourcePath: "z.ts",
-          commentrayPath: cp,
+          sidetrackPath: cp,
           blocks: [{ id: "z1", anchor: "lines:1-1" }],
         },
       },
@@ -124,17 +124,17 @@ describe("Refreshing persisted index migrations on disk", () => {
   });
 
   it("persists snippet normalization for legacy fingerprint blocks", async () => {
-    const dir = await fs.mkdtemp(path.join(os.tmpdir(), "commentray-refresh-"));
-    const meta = path.join(dir, ".commentray", "metadata");
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), "sidetrack-refresh-"));
+    const meta = path.join(dir, ".sidetrack", "metadata");
     await fs.mkdir(meta, { recursive: true });
     const indexPath = path.join(meta, "index.json");
-    const cp = ".commentray/source/x.ts.md";
+    const cp = ".sidetrack/source/x.ts.md";
     const onDisk = {
       schemaVersion: CURRENT_SCHEMA_VERSION,
-      byCommentrayPath: {
+      bySideTrackPath: {
         [cp]: {
           sourcePath: "x.ts",
-          commentrayPath: cp,
+          sidetrackPath: cp,
           blocks: [
             {
               id: "b1",
@@ -148,14 +148,14 @@ describe("Refreshing persisted index migrations on disk", () => {
     await fs.writeFile(indexPath, JSON.stringify(onDisk, null, 2), "utf8");
     const { changed, index } = await refreshIndexMigrationsOnDisk(dir);
     expect(changed).toBe(true);
-    const b0 = index.byCommentrayPath[cp]?.blocks[0] as { snippet?: string; fingerprint?: unknown };
+    const b0 = index.bySideTrackPath[cp]?.blocks[0] as { snippet?: string; fingerprint?: unknown };
     expect(b0.snippet).toBeDefined();
     expect(b0.fingerprint).toBeUndefined();
     const round = JSON.parse(await fs.readFile(indexPath, "utf8")) as typeof onDisk;
-    expect(round.byCommentrayPath[cp]?.blocks[0]).toEqual(
+    expect(round.bySideTrackPath[cp]?.blocks[0]).toEqual(
       expect.objectContaining({ snippet: expect.any(String) }),
     );
-    expect("fingerprint" in (round.byCommentrayPath[cp]?.blocks[0] as object)).toBe(false);
+    expect("fingerprint" in (round.bySideTrackPath[cp]?.blocks[0] as object)).toBe(false);
     const { changed: again } = await refreshIndexMigrationsOnDisk(dir);
     expect(again).toBe(false);
     await fs.rm(dir, { recursive: true, force: true });

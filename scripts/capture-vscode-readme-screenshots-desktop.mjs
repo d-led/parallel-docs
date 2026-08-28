@@ -3,21 +3,21 @@
  * Automated **desktop VS Code** screenshots for the extension README companion assets.
  *
  * **Entrypoint:** `bash scripts/refresh-vscode-readme-screenshots-desktop.sh` (see companion
- * `.commentray/source/packages/vscode/README.md/main.md` → Maintainer → how scenarios work).
+ * `.sidetrack/source/packages/vscode/README.md/main.md` → Maintainer → how scenarios work).
  *
  * - Downloads VS Code via `@vscode/test-electron` (same cache as `packages/vscode/.vscode-test`).
  * - Launches Electron with `--extensionDevelopmentPath`, dogfood workspace, `--remote-debugging-port`.
  * - Drives the UI with the keyboard and captures PNGs with Playwright `chromium.connectOverCDP`.
  *
- * Prerequisites: `npm run build -w @commentray/core && npm run build -w commentray-vscode` (or set
- * `COMMENTRAY_DESKTOP_SCREENSHOT_SKIP_BUILD=1` if `packages/vscode/dist/extension.js` is fresh).
+ * Prerequisites: `npm run build -w @sidetrack/core && npm run build -w sidetrack-vscode` (or set
+ * `SIDETRACK_DESKTOP_SCREENSHOT_SKIP_BUILD=1` if `packages/vscode/dist/extension.js` is fresh).
  * One-time: `npx playwright install chromium` (CDP client).
  *
  * Optional:
  * - `VSCODE_TEST_VERSION` (default `stable`).
- * - `COMMENTRAY_VSCODE_VIEWPORT_WIDTH` / `COMMENTRAY_VSCODE_VIEWPORT_HEIGHT` (defaults **1200×780**).
- * - `COMMENTRAY_VSCODE_ZOOM_LEVEL` — `window.zoomLevel` for the temp profile (default **2**).
- * - `COMMENTRAY_VSCODE_CDP_PORT` — fixed CDP port (default random 20k–60k).
+ * - `SIDETRACK_VSCODE_VIEWPORT_WIDTH` / `SIDETRACK_VSCODE_VIEWPORT_HEIGHT` (defaults **1200×780**).
+ * - `SIDETRACK_VSCODE_ZOOM_LEVEL` — `window.zoomLevel` for the temp profile (default **2**).
+ * - `SIDETRACK_VSCODE_CDP_PORT` — fixed CDP port (default random 20k–60k).
  *
  * Profile tweaks (cleaner shots): hide the secondary (Agent/Chat) sidebar and bump UI zoom via
  * `User/settings.json` in the disposable user-data dir.
@@ -25,8 +25,8 @@
  * Workspace: a **temporary copy** of `packages/vscode/fixtures/dogfood` with Angles enabled so
  * “choose angle” shows the Quick Pick (the tracked fixture stays flat for extension tests).
  *
- * Output PNGs (all under `.commentray/source/packages/vscode/README.md/assets/`):
- *   vscode-palette-commentray.png
+ * Output PNGs (all under `.sidetrack/source/packages/vscode/README.md/assets/`):
+ *   vscode-palette-sidetrack.png
  *   vscode-open-paired-beside.png
  *   vscode-open-paired-choose-angle.png
  *   vscode-add-block-from-selection.png
@@ -55,7 +55,7 @@ const extRoot = vscodePkg;
 const dogfood = path.join(extRoot, "fixtures", "dogfood");
 const assetsDir = path.join(
   repoRoot,
-  ".commentray",
+  ".sidetrack",
   "source",
   "packages",
   "vscode",
@@ -66,16 +66,16 @@ const extensionJs = path.join(vscodePkg, "dist", "extension.js");
 
 const viewportWidth = Math.max(
   800,
-  Number(process.env.COMMENTRAY_VSCODE_VIEWPORT_WIDTH ?? "1200", 10),
+  Number(process.env.SIDETRACK_VSCODE_VIEWPORT_WIDTH ?? "1200", 10),
 );
 const viewportHeight = Math.max(
   600,
-  Number(process.env.COMMENTRAY_VSCODE_VIEWPORT_HEIGHT ?? "780", 10),
+  Number(process.env.SIDETRACK_VSCODE_VIEWPORT_HEIGHT ?? "780", 10),
 );
 
 /** Palette shows contributed commands as `Category: title` (see `packages/vscode/package.json`). */
-function commentrayCommand(title) {
-  return `Commentray: ${title}`;
+function sidetrackCommand(title) {
+  return `SideTrack: ${title}`;
 }
 
 function sleep(ms) {
@@ -89,11 +89,11 @@ const focusGroup = (n) => (process.platform === "darwin" ? `Meta+${n}` : `Contro
 
 async function ensureBuilt() {
   // Screenshot runs should use the current extension code, not a stale dist artifact.
-  if ((process.env.COMMENTRAY_DESKTOP_SCREENSHOT_SKIP_BUILD ?? "").trim() === "1") {
+  if ((process.env.SIDETRACK_DESKTOP_SCREENSHOT_SKIP_BUILD ?? "").trim() === "1") {
     await access(extensionJs);
     return;
   }
-  execSync("npm run build -w @commentray/core && npm run build -w commentray-vscode", {
+  execSync("npm run build -w @sidetrack/core && npm run build -w sidetrack-vscode", {
     cwd: repoRoot,
     stdio: "inherit",
     env: process.env,
@@ -158,7 +158,7 @@ async function dismissOverlays(page) {
 }
 
 /**
- * Open the command palette in **command (run) mode** so `Commentray: …` matches contributed
+ * Open the command palette in **command (run) mode** so `SideTrack: …` matches contributed
  * commands. Without a leading `>`, the unified picker often stays in file-search mode → "No matching results".
  *
  * @param {import('playwright').Page} page
@@ -177,7 +177,7 @@ async function openCommandPaletteCommandMode(page) {
 
 /**
  * @param {import('playwright').Page} page
- * @param {string} commandQuery text after the leading `>` (e.g. `Commentray: Validate workspace`)
+ * @param {string} commandQuery text after the leading `>` (e.g. `SideTrack: Validate workspace`)
  */
 async function runPaletteQuery(page, commandQuery, { afterEnterMs = 3500, typeDelay = 20 } = {}) {
   await openCommandPaletteCommandMode(page);
@@ -205,7 +205,7 @@ async function typeInCommandPalette(page, commandQuery, { typeDelay = 20 } = {})
 async function writeScreenshotProfileSettings(userDataDir) {
   const userDir = path.join(userDataDir, "User");
   await mkdir(userDir, { recursive: true });
-  const zoomRaw = process.env.COMMENTRAY_VSCODE_ZOOM_LEVEL ?? "2";
+  const zoomRaw = process.env.SIDETRACK_VSCODE_ZOOM_LEVEL ?? "2";
   const zoom = Number.parseFloat(zoomRaw);
   const settings = {
     "window.zoomLevel": Number.isFinite(zoom) ? zoom : 2,
@@ -258,7 +258,7 @@ async function downloadVscodeForScreenshots() {
 
 function resolveCdpPort() {
   return Number(
-    process.env.COMMENTRAY_VSCODE_CDP_PORT ?? String(20_000 + Math.floor(Math.random() * 40_000)),
+    process.env.SIDETRACK_VSCODE_CDP_PORT ?? String(20_000 + Math.floor(Math.random() * 40_000)),
     10,
   );
 }
@@ -280,7 +280,7 @@ function vscodeLaunchArgs(cdpPort, extensionsDir, userDataDir, workspaceFolder) 
 }
 
 async function prepareDisposableProfile() {
-  const profileRoot = await mkdtemp(path.join(os.tmpdir(), "commentray-desktop-shot-"));
+  const profileRoot = await mkdtemp(path.join(os.tmpdir(), "sidetrack-desktop-shot-"));
   const userDataDir = path.join(profileRoot, "user-data");
   const extensionsDir = path.join(profileRoot, "extensions");
   await mkdir(userDataDir, { recursive: true });
@@ -290,7 +290,7 @@ async function prepareDisposableProfile() {
 }
 
 /**
- * Copy dogfood into the disposable profile and enable Angles (sentinel + `.commentray.toml`)
+ * Copy dogfood into the disposable profile and enable Angles (sentinel + `.sidetrack.toml`)
  * so palette screenshots match multi-angle workflows without mutating the git-tracked fixture.
  *
  * @param {string} profileRoot
@@ -302,15 +302,15 @@ const SCREENSHOT_MAIN_MD = `## Sample companion — Main
 
 This companion file is intentionally **verbose** for desktop README screenshots: the rendered preview should show real paragraphs, headings, and a visible **page break**—not a one-line stub that becomes unreadable when the frame is small.
 
-### Why keep commentary beside the source?
+### Why keep sidetrack beside the source?
 
-Teams accumulate context that does not belong inline: release checklists, product nuance, links to specs, and “gotchas” from review. Commentray stores that prose next to the repository while keeping the primary source file approachable for day-to-day coding.
+Teams accumulate context that does not belong inline: release checklists, product nuance, links to specs, and “gotchas” from review. SideTrack stores that prose next to the repository while keeping the primary source file approachable for day-to-day coding.
 
-<!-- commentray:page-break -->
+<!-- sidetrack:page-break -->
 
 ### How the rendered preview differs from the built-in Markdown preview
 
-**Open rendered Commentray preview (default angle)** uses the same HTML pipeline as static pages: GitHub-flavored Markdown, syntax highlighting, and Commentray anchors so scroll sync can follow the source editor. The built-in preview is still useful while editing raw \`.md\`; this mode matches what readers see on the site.
+**Open rendered SideTrack preview (default angle)** uses the same HTML pipeline as static pages: GitHub-flavored Markdown, syntax highlighting, and SideTrack anchors so scroll sync can follow the source editor. The built-in preview is still useful while editing raw \`.md\`; this mode matches what readers see on the site.
 
 #### Practical workflow
 
@@ -328,7 +328,7 @@ const SCREENSHOT_ALT_MD = `## Sample companion — Alt
 
 Use this angle for **friendlier onboarding** aimed at new contributors: what to install, which palette commands to try first, and how to sanity-check a change before opening a pull request.
 
-README automation opens this file when exercising **Open rendered Commentray preview (choose angle)…** so the rendered preview is clearly different from the default **Main** companion.
+README automation opens this file when exercising **Open rendered SideTrack preview (choose angle)…** so the rendered preview is clearly different from the default **Main** companion.
 
 ### Before you ask for review
 
@@ -344,11 +344,11 @@ Point readers at \`docs/\` for diagrams and long-form specs; keep this angle sho
 async function materializeScreenshotWorkspaceWithAngles(profileRoot) {
   const ws = path.join(profileRoot, "screenshot-dogfood");
   await cp(dogfood, ws, { recursive: true });
-  const defaultSentinel = path.join(ws, ".commentray", "source", ".default");
+  const defaultSentinel = path.join(ws, ".sidetrack", "source", ".default");
   await mkdir(path.dirname(defaultSentinel), { recursive: true });
-  await writeFile(defaultSentinel, "# Commentray Angles layout sentinel.\n", "utf-8");
+  await writeFile(defaultSentinel, "# SideTrack Angles layout sentinel.\n", "utf-8");
   const anglesToml = `[storage]
-dir = ".commentray"
+dir = ".sidetrack"
 
 [angles]
 default_angle = "main"
@@ -361,29 +361,29 @@ title = "Main"
 id = "alt"
 title = "Alt"
 `;
-  await writeFile(path.join(ws, ".commentray.toml"), `${anglesToml}\n`, "utf-8");
+  await writeFile(path.join(ws, ".sidetrack.toml"), `${anglesToml}\n`, "utf-8");
 
-  const companionDir = path.join(ws, ".commentray", "source", "src", "sample.ts");
+  const companionDir = path.join(ws, ".sidetrack", "source", "src", "sample.ts");
   await mkdir(companionDir, { recursive: true });
   await writeFile(path.join(companionDir, "main.md"), SCREENSHOT_MAIN_MD, "utf-8");
   await writeFile(path.join(companionDir, "alt.md"), SCREENSHOT_ALT_MD, "utf-8");
 
-  // MCP server config — show the Commentray entry with its description
+  // MCP server config — show the SideTrack entry with its description
   const vscodeDir = path.join(ws, ".vscode");
   await mkdir(vscodeDir, { recursive: true });
   const mcpConfig = {
     servers: {
-      commentray: {
+      sidetrack: {
         type: "stdio",
-        command: "commentray",
+        command: "sidetrack",
         args: ["mcp", "serve"],
         cwd: "${workspaceFolder}",
         description:
-          "Commentray: out-of-file commentary anchored to code. " +
+          "SideTrack: out-of-file sidetrack anchored to code. " +
           "Explains design decisions, trade-offs, and rationale — " +
           'the "why" that doesn\'t belong in comments or docs. ' +
           "Strict separation: code comments (inline), documentation (standalone), " +
-          "Commentray (anchored, cross-linked).",
+          "SideTrack (anchored, cross-linked).",
       },
     },
   };
@@ -404,19 +404,19 @@ async function runScreenshotScenarios(page) {
   await sleep(15_000);
 
   await openCommandPaletteCommandMode(page);
-  await page.keyboard.type("Commentray", { delay: 22 });
+  await page.keyboard.type("SideTrack", { delay: 22 });
   await sleep(700);
-  await shot(page, "vscode-palette-commentray.png");
+  await shot(page, "vscode-palette-sidetrack.png");
   await dismissOverlays(page);
 
   await openSampleTs(page);
 
-  await runPaletteQuery(page, commentrayCommand("Open paired markdown beside editor"), {
+  await runPaletteQuery(page, sidetrackCommand("Open paired markdown beside editor"), {
     afterEnterMs: 5500,
   });
   await shot(page, "vscode-open-paired-beside.png");
 
-  await runPaletteQuery(page, commentrayCommand("Open paired markdown (choose angle)"), {
+  await runPaletteQuery(page, sidetrackCommand("Open paired markdown (choose angle)"), {
     afterEnterMs: 4000,
   });
   await shot(page, "vscode-open-paired-choose-angle.png");
@@ -426,13 +426,13 @@ async function runScreenshotScenarios(page) {
   await sleep(500);
   await page.keyboard.press(selectAllShortcut);
   await sleep(350);
-  await runPaletteQuery(page, commentrayCommand("Add commentary block from selection"), {
+  await runPaletteQuery(page, sidetrackCommand("Add side-track block from selection"), {
     afterEnterMs: 6500,
   });
   await shot(page, "vscode-add-block-from-selection.png");
   await dismissOverlays(page);
 
-  await runPaletteQuery(page, commentrayCommand(`Add angle to project\u2026`), {
+  await runPaletteQuery(page, sidetrackCommand(`Add angle to project\u2026`), {
     afterEnterMs: 2800,
   });
   await shot(page, "vscode-add-angle-to-project.png");
@@ -440,7 +440,7 @@ async function runScreenshotScenarios(page) {
 
   await page.keyboard.press(focusGroup(2));
   await sleep(700);
-  await runPaletteQuery(page, commentrayCommand("Open Markdown preview for paired file"), {
+  await runPaletteQuery(page, sidetrackCommand("Open Markdown preview for paired file"), {
     afterEnterMs: 4500,
   });
   await shot(page, "vscode-markdown-preview.png");
@@ -452,7 +452,7 @@ async function runScreenshotScenarios(page) {
   await openSampleTs(page);
   await typeInCommandPalette(
     page,
-    commentrayCommand("Open rendered Commentray preview (default angle)"),
+    sidetrackCommand("Open rendered SideTrack preview (default angle)"),
   );
   await shot(page, "vscode-rendered-preview-default-palette.png");
   await page.keyboard.press("Enter");
@@ -468,7 +468,7 @@ async function runScreenshotScenarios(page) {
   await openSampleTs(page);
   await typeInCommandPalette(
     page,
-    commentrayCommand(`Open rendered Commentray preview (choose angle)\u2026`),
+    sidetrackCommand(`Open rendered SideTrack preview (choose angle)\u2026`),
   );
   await shot(page, "vscode-rendered-preview-angle-palette.png");
   await page.keyboard.press("Enter");
@@ -482,7 +482,7 @@ async function runScreenshotScenarios(page) {
   await shot(page, "vscode-rendered-preview-angle.png");
   await dismissOverlays(page);
 
-  await runPaletteQuery(page, commentrayCommand("Validate workspace"), { afterEnterMs: 3500 });
+  await runPaletteQuery(page, sidetrackCommand("Validate workspace"), { afterEnterMs: 3500 });
   await runPaletteQuery(page, "Output: Focus on Output View", { afterEnterMs: 3200 });
   await shot(page, "vscode-validate-workspace.png");
   await dismissOverlays(page);
@@ -494,12 +494,12 @@ async function runScreenshotScenarios(page) {
  * @param {import('playwright').Page} page
  */
 async function captureMcpScreenshots(page) {
-  // Show Commentray MCP setup in the command palette
-  await typeInCommandPalette(page, "Commentray Configure MCP");
+  // Show SideTrack MCP setup in the command palette
+  await typeInCommandPalette(page, "SideTrack Configure MCP");
   await shot(page, "vscode-mcp-palette.png");
   await dismissOverlays(page);
 
-  // Open .vscode/mcp.json to show the Commentray MCP server entry
+  // Open .vscode/mcp.json to show the SideTrack MCP server entry
   await dismissOverlays(page);
   await page.keyboard.press(quickOpenShortcut);
   await sleep(700);

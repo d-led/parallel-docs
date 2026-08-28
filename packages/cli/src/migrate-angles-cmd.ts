@@ -2,17 +2,17 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 import {
-  applyAnglesFlatMigrationToCommentrayToml,
-  commentrayAnglesLayoutEnabled,
+  applyAnglesFlatMigrationToSideTrackToml,
+  sidetrackAnglesLayoutEnabled,
   discoverFlatCompanionMarkdownFiles,
   ensureAnglesSentinelFile,
-  loadCommentrayConfig,
+  loadSideTrackConfig,
   planAnglesMigrationFromCompanions,
   readIndex,
   rewriteIndexKeysForAnglesMigration,
   writeIndex,
   type AnglesMigrationPlan,
-} from "@commentray/core";
+} from "@sidetrack/core";
 
 import { findProjectRoot } from "./project-root.js";
 
@@ -35,10 +35,10 @@ async function printDryRun(
   for (const m of plan.moves) {
     console.log(`  ${m.fromRepoRel} -> ${m.toRepoRel}`);
   }
-  console.log("Would create .commentray/source/.default and update .commentray.toml [angles].");
+  console.log("Would create .sidetrack/source/.default and update .sidetrack.toml [angles].");
   const idx = await readIndex(repoRoot);
   if (!idx) return;
-  const keys = Object.keys(idx.byCommentrayPath).filter((k) => plan.flatToAnglePath.has(k));
+  const keys = Object.keys(idx.bySideTrackPath).filter((k) => plan.flatToAnglePath.has(k));
   if (keys.length > 0) {
     console.log(`Would rewrite ${String(keys.length)} index.json path key(s).`);
   }
@@ -65,12 +65,12 @@ async function executeMoves(repoRoot: string, plan: AnglesMigrationPlan): Promis
 
 export async function runMigrateAnglesFromCwd(opts: MigrateAnglesCliOptions): Promise<number> {
   const repoRoot = opts.repoRootOverride ?? (await findProjectRoot(process.cwd())).dir;
-  const cfg = await loadCommentrayConfig(repoRoot);
+  const cfg = await loadSideTrackConfig(repoRoot);
   const storageDir = cfg.storageDir;
 
-  if (commentrayAnglesLayoutEnabled(repoRoot, storageDir)) {
+  if (sidetrackAnglesLayoutEnabled(repoRoot, storageDir)) {
     console.log(
-      "Angles layout is already enabled (.commentray/source/.default exists). Nothing to do.",
+      "Angles layout is already enabled (.sidetrack/source/.default exists). Nothing to do.",
     );
     return 0;
   }
@@ -78,7 +78,7 @@ export async function runMigrateAnglesFromCwd(opts: MigrateAnglesCliOptions): Pr
   const companions = await discoverFlatCompanionMarkdownFiles(repoRoot, storageDir);
   if (companions.length === 0) {
     console.log(
-      "No flat companion Markdown files found under .commentray/source/. Nothing to migrate.",
+      "No flat companion Markdown files found under .sidetrack/source/. Nothing to migrate.",
     );
     return 0;
   }
@@ -95,12 +95,12 @@ export async function runMigrateAnglesFromCwd(opts: MigrateAnglesCliOptions): Pr
 
   await ensureAnglesSentinelFile(repoRoot, storageDir);
 
-  const staticFrom = cfg.staticSite.commentrayMarkdownFile.trim();
+  const staticFrom = cfg.staticSite.sidetrackMarkdownFile.trim();
   const staticTo = staticFrom ? (plan.flatToAnglePath.get(staticFrom) ?? "") : "";
-  await applyAnglesFlatMigrationToCommentrayToml(repoRoot, {
+  await applyAnglesFlatMigrationToSideTrackToml(repoRoot, {
     angleId: opts.angleId,
     ...(staticFrom && staticTo
-      ? { staticCommentrayMarkdownFrom: staticFrom, staticCommentrayMarkdownTo: staticTo }
+      ? { staticSideTrackMarkdownFrom: staticFrom, staticSideTrackMarkdownTo: staticTo }
       : {}),
   });
 
@@ -113,6 +113,6 @@ export async function runMigrateAnglesFromCwd(opts: MigrateAnglesCliOptions): Pr
   console.log(
     `Migrated ${String(plan.moves.length)} flat companion(s) to Angles layout (angle "${opts.angleId}").`,
   );
-  console.log("Updated .commentray.toml [angles] and index.json where paths matched.");
+  console.log("Updated .sidetrack.toml [angles] and index.json where paths matched.");
   return 0;
 }

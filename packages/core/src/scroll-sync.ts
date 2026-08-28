@@ -1,27 +1,27 @@
 import { parseAnchor } from "./anchors.js";
 import type { BlockScrollLink } from "./block-scroll-pickers.js";
 import { assertValidMarkerId, MARKER_ID_BODY } from "./marker-ids.js";
-import type { CommentrayIndex } from "./model.js";
+import type { SideTrackIndex } from "./model.js";
 import { normalizeRepoRelativePath } from "./paths.js";
 import { markerViewportHalfOpen1Based, sourceLineRangeForMarkerId } from "./source-markers.js";
 
 export type { BlockScrollLink, BlockScrollStickyState } from "./block-scroll-pickers.js";
 export {
   blockStrictlyContainingSourceViewportLine,
-  commentrayProbeInStrictInterMarkerGap,
-  DEFAULT_COMMENTRAY_VIEWPORT_HYSTERESIS_LINES,
+  sidetrackProbeInStrictInterMarkerGap,
+  DEFAULT_SIDETRACK_VIEWPORT_HYSTERESIS_LINES,
   DEFAULT_SOURCE_VIEWPORT_HYSTERESIS_LINES,
-  pickBlockScrollLinkForCommentrayScroll,
-  pickBlockScrollLinkForCommentrayViewportWithHysteresis,
+  pickBlockScrollLinkForSideTrackScroll,
+  pickBlockScrollLinkForSideTrackViewportWithHysteresis,
   pickBlockScrollLinkForSourceViewportTop,
   pickBlockScrollLinkForSourceViewportWithHysteresis,
-  pickCommentrayLineForSourceDualPane,
-  pickCommentrayLineForSourceScroll,
-  pickSourceLine0ForCommentrayScroll,
+  pickSideTrackLineForSourceDualPane,
+  pickSideTrackLineForSourceScroll,
+  pickSourceLine0ForSideTrackScroll,
   sourceTopLineStrictlyBeforeFirstIndexLine,
 } from "./block-scroll-pickers.js";
 
-const BLOCK_MARKER_RE = new RegExp(`<!-- commentray:block id=(${MARKER_ID_BODY}) -->`);
+const BLOCK_MARKER_RE = new RegExp(`<!-- sidetrack:block id=(${MARKER_ID_BODY}) -->`);
 
 function markerLineByIdFromMarkdown(markdown: string): Map<string, number> {
   const map = new Map<string, number>();
@@ -39,13 +39,13 @@ function buildMarkerFallbackLinks(
 ): BlockScrollLink[] {
   if (sourceText === undefined || markerLineById.size === 0) return [];
   const links: BlockScrollLink[] = [];
-  for (const [id, commentrayLine] of markerLineById) {
+  for (const [id, sidetrackLine] of markerLineById) {
     const range = sourceLineRangeForMarkerId(sourceText, id);
     const mv = markerViewportHalfOpen1Based(sourceText, id);
     if (range === null || mv === null) continue;
     links.push({
       id,
-      commentrayLine,
+      sidetrackLine,
       sourceStart: range.start,
       sourceEnd: range.end,
       markerViewportHalfOpen1Based: mv,
@@ -55,28 +55,26 @@ function buildMarkerFallbackLinks(
   return links;
 }
 
-/** One `<!-- #region commentray:id -->` … `<!-- #endregion commentray:id -->` span in companion Markdown. */
-export type MarkdownHtmlCommentrayRegion = {
+/** One `<!-- #region sidetrack:id -->` … `<!-- #endregion sidetrack:id -->` span in companion Markdown. */
+export type MarkdownHtmlSideTrackRegion = {
   readonly id: string;
-  /** 0-based line of the opening `<!-- #region commentray:<id> -->`. */
+  /** 0-based line of the opening `<!-- #region sidetrack:<id> -->`. */
   readonly mdStartLine: number;
-  /** Exclusive line index past the closing `<!-- #endregion commentray:<id> -->`. */
+  /** Exclusive line index past the closing `<!-- #endregion sidetrack:<id> -->`. */
   readonly mdEndExclusive: number;
 };
 
 /**
- * Parses HTML-style Commentray regions in companion Markdown (`markdown` language family), the same
- * shape `commentrayRegionInsertions("markdown", …)` emits. Used when there are no
- * `<!-- commentray:block id=… -->` markers so scroll sync can still segment by authored sections.
+ * Parses HTML-style SideTrack regions in companion Markdown (`markdown` language family), the same
+ * shape `sidetrackRegionInsertions("markdown", …)` emits. Used when there are no
+ * `<!-- sidetrack:block id=… -->` markers so scroll sync can still segment by authored sections.
  */
-export function parseMarkdownHtmlCommentrayRegions(
-  markdown: string,
-): MarkdownHtmlCommentrayRegion[] {
+export function parseMarkdownHtmlSideTrackRegions(markdown: string): MarkdownHtmlSideTrackRegion[] {
   const lines = markdown.split("\n");
-  const out: MarkdownHtmlCommentrayRegion[] = [];
+  const out: MarkdownHtmlSideTrackRegion[] = [];
   const stack: { id: string; start: number }[] = [];
-  const startRe = /^<!--\s*#region\s+commentray:([a-z0-9][a-z0-9_-]{0,63})\s*-->$/i;
-  const endRe = /^<!--\s*#endregion\s+commentray:([a-z0-9][a-z0-9_-]{0,63})\s*-->$/i;
+  const startRe = /^<!--\s*#region\s+sidetrack:([a-z0-9][a-z0-9_-]{0,63})\s*-->$/i;
+  const endRe = /^<!--\s*#endregion\s+sidetrack:([a-z0-9][a-z0-9_-]{0,63})\s*-->$/i;
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i] ?? "";
     const sm = line.match(startRe);
@@ -118,19 +116,19 @@ export function parseMarkdownHtmlCommentrayRegions(
 }
 
 /**
- * When companion Markdown uses HTML `#region commentray:…` / `#endregion` pairs but the primary
+ * When companion Markdown uses HTML `#region sidetrack:…` / `#endregion` pairs but the primary
  * file has **no** matching region delimiters, partition **1…sourceLineCount** across regions in
  * proportion to each region’s Markdown body height so dual-pane scroll is **piecewise** instead
  * of one global ratio.
  */
 function buildSyntheticBlockScrollLinksFromHtmlRegions(
-  commentrayMarkdown: string,
+  sidetrackMarkdown: string,
   sourceText: string | undefined,
 ): BlockScrollLink[] {
   if (sourceText === undefined) return [];
   const sourceLineCount = sourceText.split("\n").length;
   if (sourceLineCount < 1) return [];
-  const regions = parseMarkdownHtmlCommentrayRegions(commentrayMarkdown);
+  const regions = parseMarkdownHtmlSideTrackRegions(sidetrackMarkdown);
   if (regions.length === 0) return [];
   if (sourceLineCount < regions.length) return [];
   const weights = regions.map((r) => Math.max(1, r.mdEndExclusive - r.mdStartLine - 2));
@@ -165,7 +163,7 @@ function buildSyntheticBlockScrollLinksFromHtmlRegions(
     const srcHi = Math.min(sourceLineCount, srcLo + slice - 1);
     links.push({
       id: r.id,
-      commentrayLine: r.mdStartLine,
+      sidetrackLine: r.mdStartLine,
       sourceStart: srcLo,
       sourceEnd: srcHi,
       markerViewportHalfOpen1Based: { lo: srcLo, hiExclusive: srcHi + 1 },
@@ -177,43 +175,43 @@ function buildSyntheticBlockScrollLinksFromHtmlRegions(
 
 function markerFallbackThenSynthetic(
   markerLineById: Map<string, number>,
-  commentrayMarkdown: string,
+  sidetrackMarkdown: string,
   sourceText: string | undefined,
 ): BlockScrollLink[] {
   const fb = buildMarkerFallbackLinks(markerLineById, sourceText);
   if (fb.length > 0) return fb;
-  return buildSyntheticBlockScrollLinksFromHtmlRegions(commentrayMarkdown, sourceText);
+  return buildSyntheticBlockScrollLinksFromHtmlRegions(sidetrackMarkdown, sourceText);
 }
 
-/** Join index + companion markers into `BlockScrollLink[]`; see scroll-sync commentray. */
+/** Join index + companion markers into `BlockScrollLink[]`; see scroll-sync sidetrack. */
 export function buildBlockScrollLinks(
-  index: CommentrayIndex | null | undefined,
+  index: SideTrackIndex | null | undefined,
   sourceRelative: string,
-  commentrayPath: string,
-  commentrayMarkdown: string,
+  sidetrackPath: string,
+  sidetrackMarkdown: string,
   sourceText?: string,
 ): BlockScrollLink[] {
-  const markerLineById = markerLineByIdFromMarkdown(commentrayMarkdown);
-  const entry = index?.byCommentrayPath[commentrayPath];
+  const markerLineById = markerLineByIdFromMarkdown(sidetrackMarkdown);
+  const entry = index?.bySideTrackPath[sidetrackPath];
   if (!entry || entry.sourcePath !== sourceRelative || entry.blocks.length === 0) {
-    return markerFallbackThenSynthetic(markerLineById, commentrayMarkdown, sourceText);
+    return markerFallbackThenSynthetic(markerLineById, sidetrackMarkdown, sourceText);
   }
-  const entryCrNorm = normalizeRepoRelativePath(entry.commentrayPath.replaceAll("\\", "/"));
-  const lookupCrNorm = normalizeRepoRelativePath(commentrayPath.replaceAll("\\", "/"));
+  const entryCrNorm = normalizeRepoRelativePath(entry.sidetrackPath.replaceAll("\\", "/"));
+  const lookupCrNorm = normalizeRepoRelativePath(sidetrackPath.replaceAll("\\", "/"));
   if (entryCrNorm !== lookupCrNorm) {
-    return markerFallbackThenSynthetic(markerLineById, commentrayMarkdown, sourceText);
+    return markerFallbackThenSynthetic(markerLineById, sidetrackMarkdown, sourceText);
   }
   const links: BlockScrollLink[] = [];
   for (const block of entry.blocks) {
     const anchor = parseAnchor(block.anchor);
-    const commentrayLine = markerLineById.get(block.id);
-    if (commentrayLine === undefined) continue;
+    const sidetrackLine = markerLineById.get(block.id);
+    if (sidetrackLine === undefined) continue;
     if (anchor.kind === "lines") {
       const lo = anchor.range.start;
       const hiExclusive = anchor.range.end + 1;
       links.push({
         id: block.id,
-        commentrayLine,
+        sidetrackLine,
         sourceStart: anchor.range.start,
         sourceEnd: anchor.range.end,
         markerViewportHalfOpen1Based: { lo, hiExclusive },
@@ -227,7 +225,7 @@ export function buildBlockScrollLinks(
       if (range === null || mv === null) continue;
       links.push({
         id: block.id,
-        commentrayLine,
+        sidetrackLine,
         sourceStart: range.start,
         sourceEnd: range.end,
         markerViewportHalfOpen1Based: mv,
@@ -236,5 +234,5 @@ export function buildBlockScrollLinks(
   }
   links.sort((a, b) => a.sourceStart - b.sourceStart);
   if (links.length > 0) return links;
-  return buildSyntheticBlockScrollLinksFromHtmlRegions(commentrayMarkdown, sourceText);
+  return buildSyntheticBlockScrollLinksFromHtmlRegions(sidetrackMarkdown, sourceText);
 }

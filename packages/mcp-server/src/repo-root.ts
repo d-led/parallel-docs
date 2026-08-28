@@ -2,15 +2,15 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 /**
- * Walk up from `cwd` looking for a Commentray project root.
- * Checks for `.commentray.toml` first, then `.git` as fallback.
+ * Walk up from `cwd` looking for a SideTrack project root.
+ * Checks for `.sidetrack.toml` first, then `.git` as fallback.
  * Returns `cwd` if nothing found.
  */
 export async function repoRootFrom(cwd: string): Promise<string> {
   let current = path.resolve(cwd);
   for (;;) {
     try {
-      await fs.access(path.join(current, ".commentray.toml"));
+      await fs.access(path.join(current, ".sidetrack.toml"));
       return current;
     } catch {
       // not found

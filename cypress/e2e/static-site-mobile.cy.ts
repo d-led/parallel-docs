@@ -1,16 +1,16 @@
-describe("The Commentray GitHub Pages static build on a narrow viewport", () => {
+describe("The SideTrack GitHub Pages static build on a narrow viewport", () => {
   beforeEach(() => {
     cy.PrepareStaticSiteHomeAtMobileViewport();
   });
 
-  it("opens on commentary, hides the gutter, and keeps search chrome within reach", () => {
+  it("opens on sidetrack, hides the gutter, and keeps search chrome within reach", () => {
     cy.MobileStaticSiteCodeBrowserChromeShouldBeReady();
-    cy.MobileSinglePaneLayoutShouldShowCommentaryColumnOnly();
+    cy.MobileSinglePaneLayoutShouldShowSideTrackColumnOnly();
   });
 
-  it("flips between source-only and commentary-only without losing in-page search", () => {
+  it("flips between source-only and sidetrack-only without losing in-page search", () => {
     cy.MobileStaticSiteCodeBrowserChromeShouldBeReady();
-    cy.MobileSinglePaneLayoutShouldShowCommentaryColumnOnly();
+    cy.MobileSinglePaneLayoutShouldShowSideTrackColumnOnly();
 
     cy.TapMobilePaneFlipControl();
     cy.MobileSinglePaneLayoutShouldShowSourceColumnOnly();
@@ -19,7 +19,7 @@ describe("The Commentray GitHub Pages static build on a narrow viewport", () => 
     cy.SearchResultsPanelShouldBeVisible();
 
     cy.TapMobilePaneFlipControl();
-    cy.MobileSinglePaneLayoutShouldShowCommentaryColumnOnly();
+    cy.MobileSinglePaneLayoutShouldShowSideTrackColumnOnly();
     cy.SearchResultsPanelShouldBeVisible();
   });
 
@@ -28,30 +28,30 @@ describe("The Commentray GitHub Pages static build on a narrow viewport", () => 
     cy.OptionsOfAngleSelectShouldIncludeMainAndArchitecture();
     cy.ChooseValueOfAngleSelect("architecture");
     cy.DisplayedValueOfAngleSelectShouldBe("architecture");
-    cy.CommentrayPaneShouldContainText("architecture angle");
+    cy.SideTrackPaneShouldContainText("architecture angle");
 
-    cy.OpenCommentRayedFilesDisclosure();
-    cy.CommentRayedFilesTreeShouldExposeAtLeastOneFileLink();
+    cy.OpenSideTrackedFilesDisclosure();
+    cy.SideTrackedFilesTreeShouldExposeAtLeastOneFileLink();
   });
 
-  it("renders Mermaid in the commentary pane on a narrow viewport", () => {
+  it("renders Mermaid in the sidetrack pane on a narrow viewport", () => {
     cy.MobileStaticSiteCodeBrowserChromeShouldBeReady();
-    cy.MobileSinglePaneLayoutShouldShowCommentaryColumnOnly();
+    cy.MobileSinglePaneLayoutShouldShowSideTrackColumnOnly();
     cy.DocPaneMermaidShouldShowDiagramOrMarkup();
   });
 
-  it("renders Mermaid after opening commentary when the reader left off on source-only", () => {
+  it("renders Mermaid after opening sidetrack when the reader left off on source-only", () => {
     cy.PrepareStaticSiteHomeAtMobileViewportWithSourcePaneActive();
     cy.MobileStaticSiteCodeBrowserChromeShouldBeReady();
     cy.MobileSinglePaneLayoutShouldShowSourceColumnOnly();
     cy.TapMobilePaneFlipControl();
-    cy.MobileSinglePaneLayoutShouldShowCommentaryColumnOnly();
+    cy.MobileSinglePaneLayoutShouldShowSideTrackColumnOnly();
     cy.DocPaneMermaidShouldShowDiagramOrMarkup();
   });
 
-  it("nudges the source pane scroll to match commentary depth when flipping after scrolling down", () => {
+  it("nudges the source pane scroll to match sidetrack depth when flipping after scrolling down", () => {
     cy.MobileStaticSiteCodeBrowserChromeShouldBeReady();
-    cy.MobileSinglePaneLayoutShouldShowCommentaryColumnOnly();
+    cy.MobileSinglePaneLayoutShouldShowSideTrackColumnOnly();
     cy.MobileViewportShouldHaveScrollableDocument(80);
     cy.ScrollMobileDocumentToFraction(0.45);
     cy.MobileDocumentScrollYShouldExceed(40);
@@ -60,22 +60,22 @@ describe("The Commentray GitHub Pages static build on a narrow viewport", () => 
     cy.MobileDocumentScrollYShouldExceed(5);
   });
 
-  it("keeps rendered Mermaid SVG after flipping to source and back to commentary", () => {
+  it("keeps rendered Mermaid SVG after flipping to source and back to sidetrack", () => {
     cy.MobileStaticSiteCodeBrowserChromeShouldBeReady();
-    cy.MobileSinglePaneLayoutShouldShowCommentaryColumnOnly();
+    cy.MobileSinglePaneLayoutShouldShowSideTrackColumnOnly();
     cy.DocPaneMermaidShouldShowDiagramOrMarkup();
 
     cy.TapMobilePaneFlipControl();
     cy.MobileSinglePaneLayoutShouldShowSourceColumnOnly();
 
     cy.TapMobilePaneFlipControl();
-    cy.MobileSinglePaneLayoutShouldShowCommentaryColumnOnly();
+    cy.MobileSinglePaneLayoutShouldShowSideTrackColumnOnly();
     cy.DocPaneMermaidSvgShouldExist();
   });
 
   it("writes pane hash on mobile flip and restores pane from hash on load", () => {
     cy.MobileStaticSiteCodeBrowserChromeShouldBeReady();
-    cy.MobileSinglePaneLayoutShouldShowCommentaryColumnOnly();
+    cy.MobileSinglePaneLayoutShouldShowSideTrackColumnOnly();
 
     cy.TapMobilePaneFlipControl();
     cy.MobileSinglePaneLayoutShouldShowSourceColumnOnly();
@@ -84,15 +84,15 @@ describe("The Commentray GitHub Pages static build on a narrow viewport", () => 
     cy.viewport(390, 844);
     cy.visit("/#mobile-pane-code", {
       onBeforeLoad(win) {
-        win.localStorage.setItem("commentray.codeCommentrayStatic.wideModeIntro.v1", "1");
-        win.localStorage.setItem("commentray.codeCommentrayStatic.dualMobilePane", "doc");
+        win.localStorage.setItem("sidetrack.codeSideTrackStatic.wideModeIntro.v1", "1");
+        win.localStorage.setItem("sidetrack.codeSideTrackStatic.dualMobilePane", "doc");
       },
     });
     cy.MobileStaticSiteCodeBrowserChromeShouldBeReady();
     cy.MobileSinglePaneLayoutShouldShowSourceColumnOnly();
 
     cy.TapMobilePaneFlipControl();
-    cy.MobileSinglePaneLayoutShouldShowCommentaryColumnOnly();
+    cy.MobileSinglePaneLayoutShouldShowSideTrackColumnOnly();
     cy.location("hash").should("contain", "mobile-pane-doc");
   });
 });

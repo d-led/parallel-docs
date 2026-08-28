@@ -1,4 +1,4 @@
-describe("The shipped Commentray home page", () => {
+describe("The shipped SideTrack home page", () => {
   beforeEach(() => {
     cy.GoToStaticSiteHome();
   });

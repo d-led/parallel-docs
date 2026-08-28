@@ -4,7 +4,7 @@ import path from "node:path";
 import ignore from "ignore";
 
 /**
- * Paths always skipped by `commentray serve` watching, even if missing from `.gitignore`
+ * Paths always skipped by `sidetrack serve` watching, even if missing from `.gitignore`
  * (avoids rebuild feedback from `_site/` output, dependencies, and git metadata).
  */
 export const SERVE_WATCH_ALWAYS_IGNORE_LINES = [
@@ -29,8 +29,8 @@ export function repoRelativePosix(repoRoot: string, absPath: string): string | n
 
 export type ServeRepoWatchIgnoreOptions = {
   /**
-   * Repo-relative POSIX directory from `[storage].dir` in `.commentray.toml` (same normalization as
-   * `loadCommentrayConfig`). Paths under this directory are **never** ignored by serve watching so
+   * Repo-relative POSIX directory from `[storage].dir` in `.sidetrack.toml` (same normalization as
+   * `loadSideTrackConfig`). Paths under this directory are **never** ignored by serve watching so
    * companion edits always rebuild, even if a parent path is gitignored by mistake. If an entire
    * ancestor directory is ignored and chokidar never descends into it, add a `!` negation in
    * `.gitignore`; this option only affects the ignore predicate for paths the watcher already sees.

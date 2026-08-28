@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 /**
- * Used by `scripts/serve.sh`: initial workspace builds, then `commentray serve`.
+ * Used by `scripts/serve.sh`: initial workspace builds, then `sidetrack serve`.
  * Not a production deployment stack—only a dev loop around the same `_site/` output you upload elsewhere.
- * Watches `packages/{core,render,code-commentray-static,cli}/src` (and render's
+ * Watches `packages/{core,render,code-sidetrack-static,cli}/src` (and render's
  * esbuild entry script); on change, rebuilds affected packages and restarts
- * `commentray serve` so Node reloads workspace `dist` (ESM cache). No manual
- * `serve` restart: static `_site/` rebuilds run inside the same `commentray serve`
+ * `sidetrack serve` so Node reloads workspace `dist` (ESM cache). No manual
+ * `serve` restart: static `_site/` rebuilds run inside the same `sidetrack serve`
  * process (see packages/cli/src/serve.ts).
  *
- * Each restart sets a fresh `COMMENTRAY_SERVE_BUILD_ID` so open browser tabs
+ * Each restart sets a fresh `SIDETRACK_SERVE_BUILD_ID` so open browser tabs
  * detect the new process (livereload SSE alone cannot survive the restart).
  */
 import { spawn, spawnSync } from "node:child_process";
@@ -32,7 +32,7 @@ try {
   );
 } catch {
   console.error(
-    "[serve] chokidar not found (expected via the commentray CLI workspace). Run `npm install` from the repo root.",
+    "[serve] chokidar not found (expected via the sidetrack CLI workspace). Run `npm install` from the repo root.",
   );
   process.exit(1);
 }
@@ -57,21 +57,21 @@ function npmRunSyncTry(args) {
 }
 
 function buildLibsTry() {
-  if (!npmRunSyncTry(["run", "build", "-w", "@commentray/core"])) return false;
-  if (!npmRunSyncTry(["run", "build", "-w", "@commentray/render"])) return false;
-  if (!npmRunSyncTry(["run", "build", "-w", "@commentray/code-commentray-static"])) return false;
+  if (!npmRunSyncTry(["run", "build", "-w", "@sidetrack/core"])) return false;
+  if (!npmRunSyncTry(["run", "build", "-w", "@sidetrack/render"])) return false;
+  if (!npmRunSyncTry(["run", "build", "-w", "@sidetrack/code-sidetrack-static"])) return false;
   return true;
 }
 
 function buildCliTry() {
-  return npmRunSyncTry(["run", "build", "-w", "commentray"]);
+  return npmRunSyncTry(["run", "build", "-w", "sidetrack"]);
 }
 
 function buildAllStrict() {
-  npmRunSyncStrict(["run", "build", "-w", "@commentray/core"]);
-  npmRunSyncStrict(["run", "build", "-w", "@commentray/render"]);
-  npmRunSyncStrict(["run", "build", "-w", "@commentray/code-commentray-static"]);
-  npmRunSyncStrict(["run", "build", "-w", "commentray"]);
+  npmRunSyncStrict(["run", "build", "-w", "@sidetrack/core"]);
+  npmRunSyncStrict(["run", "build", "-w", "@sidetrack/render"]);
+  npmRunSyncStrict(["run", "build", "-w", "@sidetrack/code-sidetrack-static"]);
+  npmRunSyncStrict(["run", "build", "-w", "sidetrack"]);
 }
 
 /** @type {import('node:child_process').ChildProcess | null} */
@@ -85,7 +85,7 @@ const cliArgs = process.argv.slice(2);
 let packageWatchBuildId = crypto.randomBytes(8).toString("hex");
 
 function childEnv() {
-  return { ...process.env, COMMENTRAY_SERVE_BUILD_ID: packageWatchBuildId };
+  return { ...process.env, SIDETRACK_SERVE_BUILD_ID: packageWatchBuildId };
 }
 
 function startServe() {
@@ -97,7 +97,7 @@ function startServe() {
   });
   serveChild.on("exit", (code, signal) => {
     if (intentionalShutdown || restarting) return;
-    console.error(`[serve] commentray serve exited (${code ?? "null"} / ${signal ?? "null"})`);
+    console.error(`[serve] sidetrack serve exited (${code ?? "null"} / ${signal ?? "null"})`);
     process.exit(code ?? 1);
   });
 }
@@ -143,7 +143,7 @@ async function applyWork(work) {
   if (work.libs) ok = buildLibsTry();
   if (ok && work.cli) ok = buildCliTry();
   if (!ok) {
-    console.error("[serve] workspace rebuild failed; leaving commentray serve unchanged.");
+    console.error("[serve] workspace rebuild failed; leaving sidetrack serve unchanged.");
     return;
   }
   packageWatchBuildId = crypto.randomBytes(8).toString("hex");
@@ -154,7 +154,7 @@ async function applyWork(work) {
     restarting = false;
   }
   startServe();
-  console.error("[serve] restarted commentray serve after workspace rebuild.");
+  console.error("[serve] restarted sidetrack serve after workspace rebuild.");
 }
 
 buildAllStrict();
@@ -164,7 +164,7 @@ const watchPaths = [
   path.join(repoRoot, "packages", "core", "src"),
   path.join(repoRoot, "packages", "render", "src"),
   path.join(repoRoot, "packages", "render", "esbuild-code-browser-client.mjs"),
-  path.join(repoRoot, "packages", "code-commentray-static", "src"),
+  path.join(repoRoot, "packages", "code-sidetrack-static", "src"),
   path.join(repoRoot, "packages", "cli", "src"),
 ];
 
@@ -178,8 +178,8 @@ const ignored = [
 ];
 
 const usePolling =
-  process.env.COMMENTRAY_SERVE_PACKAGE_WATCH_POLL !== "0" &&
-  process.env.COMMENTRAY_SERVE_PACKAGE_WATCH_POLL !== "false";
+  process.env.SIDETRACK_SERVE_PACKAGE_WATCH_POLL !== "0" &&
+  process.env.SIDETRACK_SERVE_PACKAGE_WATCH_POLL !== "false";
 
 const watcher = chokidar.watch(watchPaths, {
   ignoreInitial: true,

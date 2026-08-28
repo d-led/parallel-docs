@@ -1,29 +1,29 @@
-import type { BlockScrollLink } from "@commentray/core";
+import type { BlockScrollLink } from "@sidetrack/core";
 import { describe, expect, it } from "vitest";
 
 import {
-  activeBlockIdForCommentrayLine0,
+  activeBlockIdForSideTrackLine0,
   activeBlockIdForViewport,
   clampViewportYToGutterLocal,
   codeLineDomIndex0,
   cubicBezierAcrossGutterD,
   dedupeBlockScrollLinksById,
   gutterRayBezierPaths,
-  nextBlockLinkInCommentrayOrder,
+  nextBlockLinkInSideTrackOrder,
   splitCubicAtT,
-  sortBlockLinksByCommentrayLine,
+  sortBlockLinksBySideTrackLine,
   sortBlockLinksBySource,
 } from "./code-browser-block-rays.js";
 
 function scrollLink(
   id: string,
-  commentrayLine: number,
+  sidetrackLine: number,
   sourceStart: number,
   sourceEnd: number,
 ): BlockScrollLink {
   return {
     id,
-    commentrayLine,
+    sidetrackLine,
     sourceStart,
     sourceEnd,
     markerViewportHalfOpen1Based: { lo: sourceStart, hiExclusive: sourceEnd + 1 },
@@ -107,14 +107,14 @@ describe("dedupeBlockScrollLinksById", () => {
   });
 });
 
-describe("nextBlockLinkInCommentrayOrder", () => {
+describe("nextBlockLinkInSideTrackOrder", () => {
   it("uses companion line order, not source order", () => {
     const a = scrollLink("static", 100, 1, 10);
     const b = scrollLink("angles", 50, 20, 30);
     const both = [a, b];
-    expect(sortBlockLinksByCommentrayLine(both).map((x) => x.id)).toEqual(["angles", "static"]);
-    expect(nextBlockLinkInCommentrayOrder(both, b)?.id).toBe("static");
-    expect(nextBlockLinkInCommentrayOrder(both, a)).toBeUndefined();
+    expect(sortBlockLinksBySideTrackLine(both).map((x) => x.id)).toEqual(["angles", "static"]);
+    expect(nextBlockLinkInSideTrackOrder(both, b)?.id).toBe("static");
+    expect(nextBlockLinkInSideTrackOrder(both, a)).toBeUndefined();
   });
 });
 
@@ -131,20 +131,20 @@ describe("activeBlockIdForViewport", () => {
   });
 });
 
-describe("activeBlockIdForCommentrayLine0", () => {
+describe("activeBlockIdForSideTrackLine0", () => {
   const links = [scrollLink("b1", 2, 1, 5), scrollLink("b2", 12, 20, 25)];
 
   it("returns the block whose marker is at or above the probed companion line", () => {
-    expect(activeBlockIdForCommentrayLine0(links, 2)).toBe("b1");
-    expect(activeBlockIdForCommentrayLine0(links, 11)).toBe("b1");
-    expect(activeBlockIdForCommentrayLine0(links, 12)).toBe("b2");
-    expect(activeBlockIdForCommentrayLine0(links, 99)).toBe("b2");
+    expect(activeBlockIdForSideTrackLine0(links, 2)).toBe("b1");
+    expect(activeBlockIdForSideTrackLine0(links, 11)).toBe("b1");
+    expect(activeBlockIdForSideTrackLine0(links, 12)).toBe("b2");
+    expect(activeBlockIdForSideTrackLine0(links, 99)).toBe("b2");
   });
 
   it("uses markdown order, not source line order, when ids are inverted", () => {
     const inverted = [scrollLink("lateInFile", 0, 100, 110), scrollLink("earlyInFile", 8, 1, 20)];
-    expect(activeBlockIdForCommentrayLine0(inverted, 0)).toBe("lateInFile");
-    expect(activeBlockIdForCommentrayLine0(inverted, 8)).toBe("earlyInFile");
+    expect(activeBlockIdForSideTrackLine0(inverted, 0)).toBe("lateInFile");
+    expect(activeBlockIdForSideTrackLine0(inverted, 8)).toBe("earlyInFile");
   });
 });
 

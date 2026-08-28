@@ -17,9 +17,9 @@ describe("appendHtmlToOpaqueBrowsePathname", () => {
     expect(appendHtmlToOpaqueBrowsePathname("/browse/q-j-IF9uLQ-C70PFH-96neaB0WJD")).toBe(
       "/browse/q-j-IF9uLQ-C70PFH-96neaB0WJD.html",
     );
-    expect(
-      appendHtmlToOpaqueBrowsePathname("/commentray/browse/q-j-IF9uLQ-C70PFH-96neaB0WJD"),
-    ).toBe("/commentray/browse/q-j-IF9uLQ-C70PFH-96neaB0WJD.html");
+    expect(appendHtmlToOpaqueBrowsePathname("/sidetrack/browse/q-j-IF9uLQ-C70PFH-96neaB0WJD")).toBe(
+      "/sidetrack/browse/q-j-IF9uLQ-C70PFH-96neaB0WJD.html",
+    );
   });
 
   it("leaves indexed and already-suffixed paths unchanged", () => {
@@ -139,24 +139,24 @@ describe("findDocumentedPair", () => {
   const pairs = [
     {
       sourcePath: "README.md",
-      commentrayPath: ".commentray/source/README.md/main.md",
-      commentrayOnGithub: "https://github.com/x/blob/y/main.md",
+      sidetrackPath: ".sidetrack/source/README.md/main.md",
+      sidetrackOnGithub: "https://github.com/x/blob/y/main.md",
     },
     {
       sourcePath: "docs/a.md",
-      commentrayPath: ".commentray/source/docs/a.md/main.md",
-      commentrayOnGithub: "https://github.com/x/blob/y/a.md",
+      sidetrackPath: ".sidetrack/source/docs/a.md/main.md",
+      sidetrackOnGithub: "https://github.com/x/blob/y/a.md",
     },
   ];
 
-  it("should match by commentray path first", () => {
-    const p = findDocumentedPair(pairs, ".commentray/source/docs/a.md/main.md", "");
+  it("should match by sidetrack path first", () => {
+    const p = findDocumentedPair(pairs, ".sidetrack/source/docs/a.md/main.md", "");
     expect(p?.sourcePath).toBe("docs/a.md");
   });
 
-  it("should match by source path when commentray is empty", () => {
+  it("should match by source path when sidetrack is empty", () => {
     const p = findDocumentedPair(pairs, "", "docs/a.md");
-    expect(p?.commentrayPath).toBe(".commentray/source/docs/a.md/main.md");
+    expect(p?.sidetrackPath).toBe(".sidetrack/source/docs/a.md/main.md");
   });
 });
 
@@ -164,10 +164,10 @@ describe("isSameDocumentedPair", () => {
   it("should compare normalized paths", () => {
     const p = {
       sourcePath: "README.md",
-      commentrayPath: ".commentray/source/README.md/main.md",
-      commentrayOnGithub: "x",
+      sidetrackPath: ".sidetrack/source/README.md/main.md",
+      sidetrackOnGithub: "x",
     };
-    expect(isSameDocumentedPair(p, "README.md", ".commentray/source/README.md/main.md")).toBe(true);
-    expect(isSameDocumentedPair(p, "other.md", ".commentray/source/README.md/main.md")).toBe(false);
+    expect(isSameDocumentedPair(p, "README.md", ".sidetrack/source/README.md/main.md")).toBe(true);
+    expect(isSameDocumentedPair(p, "other.md", ".sidetrack/source/README.md/main.md")).toBe(false);
   });
 });

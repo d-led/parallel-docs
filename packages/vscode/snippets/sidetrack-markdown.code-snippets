@@ -1,0 +1,8 @@
+{
+  "SideTrack: Page break": {
+    "scope": "markdown",
+    "prefix": ["cr-page-break", "sidetrack-page-break"],
+    "description": "Insert a deliberate SideTrack page break marker",
+    "body": ["<!-- sidetrack:page-break -->", "", "## ${1:Next section}", "", "${0}"],
+  },
+}

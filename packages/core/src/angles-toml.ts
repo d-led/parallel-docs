@@ -3,8 +3,8 @@ import path from "node:path";
 import { parse as parseToml, stringify } from "@iarna/toml";
 
 import { assertValidAngleId } from "./angles.js";
-import { type CommentrayToml, mergeCommentrayConfig } from "./config.js";
-import { commentrayAnglesSentinelPath } from "./paths.js";
+import { type SideTrackToml, mergeSideTrackConfig } from "./config.js";
+import { sidetrackAnglesSentinelPath } from "./paths.js";
 
 export type UpsertAngleDefinitionInput = {
   id: string;
@@ -14,7 +14,7 @@ export type UpsertAngleDefinitionInput = {
 };
 
 const MINIMAL_NEW_TOML = `[storage]
-dir = ".commentray"
+dir = ".sidetrack"
 `;
 
 /**
@@ -25,7 +25,7 @@ export async function ensureAnglesSentinelFile(
   repoRoot: string,
   storageDir: string,
 ): Promise<void> {
-  const rel = commentrayAnglesSentinelPath(storageDir);
+  const rel = sidetrackAnglesSentinelPath(storageDir);
   const absolute = path.join(repoRoot, ...rel.split("/"));
   await fs.mkdir(path.dirname(absolute), { recursive: true });
   try {
@@ -33,23 +33,23 @@ export async function ensureAnglesSentinelFile(
   } catch {
     await fs.writeFile(
       absolute,
-      "# Commentray Angles layout sentinel (see docs/spec/storage.md).\n",
+      "# SideTrack Angles layout sentinel (see docs/spec/storage.md).\n",
       "utf8",
     );
   }
 }
 
 /**
- * Reads `.commentray.toml`, appends a new `[[angles.definitions]]` row (or throws if the id
- * already exists), validates via {@link mergeCommentrayConfig}, and writes the file back using
+ * Reads `.sidetrack.toml`, appends a new `[[angles.definitions]]` row (or throws if the id
+ * already exists), validates via {@link mergeSideTrackConfig}, and writes the file back using
  * TOML stringify (comments and key order are not preserved).
  */
-export async function upsertAngleDefinitionInCommentrayToml(
+export async function upsertAngleDefinitionInSideTrackToml(
   repoRoot: string,
   input: UpsertAngleDefinitionInput,
 ): Promise<void> {
   const id = assertValidAngleId(input.id);
-  const configPath = path.join(repoRoot, ".commentray.toml");
+  const configPath = path.join(repoRoot, ".sidetrack.toml");
   let raw = "";
   try {
     raw = await fs.readFile(configPath, "utf8");
@@ -58,7 +58,7 @@ export async function upsertAngleDefinitionInCommentrayToml(
     if (code !== "ENOENT") throw err;
   }
 
-  const parsed: CommentrayToml = raw.trim() ? parseToml(raw) : {};
+  const parsed: SideTrackToml = raw.trim() ? parseToml(raw) : {};
   const angles = parsed.angles ?? {};
   const definitions = [...(angles.definitions ?? [])];
   if (
@@ -77,7 +77,7 @@ export async function upsertAngleDefinitionInCommentrayToml(
     angles.default_angle = id;
   }
   parsed.angles = angles;
-  mergeCommentrayConfig(parsed);
+  mergeSideTrackConfig(parsed);
 
   const serialized = stringify(parsed as never);
   const body = raw.trim() ? serialized : `${MINIMAL_NEW_TOML.trim()}\n\n${serialized}`;
@@ -88,9 +88,9 @@ export type ApplyAnglesFlatMigrationTomlInput = {
   angleId: string;
   /** Optional label for the single migrated angle (defaults to title-cased id). */
   angleTitle?: string;
-  /** When both set, replace `[static_site].commentray_markdown` if it equals `from`. */
-  staticCommentrayMarkdownFrom?: string;
-  staticCommentrayMarkdownTo?: string;
+  /** When both set, replace `[static_site].sidetrack_markdown` if it equals `from`. */
+  staticSideTrackMarkdownFrom?: string;
+  staticSideTrackMarkdownTo?: string;
 };
 
 function defaultTitleForAngleId(angleId: string): string {
@@ -101,40 +101,39 @@ function defaultTitleForAngleId(angleId: string): string {
     .join(" ");
 }
 
-function maybeRewriteStaticCommentrayMarkdown(
-  ss: NonNullable<CommentrayToml["static_site"]>,
+function maybeRewriteStaticSideTrackMarkdown(
+  ss: NonNullable<SideTrackToml["static_site"]>,
   from: string | undefined,
   to: string | undefined,
 ): void {
   if (!from || !to) return;
-  const cur = (ss.commentray_markdown ?? ss.commentary_markdown ?? "").trim();
+  const cur = (ss.sidetrack_markdown ?? "").trim();
   if (cur !== from) return;
-  ss.commentray_markdown = to;
-  delete ss.commentary_markdown;
+  ss.sidetrack_markdown = to;
 }
 
 /**
  * After flat → Angles filesystem moves, stamp `[angles]` and optionally rewrite
- * `[static_site].commentray_markdown` to the new companion path. Refuses when
+ * `[static_site].sidetrack_markdown` to the new companion path. Refuses when
  * `[angles].definitions` is already non-empty (avoid clobbering a configured project).
  */
-export async function applyAnglesFlatMigrationToCommentrayToml(
+export async function applyAnglesFlatMigrationToSideTrackToml(
   repoRoot: string,
   input: ApplyAnglesFlatMigrationTomlInput,
 ): Promise<void> {
   const id = assertValidAngleId(input.angleId);
-  const configPath = path.join(repoRoot, ".commentray.toml");
+  const configPath = path.join(repoRoot, ".sidetrack.toml");
   let raw: string;
   try {
     raw = await fs.readFile(configPath, "utf8");
   } catch (err) {
     const code = (err as NodeJS.ErrnoException).code;
     if (code === "ENOENT") {
-      throw new Error("Missing .commentray.toml (run: commentray init config)", { cause: err });
+      throw new Error("Missing .sidetrack.toml (run: sidetrack init config)", { cause: err });
     }
     throw err;
   }
-  const parsed: CommentrayToml = raw.trim() ? parseToml(raw) : {};
+  const parsed: SideTrackToml = raw.trim() ? parseToml(raw) : {};
   const existingDefs = parsed.angles?.definitions ?? [];
   if (existingDefs.length > 0) {
     throw new Error(
@@ -147,12 +146,12 @@ export async function applyAnglesFlatMigrationToCommentrayToml(
     definitions: [{ id, title }],
   };
   const ss = parsed.static_site ?? {};
-  maybeRewriteStaticCommentrayMarkdown(
+  maybeRewriteStaticSideTrackMarkdown(
     ss,
-    input.staticCommentrayMarkdownFrom?.trim(),
-    input.staticCommentrayMarkdownTo?.trim(),
+    input.staticSideTrackMarkdownFrom?.trim(),
+    input.staticSideTrackMarkdownTo?.trim(),
   );
   parsed.static_site = ss;
-  mergeCommentrayConfig(parsed);
+  mergeSideTrackConfig(parsed);
   await fs.writeFile(configPath, `${stringify(parsed as never)}\n`, "utf8");
 }

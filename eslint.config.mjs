@@ -39,7 +39,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ["packages/cli/src/**/*.ts", "packages/code-commentray-static/src/**/*.ts"],
+    files: ["packages/cli/src/**/*.ts", "packages/code-sidetrack-static/src/**/*.ts"],
     rules: {
       "no-console": "off",
     },

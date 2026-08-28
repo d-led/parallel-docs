@@ -1,20 +1,20 @@
 import { describe, expect, it } from "vitest";
-import { buildCommentraySnippetV1 } from "./block-snippet.js";
+import { buildSideTrackSnippetV1 } from "./block-snippet.js";
 import {
   addBlockToIndex,
   alignAndCleanRegions,
-  appendBlockToCommentray,
+  appendBlockToSideTrack,
   createBlockForRange,
   generateBlockId,
   insertBlockBySourceMarkerOrder,
   recoverSourceMarkersFromSnippet,
-  removeBlockFromCommentray,
+  removeBlockFromSideTrack,
   removeBlockFromIndex,
   removeSourceMarkersFromText,
-  wrapSourceLineRangeWithCommentrayMarkers,
+  wrapSourceLineRangeWithSideTrackMarkers,
 } from "./blocks.js";
 import { emptyIndex } from "./metadata.js";
-import type { CommentrayBlock } from "./model.js";
+import type { SideTrackBlock } from "./model.js";
 
 const SOURCE = ["export function greet(name) {", "  return `Hello, ${name}!`;", "}"].join("\n");
 
@@ -23,30 +23,30 @@ function seeded(values: number[]): () => number {
   return () => values[i++ % values.length];
 }
 
-describe("Wrapping a source line range with Commentray region delimiters", () => {
+describe("Wrapping a source line range with SideTrack region delimiters", () => {
   it("uses HTML-style regions in Markdown like the repository README", () => {
     const src = ["# Title", "body", "tail"].join("\n");
-    const { sourceText, innerRange } = wrapSourceLineRangeWithCommentrayMarkers({
+    const { sourceText, innerRange } = wrapSourceLineRangeWithSideTrackMarkers({
       sourceText: src,
       range: { startLine: 2, endLine: 2 },
       languageId: "markdown",
       markerId: "readme-why",
     });
-    expect(sourceText).toContain("<!-- #region commentray:readme-why -->");
-    expect(sourceText).toContain("<!-- #endregion commentray:readme-why -->");
+    expect(sourceText).toContain("<!-- #region sidetrack:readme-why -->");
+    expect(sourceText).toContain("<!-- #endregion sidetrack:readme-why -->");
     expect(innerRange).toEqual({ startLine: 3, endLine: 3 });
   });
 
   it("uses hash line-comment markers in TOML (same pairing contract as README, different comment syntax)", () => {
     const src = ["[storage]", 'dir = "x"', "", "[scm]", "y = 1"].join("\n");
-    const { sourceText, innerRange } = wrapSourceLineRangeWithCommentrayMarkers({
+    const { sourceText, innerRange } = wrapSourceLineRangeWithSideTrackMarkers({
       sourceText: src,
       range: { startLine: 1, endLine: 2 },
       languageId: "toml",
       markerId: "toml-lede",
     });
-    expect(sourceText).toContain("# commentray:start id=toml-lede");
-    expect(sourceText).toContain("# commentray:end id=toml-lede");
+    expect(sourceText).toContain("# sidetrack:start id=toml-lede");
+    expect(sourceText).toContain("# sidetrack:end id=toml-lede");
     expect(innerRange).toEqual({ startLine: 2, endLine: 3 });
   });
 });
@@ -71,7 +71,7 @@ describe("Creating a new documentation block for a source range", () => {
       id: "fixed1",
     });
     expect(block.snippet).toBe(
-      buildCommentraySnippetV1(["export function greet(name) {", "return `Hello, ${name}!`;", "}"]),
+      buildSideTrackSnippetV1(["export function greet(name) {", "return `Hello, ${name}!`;", "}"]),
     );
   });
 
@@ -104,7 +104,7 @@ describe("Creating a new documentation block for a source range", () => {
       id: "fixed1",
     });
     expect(block.anchor).toBe("marker:fixed1");
-    expect(block.snippet).toBe(buildCommentraySnippetV1(["return `Hello, ${name}!`;", "}"]));
+    expect(block.snippet).toBe(buildSideTrackSnippetV1(["return `Hello, ${name}!`;", "}"]));
   });
 
   it("emits an invisible id marker that renders to nothing in HTML", () => {
@@ -114,7 +114,7 @@ describe("Creating a new documentation block for a source range", () => {
       range: { startLine: 1, endLine: 3 },
       id: "abc123",
     });
-    expect(markdown).toMatch(/^<!-- commentray:block id=abc123 -->\n/);
+    expect(markdown).toMatch(/^<!-- sidetrack:block id=abc123 -->\n/);
     expect(block.id).toBe("abc123");
   });
 
@@ -126,7 +126,7 @@ describe("Creating a new documentation block for a source range", () => {
       id: "abc123",
     });
     const lines = markdown.split("\n");
-    expect(lines[caretLineOffset]).toBe("_(write commentary here)_");
+    expect(lines[caretLineOffset]).toBe("_(write sidetrack here)_");
   });
 
   it("derives a deterministic id from the supplied rng", () => {
@@ -142,74 +142,74 @@ describe("Creating a new documentation block for a source range", () => {
 
 describe("Appending a block into companion Markdown", () => {
   it("separates the new block from existing content with a blank line", () => {
-    const existing = "# Commentray\n\n";
-    const blockMd = "<!-- commentray:block id=abc -->\n## line 1\n\nbody\n";
-    const next = appendBlockToCommentray(existing, blockMd);
-    expect(next).toBe(`# Commentray\n\n${blockMd}`);
+    const existing = "# SideTrack\n\n";
+    const blockMd = "<!-- sidetrack:block id=abc -->\n## line 1\n\nbody\n";
+    const next = appendBlockToSideTrack(existing, blockMd);
+    expect(next).toBe(`# SideTrack\n\n${blockMd}`);
   });
 
   it("keeps a no-trailing-newline existing file intact and still separates", () => {
     const existing = "header without trailing newline";
-    const blockMd = "<!-- commentray:block id=abc -->\n## line 1\n";
-    const next = appendBlockToCommentray(existing, blockMd);
+    const blockMd = "<!-- sidetrack:block id=abc -->\n## line 1\n";
+    const next = appendBlockToSideTrack(existing, blockMd);
     expect(next).toBe(`header without trailing newline\n\n${blockMd}`);
   });
 
   it("handles an empty file by writing the block at the top", () => {
-    const next = appendBlockToCommentray("", "<!-- commentray:block id=abc -->\n## x\n");
-    expect(next).toBe("<!-- commentray:block id=abc -->\n## x\n");
+    const next = appendBlockToSideTrack("", "<!-- sidetrack:block id=abc -->\n## x\n");
+    expect(next).toBe("<!-- sidetrack:block id=abc -->\n## x\n");
   });
 });
 
 describe("Inserting a block by source marker order", () => {
   it("places a new block before the first companion section that maps after it in source", () => {
     const source = [
-      "//#region commentray:a",
+      "//#region sidetrack:a",
       "a",
-      "//#endregion commentray:a",
-      "//#region commentray:b",
+      "//#endregion sidetrack:a",
+      "//#region sidetrack:b",
       "b",
-      "//#endregion commentray:b",
-      "//#region commentray:c",
+      "//#endregion sidetrack:b",
+      "//#region sidetrack:c",
       "c",
-      "//#endregion commentray:c",
+      "//#endregion sidetrack:c",
     ].join("\n");
     const existing = [
-      "<!-- commentray:block id=a -->",
+      "<!-- sidetrack:block id=a -->",
       "## a",
       "",
       "A",
       "",
-      "<!-- commentray:block id=c -->",
+      "<!-- sidetrack:block id=c -->",
       "## c",
       "",
       "C",
       "",
     ].join("\n");
-    const blockB = ["<!-- commentray:block id=b -->", "## b", "", "B", ""].join("\n");
+    const blockB = ["<!-- sidetrack:block id=b -->", "## b", "", "B", ""].join("\n");
 
     const next = insertBlockBySourceMarkerOrder({
-      existingCommentray: existing,
+      existingSideTrack: existing,
       blockMarkdown: blockB,
       sourceText: source,
       markerId: "b",
     });
 
-    const aPos = next.indexOf("<!-- commentray:block id=a -->");
-    const bPos = next.indexOf("<!-- commentray:block id=b -->");
-    const cPos = next.indexOf("<!-- commentray:block id=c -->");
+    const aPos = next.indexOf("<!-- sidetrack:block id=a -->");
+    const bPos = next.indexOf("<!-- sidetrack:block id=b -->");
+    const cPos = next.indexOf("<!-- sidetrack:block id=c -->");
     expect(aPos).toBeGreaterThanOrEqual(0);
     expect(bPos).toBeGreaterThan(aPos);
     expect(cPos).toBeGreaterThan(bPos);
   });
 
   it("falls back to append when marker id is missing from source order", () => {
-    const source = ["//#region commentray:a", "a", "//#endregion commentray:a"].join("\n");
-    const existing = "<!-- commentray:block id=a -->\n## a\n";
-    const blockZ = "<!-- commentray:block id=z -->\n## z\n";
+    const source = ["//#region sidetrack:a", "a", "//#endregion sidetrack:a"].join("\n");
+    const existing = "<!-- sidetrack:block id=a -->\n## a\n";
+    const blockZ = "<!-- sidetrack:block id=z -->\n## z\n";
 
     const next = insertBlockBySourceMarkerOrder({
-      existingCommentray: existing,
+      existingSideTrack: existing,
       blockMarkdown: blockZ,
       sourceText: source,
       markerId: "z",
@@ -220,93 +220,93 @@ describe("Inserting a block by source marker order", () => {
 
   it("uses first marker starts for ordering even when a prior region is temporarily unclosed", () => {
     const source = [
-      "<!-- #region commentray:running -->",
+      "<!-- #region sidetrack:running -->",
       "running body",
-      "<!-- #region commentray:unit -->",
+      "<!-- #region sidetrack:unit -->",
       "unit body",
-      "<!-- #endregion commentray:unit -->",
+      "<!-- #endregion sidetrack:unit -->",
     ].join("\n");
-    const existing = ["<!-- commentray:block id=unit -->", "## unit", "", "Unit text", ""].join(
+    const existing = ["<!-- sidetrack:block id=unit -->", "## unit", "", "Unit text", ""].join(
       "\n",
     );
-    const running = ["<!-- commentray:block id=running -->", "## running", "", "Run text", ""].join(
+    const running = ["<!-- sidetrack:block id=running -->", "## running", "", "Run text", ""].join(
       "\n",
     );
 
     const next = insertBlockBySourceMarkerOrder({
-      existingCommentray: existing,
+      existingSideTrack: existing,
       blockMarkdown: running,
       sourceText: source,
       markerId: "running",
     });
 
-    const runningPos = next.indexOf("<!-- commentray:block id=running -->");
-    const unitPos = next.indexOf("<!-- commentray:block id=unit -->");
+    const runningPos = next.indexOf("<!-- sidetrack:block id=running -->");
+    const unitPos = next.indexOf("<!-- sidetrack:block id=unit -->");
     expect(runningPos).toBeGreaterThanOrEqual(0);
     expect(unitPos).toBeGreaterThan(runningPos);
   });
 });
 
 describe("Registering a block in the index", () => {
-  const block: CommentrayBlock = { id: "abc123", anchor: "lines:1-3" };
+  const block: SideTrackBlock = { id: "abc123", anchor: "lines:1-3" };
 
   it("creates the source entry lazily the first time a block is added", () => {
     const next = addBlockToIndex(emptyIndex(), {
       sourcePath: "src/greet.ts",
-      commentrayPath: ".commentray/source/src/greet.ts.md",
+      sidetrackPath: ".sidetrack/source/src/greet.ts.md",
       block,
     });
-    const cr = ".commentray/source/src/greet.ts.md";
-    expect(next.byCommentrayPath[cr]).toEqual({
+    const cr = ".sidetrack/source/src/greet.ts.md";
+    expect(next.bySideTrackPath[cr]).toEqual({
       sourcePath: "src/greet.ts",
-      commentrayPath: cr,
+      sidetrackPath: cr,
       blocks: [block],
     });
   });
 
   it("appends to an existing source entry without mutating the input index", () => {
-    const cr = ".commentray/source/src/greet.ts.md";
+    const cr = ".sidetrack/source/src/greet.ts.md";
     const base = addBlockToIndex(emptyIndex(), {
       sourcePath: "src/greet.ts",
-      commentrayPath: cr,
+      sidetrackPath: cr,
       block,
     });
     const next = addBlockToIndex(base, {
       sourcePath: "src/greet.ts",
-      commentrayPath: cr,
+      sidetrackPath: cr,
       block: { id: "def456", anchor: "lines:10-20" },
     });
-    expect(next.byCommentrayPath[cr]?.blocks.map((b) => b.id)).toEqual(["abc123", "def456"]);
-    expect(base.byCommentrayPath[cr]?.blocks.map((b) => b.id)).toEqual(["abc123"]);
+    expect(next.bySideTrackPath[cr]?.blocks.map((b) => b.id)).toEqual(["abc123", "def456"]);
+    expect(base.bySideTrackPath[cr]?.blocks.map((b) => b.id)).toEqual(["abc123"]);
   });
 
   it("refuses to overwrite a block whose id already exists", () => {
-    const cr = ".commentray/source/src/greet.ts.md";
+    const cr = ".sidetrack/source/src/greet.ts.md";
     const base = addBlockToIndex(emptyIndex(), {
       sourcePath: "src/greet.ts",
-      commentrayPath: cr,
+      sidetrackPath: cr,
       block,
     });
     expect(() =>
       addBlockToIndex(base, {
         sourcePath: "src/greet.ts",
-        commentrayPath: cr,
+        sidetrackPath: cr,
         block: { id: "abc123", anchor: "lines:5-7" },
       }),
     ).toThrowError(/already exists/);
   });
 
-  it("refuses the same commentrayPath indexed for a different source file", () => {
-    const cr = ".commentray/source/x.md";
+  it("refuses the same sidetrackPath indexed for a different source file", () => {
+    const cr = ".sidetrack/source/x.md";
     const base = addBlockToIndex(emptyIndex(), {
       sourcePath: "src/a.ts",
-      commentrayPath: cr,
+      sidetrackPath: cr,
       block,
     });
     expect(() =>
       addBlockToIndex(base, {
         sourcePath: "src/other.ts",
-        commentrayPath: cr,
+        sidetrackPath: cr,
         block: { id: "def456", anchor: "lines:1-2" },
       }),
     ).toThrow(/already indexed for/);
@@ -322,38 +322,38 @@ describe("Generating stable block identifiers", () => {
 
 describe("Removing a block from companion Markdown", () => {
   it("returns original text when the block ID does not exist", () => {
-    const md = "<!-- commentray:block id=abc -->\n## src/x.ts line 1\n\nprose\n";
-    const result = removeBlockFromCommentray(md, "nonexistent");
+    const md = "<!-- sidetrack:block id=abc -->\n## src/x.ts line 1\n\nprose\n";
+    const result = removeBlockFromSideTrack(md, "nonexistent");
     expect(result).toBe(md);
   });
 
   it("removes the only block completely and returns the prelude only", () => {
     const md =
-      "# Prelude Title\nIntro text\n\n<!-- commentray:block id=abc -->\n## src/x.ts line 1\n\nprose\n";
-    const result = removeBlockFromCommentray(md, "abc");
+      "# Prelude Title\nIntro text\n\n<!-- sidetrack:block id=abc -->\n## src/x.ts line 1\n\nprose\n";
+    const result = removeBlockFromSideTrack(md, "abc");
     expect(result.trim()).toBe("# Prelude Title\nIntro text");
   });
 
   it("removes a block in the middle of other blocks, joining them cleanly", () => {
     const md = [
-      "<!-- commentray:block id=a -->",
+      "<!-- sidetrack:block id=a -->",
       "## src/x.ts line 1",
       "",
       "prose A",
       "",
-      "<!-- commentray:block id=b -->",
+      "<!-- sidetrack:block id=b -->",
       "## src/x.ts line 2",
       "",
       "prose B",
       "",
-      "<!-- commentray:block id=c -->",
+      "<!-- sidetrack:block id=c -->",
       "## src/x.ts line 3",
       "",
       "prose C",
       "",
     ].join("\n");
 
-    const result = removeBlockFromCommentray(md, "b");
+    const result = removeBlockFromSideTrack(md, "b");
 
     expect(result).toContain("id=a");
     expect(result).not.toContain("id=b");
@@ -365,22 +365,22 @@ describe("Removing a block from companion Markdown", () => {
 
   it("removes the last block, preserving the preceding block and its layout", () => {
     const md = [
-      "<!-- commentray:block id=a -->",
+      "<!-- sidetrack:block id=a -->",
       "## src/x.ts line 1",
       "",
       "prose A",
       "",
-      "<!-- commentray:block id=b -->",
+      "<!-- sidetrack:block id=b -->",
       "## src/x.ts line 2",
       "",
       "prose B",
       "",
     ].join("\n");
 
-    const result = removeBlockFromCommentray(md, "b");
+    const result = removeBlockFromSideTrack(md, "b");
 
     expect(result.trim()).toBe(
-      ["<!-- commentray:block id=a -->", "## src/x.ts line 1", "", "prose A"].join("\n"),
+      ["<!-- sidetrack:block id=a -->", "## src/x.ts line 1", "", "prose A"].join("\n"),
     );
   });
 });
@@ -395,9 +395,9 @@ describe("Removing source markers from source files", () => {
   it("removes starting and ending marker lines for the given ID", () => {
     const src = [
       "function foo() {",
-      "//#region commentray:abc",
+      "//#region sidetrack:abc",
       "  console.log('hello');",
-      "//#endregion commentray:abc",
+      "//#endregion sidetrack:abc",
       "}",
     ].join("\n");
 
@@ -408,9 +408,9 @@ describe("Removing source markers from source files", () => {
 
   it("supports multiple comment styles", () => {
     const src = [
-      "<!-- #region commentray:abc -->",
+      "<!-- #region sidetrack:abc -->",
       "some markdown",
-      "<!-- #endregion commentray:abc -->",
+      "<!-- #endregion sidetrack:abc -->",
     ].join("\n");
 
     const result = removeSourceMarkersFromText(src, "abc");
@@ -430,41 +430,41 @@ describe("Removing a block from the metadata index", () => {
     const cp = "docs/x.md";
     let idx = addBlockToIndex(emptyIndex(), {
       sourcePath: "src/x.ts",
-      commentrayPath: cp,
+      sidetrackPath: cp,
       block: { id: "a", anchor: "marker:a" },
     });
     idx = addBlockToIndex(idx, {
       sourcePath: "src/x.ts",
-      commentrayPath: cp,
+      sidetrackPath: cp,
       block: { id: "b", anchor: "marker:b" },
     });
 
     const result = removeBlockFromIndex(idx, cp, "a");
 
-    expect(result.byCommentrayPath[cp]?.blocks.map((b) => b.id)).toEqual(["b"]);
+    expect(result.bySideTrackPath[cp]?.blocks.map((b) => b.id)).toEqual(["b"]);
   });
 
-  it("removes the entire entry from byCommentrayPath when the last block is deleted", () => {
+  it("removes the entire entry from bySideTrackPath when the last block is deleted", () => {
     const cp = "docs/x.md";
     const idx = addBlockToIndex(emptyIndex(), {
       sourcePath: "src/x.ts",
-      commentrayPath: cp,
+      sidetrackPath: cp,
       block: { id: "a", anchor: "marker:a" },
     });
 
     const result = removeBlockFromIndex(idx, cp, "a");
 
-    expect(result.byCommentrayPath[cp]).toBeUndefined();
+    expect(result.bySideTrackPath[cp]).toBeUndefined();
   });
 });
 
 function buildAlignIndex(blocks: { id: string; anchor: string }[]) {
   return {
     schemaVersion: 3 as const,
-    byCommentrayPath: {
+    bySideTrackPath: {
       "docs/main.md": {
         sourcePath: "src/main.ts",
-        commentrayPath: "docs/main.md",
+        sidetrackPath: "docs/main.md",
         blocks,
       },
     },
@@ -473,14 +473,14 @@ function buildAlignIndex(blocks: { id: string; anchor: string }[]) {
 
 function runAlign(args: {
   sourceText: string;
-  commentrayMarkdown: string;
+  sidetrackMarkdown: string;
   blocks: { id: string; anchor: string }[];
 }) {
   return alignAndCleanRegions({
     sourceText: args.sourceText,
-    commentrayMarkdown: args.commentrayMarkdown,
+    sidetrackMarkdown: args.sidetrackMarkdown,
     index: buildAlignIndex(args.blocks),
-    commentrayPath: "docs/main.md",
+    sidetrackPath: "docs/main.md",
     sourcePath: "src/main.ts",
   });
 }
@@ -488,34 +488,34 @@ function runAlign(args: {
 describe("Aligning and cleaning regions across source, markdown, and index", () => {
   const sourceText = [
     "function main() {",
-    "//#region commentray:first",
+    "//#region sidetrack:first",
     "  console.log(1);",
-    "//#endregion commentray:first",
+    "//#endregion sidetrack:first",
     "  console.log(2);",
-    "//#region commentray:second",
+    "//#region sidetrack:second",
     "  console.log(3);",
-    "//#endregion commentray:second",
+    "//#endregion sidetrack:second",
     "}",
   ].join("\n");
 
   it("reorders markdown block segments and index blocks to match source region order", () => {
     // Markdown has "second" block first, and "first" block second
     const markdown = [
-      "<!-- commentray:block id=second -->",
+      "<!-- sidetrack:block id=second -->",
       "## src/main.ts line 7",
       "",
       "prose second",
       "",
-      "<!-- commentray:block id=first -->",
+      "<!-- sidetrack:block id=first -->",
       "## src/main.ts line 3",
       "",
       "prose first",
       "",
     ].join("\n");
 
-    const { commentrayMarkdown, index } = runAlign({
+    const { sidetrackMarkdown, index } = runAlign({
       sourceText,
-      commentrayMarkdown: markdown,
+      sidetrackMarkdown: markdown,
       blocks: [
         { id: "second", anchor: "marker:second" },
         { id: "first", anchor: "marker:first" },
@@ -523,14 +523,14 @@ describe("Aligning and cleaning regions across source, markdown, and index", () 
     });
 
     // Verify markdown ordering
-    const firstPos = commentrayMarkdown.indexOf("id=first");
-    const secondPos = commentrayMarkdown.indexOf("id=second");
+    const firstPos = sidetrackMarkdown.indexOf("id=first");
+    const secondPos = sidetrackMarkdown.indexOf("id=second");
     expect(firstPos).toBeGreaterThan(-1);
     expect(secondPos).toBeGreaterThan(-1);
     expect(firstPos).toBeLessThan(secondPos);
 
     // Verify index ordering
-    const entry = index.byCommentrayPath["docs/main.md"];
+    const entry = index.bySideTrackPath["docs/main.md"];
     expect(entry?.blocks.map((b) => b.id)).toEqual(["first", "second"]);
   });
 });
@@ -538,37 +538,37 @@ describe("Aligning and cleaning regions across source, markdown, and index", () 
 describe("Aligning and cleaning regions (adding and removing markers)", () => {
   const sourceText = [
     "function main() {",
-    "//#region commentray:first",
+    "//#region sidetrack:first",
     "  console.log(1);",
-    "//#endregion commentray:first",
+    "//#endregion sidetrack:first",
     "  console.log(2);",
-    "//#region commentray:second",
+    "//#region sidetrack:second",
     "  console.log(3);",
-    "//#endregion commentray:second",
+    "//#endregion sidetrack:second",
     "}",
   ].join("\n");
 
   it("creates placeholder blocks when a new region is added in source code", () => {
     // Companion Markdown has only the "first" block, but source has "first" and "second"
     const markdown = [
-      "<!-- commentray:block id=first -->",
+      "<!-- sidetrack:block id=first -->",
       "## src/main.ts line 3",
       "",
       "prose first",
       "",
     ].join("\n");
 
-    const { commentrayMarkdown, index } = runAlign({
+    const { sidetrackMarkdown, index } = runAlign({
       sourceText,
-      commentrayMarkdown: markdown,
+      sidetrackMarkdown: markdown,
       blocks: [{ id: "first", anchor: "marker:first" }],
     });
 
-    expect(commentrayMarkdown).toContain("id=first");
-    expect(commentrayMarkdown).toContain("id=second");
-    expect(commentrayMarkdown).toContain("_(write commentary here)_");
+    expect(sidetrackMarkdown).toContain("id=first");
+    expect(sidetrackMarkdown).toContain("id=second");
+    expect(sidetrackMarkdown).toContain("_(write sidetrack here)_");
 
-    const entry = index.byCommentrayPath["docs/main.md"];
+    const entry = index.bySideTrackPath["docs/main.md"];
     expect(entry?.blocks.map((b) => b.id)).toEqual(["first", "second"]);
     expect(entry?.blocks.find((b) => b.id === "second")?.snippet).toContain("console.log(3)");
   });
@@ -577,38 +577,38 @@ describe("Aligning and cleaning regions (adding and removing markers)", () => {
     // Source code has only "first" (we pass a source text with only "first")
     const srcOnlyFirst = [
       "function main() {",
-      "//#region commentray:first",
+      "//#region sidetrack:first",
       "  console.log(1);",
-      "//#endregion commentray:first",
+      "//#endregion sidetrack:first",
       "}",
     ].join("\n");
 
     const markdown = [
-      "<!-- commentray:block id=first -->",
+      "<!-- sidetrack:block id=first -->",
       "## src/main.ts line 3",
       "",
       "prose first",
       "",
-      "<!-- commentray:block id=second -->",
+      "<!-- sidetrack:block id=second -->",
       "## src/main.ts line 7",
       "",
       "prose second",
       "",
     ].join("\n");
 
-    const { commentrayMarkdown, index } = runAlign({
+    const { sidetrackMarkdown, index } = runAlign({
       sourceText: srcOnlyFirst,
-      commentrayMarkdown: markdown,
+      sidetrackMarkdown: markdown,
       blocks: [
         { id: "first", anchor: "marker:first" },
         { id: "second", anchor: "marker:second" },
       ],
     });
 
-    expect(commentrayMarkdown).toContain("id=first");
-    expect(commentrayMarkdown).not.toContain("id=second");
+    expect(sidetrackMarkdown).toContain("id=first");
+    expect(sidetrackMarkdown).not.toContain("id=second");
 
-    const entry = index.byCommentrayPath["docs/main.md"];
+    const entry = index.bySideTrackPath["docs/main.md"];
     expect(entry?.blocks.map((b) => b.id)).toEqual(["first"]);
   });
 });
@@ -619,10 +619,10 @@ describe("Recovering source markers from snippet", () => {
     snippetLines: string[];
     blockId?: string;
   }) {
-    const block: CommentrayBlock = {
+    const block: SideTrackBlock = {
       id: args.blockId ?? "sum",
       anchor: `marker:${args.blockId ?? "sum"}`,
-      snippet: buildCommentraySnippetV1(args.snippetLines),
+      snippet: buildSideTrackSnippetV1(args.snippetLines),
     };
     return recoverSourceMarkersFromSnippet({
       sourceText: args.sourceText,
@@ -639,7 +639,7 @@ describe("Recovering source markers from snippet", () => {
   }
 
   it("returns healed=false and unchanged sourceText when snippet is missing or empty", () => {
-    const block: CommentrayBlock = { id: "greet", anchor: "marker:greet" };
+    const block: SideTrackBlock = { id: "greet", anchor: "marker:greet" };
     const src = "function greet() {\n  return 'hi';\n}";
     const result = recoverSourceMarkersFromSnippet({
       sourceText: src,
@@ -656,10 +656,10 @@ describe("Recovering source markers from snippet", () => {
     expect(result.sourceText).toBe(
       [
         "function sum() {",
-        "  //#region commentray:sum",
+        "  //#region sidetrack:sum",
         "  const x = 1;",
         "  return x;",
-        "  //#endregion commentray:sum",
+        "  //#endregion sidetrack:sum",
         "}",
       ].join("\n"),
     );

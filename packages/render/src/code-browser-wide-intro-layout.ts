@@ -86,13 +86,13 @@ export function renderWideIntroArrows(
     if (!Number.isFinite(length) || length < 12) continue;
 
     const arrow = document.createElement("span");
-    arrow.className = "commentray-wide-intro-arrow";
+    arrow.className = "sidetrack-wide-intro-arrow";
     arrow.style.left = `${String(Math.round(startX))}px`;
     arrow.style.top = `${String(Math.round(startY))}px`;
     arrow.style.width = `${String(Math.round(length))}px`;
     arrow.style.setProperty("--wide-intro-arrow-angle", `${String(Math.atan2(dy, dx))}rad`);
     const head = document.createElement("span");
-    head.className = "commentray-wide-intro-arrow-head";
+    head.className = "sidetrack-wide-intro-arrow-head";
     arrow.appendChild(head);
     arrowLayer.appendChild(arrow);
   }

@@ -1,10 +1,10 @@
 import { shellA11y } from "../support/shell-a11y";
 
-const WIDE_MODE_INTRO_STORAGE_KEY = "commentray.codeCommentrayStatic.wideModeIntro.v1";
-const SOURCE_PANE_MODE_STORAGE_KEY = "commentray.codeCommentrayStatic.sourceMarkdownPaneMode";
+const WIDE_MODE_INTRO_STORAGE_KEY = "sidetrack.codeSideTrackStatic.wideModeIntro.v1";
+const SOURCE_PANE_MODE_STORAGE_KEY = "sidetrack.codeSideTrackStatic.sourceMarkdownPaneMode";
 
 function expectVisibleArrows(count: number): void {
-  cy.get("#commentray-wide-intro-arrows .commentray-wide-intro-arrow")
+  cy.get("#sidetrack-wide-intro-arrows .sidetrack-wide-intro-arrow")
     .should("have.length", count)
     .each(($arrow) => {
       const el = $arrow[0];
@@ -17,9 +17,9 @@ function expectVisibleArrows(count: number): void {
 }
 
 function expectArrowStartsOutsideBubble(): void {
-  cy.get("#commentray-wide-intro").then(($bubble) => {
+  cy.get("#sidetrack-wide-intro").then(($bubble) => {
     const bubbleRect = $bubble[0].getBoundingClientRect();
-    cy.get("#commentray-wide-intro-arrows .commentray-wide-intro-arrow").each(($arrow) => {
+    cy.get("#sidetrack-wide-intro-arrows .sidetrack-wide-intro-arrow").each(($arrow) => {
       const arrowRect = $arrow[0].getBoundingClientRect();
       const startInsideBubble =
         arrowRect.left >= bubbleRect.left &&
@@ -42,10 +42,10 @@ function visitWithFreshWideIntroStorage(): void {
 function whenWideIntroVisible(callback: () => void): void {
   cy.get(shellA11y.shell).then(($shell) => {
     if ($shell.attr("data-layout") === "stretch") {
-      cy.get("#commentray-wide-intro").should("not.exist");
+      cy.get("#sidetrack-wide-intro").should("not.exist");
       return;
     }
-    cy.get("#commentray-wide-intro").should("be.visible");
+    cy.get("#sidetrack-wide-intro").should("be.visible");
     callback();
   });
 }
@@ -55,9 +55,9 @@ function clickWideIntroNextUntilTitle(fragment: string, maxNextClicks: number): 
   if (maxNextClicks < 0) {
     throw new Error(`Wide intro did not reach a title containing "${fragment}".`);
   }
-  cy.get("#commentray-wide-intro .commentray-wide-intro-title").then(($title) => {
+  cy.get("#sidetrack-wide-intro .sidetrack-wide-intro-title").then(($title) => {
     if ($title.text().includes(fragment)) return;
-    cy.get('#commentray-wide-intro button[data-wide-intro="next"]').click();
+    cy.get('#sidetrack-wide-intro button[data-wide-intro="next"]').click();
     clickWideIntroNextUntilTitle(fragment, maxNextClicks - 1);
   });
 }
@@ -82,7 +82,7 @@ function whenHomeDualLayoutWide(dualOnly: () => void): void {
       .and("have.attr", "data-source-pane-mode", "rendered-markdown")
       .then(() => cy.document({ log: false }))
       .then((doc) => {
-        const intro = doc.getElementById("commentray-wide-intro");
+        const intro = doc.getElementById("sidetrack-wide-intro");
         if (!(intro instanceof HTMLElement)) {
           return undefined;
         }
@@ -90,7 +90,7 @@ function whenHomeDualLayoutWide(dualOnly: () => void): void {
       })
       .then(() => {
         return cy.get("body").should(($b) => {
-          expect($b.find("#commentray-wide-intro")).to.have.length(0);
+          expect($b.find("#sidetrack-wide-intro")).to.have.length(0);
         });
       })
       .then(() => {
@@ -147,7 +147,7 @@ describe("Markdown source rendering modes", () => {
        * `scrollIntoView()` can scroll the window instead of `#code-pane`’s internal scrollport,
        * so we set `scrollTop` on `#code-pane` to reliably emit the driver scroll the client syncs on.
        */
-      cy.get("#code-pane-markdown-body #using-commentray", { timeout: 20000 })
+      cy.get("#code-pane-markdown-body #using-sidetrack", { timeout: 20000 })
         .should("exist")
         .then(($heading) => {
           return cy.get("#code-pane").then(($codePane) => {
@@ -162,13 +162,13 @@ describe("Markdown source rendering modes", () => {
       cy.AwaitDualPaneScrollSyncFlush();
       cy.AwaitDualPaneScrollSyncFlush();
 
-      cy.get("#commentray-block-readme-user-guides").should("exist");
+      cy.get("#sidetrack-block-readme-user-guides").should("exist");
       cy.get("#code-pane")
         .invoke("scrollTop")
         .then(() => {
           cy.get(shellA11y.docPaneBody, { timeout: 20000 }).then(($body) => {
             const docPaneBody = $body[0];
-            cy.get("#commentray-block-readme-user-guides").should(($anchor) => {
+            cy.get("#sidetrack-block-readme-user-guides").should(($anchor) => {
               const anchorTopWithin =
                 $anchor[0].getBoundingClientRect().top - docPaneBody.getBoundingClientRect().top;
               expect(anchorTopWithin, "block anchor near doc viewport top").to.be.within(-16, 72);
@@ -194,13 +194,13 @@ describe("Markdown source rendering modes", () => {
         return;
       }
       cy.wrap($shell).should("have.attr", "data-dual-mobile-pane", "doc");
-      cy.get(shellA11y.panes.commentray).should("be.visible");
+      cy.get(shellA11y.panes.sidetrack).should("be.visible");
       cy.get(shellA11y.panes.source).should("not.be.visible");
       cy.get(shellA11y.resizeSplitter).should("not.be.visible");
       cy.get(shellA11y.mobilePaneFlip).should("be.visible").click();
       cy.get(shellA11y.shell).should("have.attr", "data-dual-mobile-pane", "code");
       cy.get(shellA11y.panes.source).should("be.visible");
-      cy.get(shellA11y.panes.commentray).should("not.be.visible");
+      cy.get(shellA11y.panes.sidetrack).should("not.be.visible");
     });
   });
 
@@ -291,21 +291,21 @@ describe("Markdown source rendering modes", () => {
     visitWithFreshWideIntroStorage();
 
     whenWideIntroVisible(() => {
-      cy.contains("#commentray-wide-intro .commentray-wide-intro-title", "Welcome").should(
+      cy.contains("#sidetrack-wide-intro .sidetrack-wide-intro-title", "Welcome").should(
         "be.visible",
       );
-      cy.get('#commentray-wide-intro button[data-wide-intro="skip"]').click();
-      cy.get("#commentray-wide-intro").should("not.exist");
+      cy.get('#sidetrack-wide-intro button[data-wide-intro="skip"]').click();
+      cy.get("#sidetrack-wide-intro").should("not.exist");
       cy.window()
         .its("localStorage")
         .invoke("getItem", WIDE_MODE_INTRO_STORAGE_KEY)
         .should("eq", "1");
 
       cy.reload();
-      cy.get("#commentray-wide-intro").should("not.exist");
+      cy.get("#sidetrack-wide-intro").should("not.exist");
 
-      cy.get("#commentray-help-tour").click();
-      cy.get("#commentray-wide-intro").should("be.visible");
+      cy.get("#sidetrack-help-tour").click();
+      cy.get("#sidetrack-wide-intro").should("be.visible");
     });
   });
 
@@ -314,14 +314,14 @@ describe("Markdown source rendering modes", () => {
     visitWithFreshWideIntroStorage();
 
     whenWideIntroVisible(() => {
-      cy.contains("#commentray-wide-intro .commentray-wide-intro-title", "Welcome").should(
+      cy.contains("#sidetrack-wide-intro .sidetrack-wide-intro-title", "Welcome").should(
         "be.visible",
       );
       expectVisibleArrows(2);
       expectArrowStartsOutsideBubble();
 
-      cy.get('#commentray-wide-intro button[data-wide-intro="next"]').click();
-      cy.contains("#commentray-wide-intro .commentray-wide-intro-title", "Two views").should(
+      cy.get('#sidetrack-wide-intro button[data-wide-intro="next"]').click();
+      cy.contains("#sidetrack-wide-intro .sidetrack-wide-intro-title", "Two views").should(
         "be.visible",
       );
       expectVisibleArrows(2);
@@ -337,13 +337,13 @@ describe("Markdown source rendering modes", () => {
       expectVisibleArrows(2);
 
       cy.viewport(390, 844);
-      cy.contains("#commentray-wide-intro .commentray-wide-intro-title", "Welcome").should(
+      cy.contains("#sidetrack-wide-intro .sidetrack-wide-intro-title", "Welcome").should(
         "be.visible",
       );
       expectVisibleArrows(1);
 
       cy.viewport(1280, 900);
-      cy.contains("#commentray-wide-intro .commentray-wide-intro-title", "Welcome").should(
+      cy.contains("#sidetrack-wide-intro .sidetrack-wide-intro-title", "Welcome").should(
         "be.visible",
       );
       expectVisibleArrows(2);
@@ -354,14 +354,14 @@ describe("Markdown source rendering modes", () => {
     cy.viewport(390, 844);
     visitWithFreshWideIntroStorage();
     whenWideIntroVisible(() => {
-      cy.contains("#commentray-wide-intro .commentray-wide-intro-title", "Welcome").should(
+      cy.contains("#sidetrack-wide-intro .sidetrack-wide-intro-title", "Welcome").should(
         "be.visible",
       );
-      cy.get('#commentray-wide-intro button[data-wide-intro="next"]').click();
-      cy.contains("#commentray-wide-intro .commentray-wide-intro-title", "Two views").should(
+      cy.get('#sidetrack-wide-intro button[data-wide-intro="next"]').click();
+      cy.contains("#sidetrack-wide-intro .sidetrack-wide-intro-title", "Two views").should(
         "be.visible",
       );
-      cy.contains("#commentray-wide-intro .commentray-wide-intro-body", "narrow view").should(
+      cy.contains("#sidetrack-wide-intro .sidetrack-wide-intro-body", "narrow view").should(
         "be.visible",
       );
     });
@@ -373,15 +373,14 @@ describe("Markdown source rendering modes", () => {
     whenWideIntroVisible(() => {
       clickWideIntroNextUntilTitle("Need a refresher?", 18);
 
+      cy.contains("#sidetrack-wide-intro .sidetrack-wide-intro-title", "Need a refresher?").should(
+        "be.visible",
+      );
       cy.contains(
-        "#commentray-wide-intro .commentray-wide-intro-title",
-        "Need a refresher?",
-      ).should("be.visible");
-      cy.contains(
-        "#commentray-wide-intro .commentray-wide-intro-body",
+        "#sidetrack-wide-intro .sidetrack-wide-intro-body",
         "You can always go back to this tutorial via the help button.",
       ).should("be.visible");
-      cy.get("#commentray-wide-intro-arrows .commentray-wide-intro-arrow").should("have.length", 1);
+      cy.get("#sidetrack-wide-intro-arrows .sidetrack-wide-intro-arrow").should("have.length", 1);
     });
   });
 
@@ -391,7 +390,7 @@ describe("Markdown source rendering modes", () => {
 
     cy.get(shellA11y.shell).then(($shell) => {
       if ($shell.attr("data-layout") !== "dual") {
-        cy.get("#commentray-wide-intro").should("not.exist");
+        cy.get("#sidetrack-wide-intro").should("not.exist");
         return;
       }
       cy.wrap($shell).should("have.attr", "data-source-pane-mode", "rendered-markdown");
@@ -399,17 +398,17 @@ describe("Markdown source rendering modes", () => {
 
       clickWideIntroNextUntilTitle("Readability controls", 14);
       cy.contains(
-        "#commentray-wide-intro .commentray-wide-intro-title",
+        "#sidetrack-wide-intro .sidetrack-wide-intro-title",
         "Readability controls",
       ).should("be.visible");
-      cy.get("#commentray-wide-intro .commentray-wide-intro-step-action")
+      cy.get("#sidetrack-wide-intro .sidetrack-wide-intro-step-action")
         .should("be.visible")
         .and("contain.text", "Switch to markdown source")
         .click();
 
       cy.get(shellA11y.shell).should("have.attr", "data-source-pane-mode", "source");
       cy.get(shellA11y.wrapLinesLabel).should("be.visible");
-      cy.get("#commentray-wide-intro-arrows .commentray-wide-intro-arrow").should("have.length", 1);
+      cy.get("#sidetrack-wide-intro-arrows .sidetrack-wide-intro-arrow").should("have.length", 1);
     });
   });
 });

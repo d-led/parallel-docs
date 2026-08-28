@@ -4,31 +4,31 @@ import path from "node:path";
 import { execSync } from "node:child_process";
 
 import {
-  applyAnglesFlatMigrationToCommentrayToml,
-  applyPathRenamesToCommentrayIndex,
+  applyAnglesFlatMigrationToSideTrackToml,
+  applyPathRenamesToSideTrackIndex,
   collectOrphanCompanionMarkdownTargets,
-  convertCommentraySourceMarkersToLanguage,
+  convertSideTrackSourceMarkersToLanguage,
   defaultMetadataIndexPath,
-  discoverCommentrayPairsOnDisk,
+  discoverSideTrackPairsOnDisk,
   discoverFlatCompanionMarkdownFiles,
   ensureAnglesSentinelFile,
   GitScmProvider,
-  initializeCommentrayProject,
-  loadCommentrayConfig,
+  initializeSideTrackProject,
+  loadSideTrackConfig,
   normalizeRepoRelativePath,
   planAnglesMigrationFromCompanions,
   pruneOrphanCompanionMarkdown,
   readIndex,
   refreshIndexMigrationsOnDisk,
-  resolveCommentrayMarkdownPath,
+  resolveSideTrackMarkdownPath,
   resolveMermaidRuntimePath,
   rewriteIndexKeysForAnglesMigration,
-  upsertAngleDefinitionInCommentrayToml,
+  upsertAngleDefinitionInSideTrackToml,
   validateProject,
   type ValidateProjectOptions,
   writeIndex,
-} from "@commentray/core";
-import { renderSideBySideHtml } from "@commentray/render";
+} from "@sidetrack/core";
+import { renderSideBySideHtml } from "@sidetrack/render";
 import { z } from "zod";
 
 // ── Tool definition type ────────────────────────────────────────────────
@@ -79,11 +79,11 @@ function resolveSetupPagesPaths(
   nodeVersion: string,
 ): { workflowDir: string; workflowFile: string; workflowYaml: string } {
   const workflowDir = path.join(repoRoot, ".github", "workflows");
-  const workflowFile = path.join(workflowDir, "commentray-pages.yml");
+  const workflowFile = path.join(workflowDir, "sidetrack-pages.yml");
   const workflowYaml = `\
-# Commentray → GitHub Pages static site deployment.
+# SideTrack → GitHub Pages static site deployment.
 # Settings → Pages → Source: GitHub Actions.
-name: commentray-pages
+name: sidetrack-pages
 
 on:
   push:
@@ -114,11 +114,11 @@ jobs:
 
       - run: npm ci
 
-      - name: Install Commentray CLI
-        run: npm install --no-save commentray
+      - name: Install SideTrack CLI
+        run: npm install --no-save sidetrack
 
-      - name: Build Commentray static site
-        run: npx commentray pages build
+      - name: Build SideTrack static site
+        run: npx sidetrack pages build
 
       - uses: actions/upload-pages-artifact@v3
         with:
@@ -197,18 +197,18 @@ function formatWriteResult(
 // ── Tool definitions ─────────────────────────────────────────────────────
 
 export const ALL_TOOLS: McpToolDef[] = [
-  // ── commentray_init ──────────────────────────────────────────────────
+  // ── sidetrack_init ──────────────────────────────────────────────────
   {
-    name: "commentray_init",
+    name: "sidetrack_init",
     description:
-      "Initialize a Commentray project in the current workspace. " +
-      "Creates the .commentray/ storage directory, index.json, and .commentray.toml " +
+      "Initialize a SideTrack project in the current workspace. " +
+      "Creates the .sidetrack/ storage directory, index.json, and .sidetrack.toml " +
       "configuration file. Idempotent — safe to run multiple times.",
     schema: {},
     handler: async (repoRoot) => {
-      const result = await initializeCommentrayProject(repoRoot);
+      const result = await initializeSideTrackProject(repoRoot);
       const msgs: string[] = [];
-      if (result.createdToml) msgs.push("Created .commentray.toml");
+      if (result.createdToml) msgs.push("Created .sidetrack.toml");
       if (result.createdIndex) msgs.push("Created index.json");
       if (result.migratedIndex) msgs.push("Migrated index to current schema");
       if (result.addedSiteGitignore) msgs.push("Added _site to .gitignore");
@@ -222,11 +222,11 @@ export const ALL_TOOLS: McpToolDef[] = [
     },
   },
 
-  // ── commentray_validate ──────────────────────────────────────────────
+  // ── sidetrack_validate ──────────────────────────────────────────────
   {
-    name: "commentray_validate",
+    name: "sidetrack_validate",
     description:
-      "Validate the Commentray project metadata and configuration. " +
+      "Validate the SideTrack project metadata and configuration. " +
       "Returns errors and warnings. Set staged=true to only validate index entries " +
       "touched by staged Git files.",
     schema: {
@@ -253,49 +253,49 @@ export const ALL_TOOLS: McpToolDef[] = [
     },
   },
 
-  // ── commentray_paths ─────────────────────────────────────────────────
+  // ── sidetrack_paths ─────────────────────────────────────────────────
   {
-    name: "commentray_paths",
+    name: "sidetrack_paths",
     description:
-      "Resolve and return the Commentray Markdown companion path for a source file. " +
+      "Resolve and return the SideTrack Markdown companion path for a source file. " +
       "Given a repo-relative source file path, returns the corresponding .md path.",
     schema: {
       file: z.string().describe("Repo-relative path to the source file"),
     },
     handler: async (repoRoot, args) => {
       const rel = normalizeRepoRelativePath(String(args.file));
-      const cfg = await loadCommentrayConfig(repoRoot);
-      const resolved = resolveCommentrayMarkdownPath(repoRoot, rel, cfg);
-      return textResult(resolved.commentrayPath);
+      const cfg = await loadSideTrackConfig(repoRoot);
+      const resolved = resolveSideTrackMarkdownPath(repoRoot, rel, cfg);
+      return textResult(resolved.sidetrackPath);
     },
   },
 
-  // ── commentray_render ────────────────────────────────────────────────
+  // ── sidetrack_render ────────────────────────────────────────────────
   {
-    name: "commentray_render",
+    name: "sidetrack_render",
     description:
-      "Render a side-by-side HTML page (source code + Commentray Markdown). " +
+      "Render a side-by-side HTML page (source code + SideTrack Markdown). " +
       "Reads the source and markdown files from disk, writes HTML output.",
     schema: {
       source: z.string().optional().describe("Repo-relative source file path"),
-      markdown: z.string().optional().describe("Path to Commentray Markdown file"),
+      markdown: z.string().optional().describe("Path to SideTrack Markdown file"),
       out: z.string().optional().default("_site/index.html").describe("Output HTML path"),
       mermaid: z.boolean().optional().default(false).describe("Include Mermaid diagram runtime"),
     },
     handler: async (repoRoot, args) => {
-      const cfg = await loadCommentrayConfig(repoRoot);
+      const cfg = await loadSideTrackConfig(repoRoot);
       const srcRel = args.source ?? cfg.staticSite?.sourceFile;
-      const mdRel = args.markdown ?? cfg.staticSite?.commentrayMarkdownFile;
+      const mdRel = args.markdown ?? cfg.staticSite?.sidetrackMarkdownFile;
       const outRel = String(args.out ?? "_site/index.html");
 
       if (!srcRel) {
         return errorResult(
-          "No source file provided. Pass source or set [static_site].source_file in .commentray.toml.",
+          "No source file provided. Pass source or set [static_site].source_file in .sidetrack.toml.",
         );
       }
       if (!mdRel) {
         return errorResult(
-          "No markdown file provided. Pass markdown or set [static_site].commentray_markdown in .commentray.toml.",
+          "No markdown file provided. Pass markdown or set [static_site].sidetrack_markdown in .sidetrack.toml.",
         );
       }
 
@@ -320,7 +320,7 @@ export const ALL_TOOLS: McpToolDef[] = [
       const html = await renderSideBySideHtml({
         code,
         language: ext,
-        commentrayMarkdown: mdText,
+        sidetrackMarkdown: mdText,
         hljsTheme: cfg.render.syntaxTheme,
         includeMermaidRuntime: Boolean(args.mermaid),
         mermaidRuntimePath: resolveMermaidRuntimePath(repoRoot, cfg.render.mermaidRuntimePath),
@@ -332,9 +332,9 @@ export const ALL_TOOLS: McpToolDef[] = [
     },
   },
 
-  // ── commentray_doctor ────────────────────────────────────────────────
+  // ── sidetrack_doctor ────────────────────────────────────────────────
   {
-    name: "commentray_doctor",
+    name: "sidetrack_doctor",
     description:
       "Run validation plus environment checks. With allowDeletions=true, also " +
       "removes orphan companion Markdown files (no matching primary source file).",
@@ -348,7 +348,7 @@ export const ALL_TOOLS: McpToolDef[] = [
     handler: async (repoRoot, args) => {
       const lines: string[] = [];
       if (args.allowDeletions) {
-        const cfg = await loadCommentrayConfig(repoRoot);
+        const cfg = await loadSideTrackConfig(repoRoot);
         const { removedAbsPaths } = await pruneOrphanCompanionMarkdown(repoRoot, cfg.storageDir);
         if (removedAbsPaths.length > 0) {
           lines.push(`Removed ${removedAbsPaths.length} orphan companion path(s):`);
@@ -378,9 +378,9 @@ export const ALL_TOOLS: McpToolDef[] = [
     },
   },
 
-  // ── commentray_migrate ───────────────────────────────────────────────
+  // ── sidetrack_migrate ───────────────────────────────────────────────
   {
-    name: "commentray_migrate",
+    name: "sidetrack_migrate",
     description:
       "Migrate the metadata index.json to the current schema version. " +
       "Safe to run multiple times — only applies pending migrations.",
@@ -394,18 +394,18 @@ export const ALL_TOOLS: McpToolDef[] = [
     },
   },
 
-  // ── commentray_migrate_angles ────────────────────────────────────────
+  // ── sidetrack_migrate_angles ────────────────────────────────────────
   {
-    name: "commentray_migrate_angles",
+    name: "sidetrack_migrate_angles",
     description:
-      "Convert flat .commentray/source/ companions to the Angles layout " +
+      "Convert flat .sidetrack/source/ companions to the Angles layout " +
       "(per-source folders under angle directories). Use dryRun=true to preview.",
     schema: {
       angleId: z.string().optional().default("main").describe("Angle ID for migrated files"),
       dryRun: z.boolean().optional().default(false).describe("Preview moves without writing files"),
     },
     handler: async (repoRoot, args) => {
-      const cfg = await loadCommentrayConfig(repoRoot);
+      const cfg = await loadSideTrackConfig(repoRoot);
       const storageDir = cfg.storageDir;
       const companions = await discoverFlatCompanionMarkdownFiles(repoRoot, storageDir);
       if (companions.length === 0) {
@@ -431,17 +431,17 @@ export const ALL_TOOLS: McpToolDef[] = [
         await fs.rename(fromAbs, toAbs);
       }
 
-      // Update .commentray.toml
+      // Update .sidetrack.toml
       const firstCompanion = companions[0];
       const firstTarget = plan.moves[0];
       const sourceFile = firstCompanion.sourcePath;
-      const fromCommentray = path.posix.join(storageDir, "source", `${sourceFile}.md`);
-      const toCommentray = firstTarget?.toRepoRel;
+      const fromSideTrack = path.posix.join(storageDir, "source", `${sourceFile}.md`);
+      const toSideTrack = firstTarget?.toRepoRel;
 
-      await applyAnglesFlatMigrationToCommentrayToml(repoRoot, {
+      await applyAnglesFlatMigrationToSideTrackToml(repoRoot, {
         angleId,
-        staticCommentrayMarkdownFrom: fromCommentray,
-        staticCommentrayMarkdownTo: toCommentray,
+        staticSideTrackMarkdownFrom: fromSideTrack,
+        staticSideTrackMarkdownTo: toSideTrack,
       });
 
       // Rewrite index keys
@@ -455,11 +455,11 @@ export const ALL_TOOLS: McpToolDef[] = [
     },
   },
 
-  // ── commentray_angles_add ────────────────────────────────────────────
+  // ── sidetrack_angles_add ────────────────────────────────────────────
   {
-    name: "commentray_angles_add",
+    name: "sidetrack_angles_add",
     description:
-      "Register a new angle in .commentray.toml and create the Angles sentinel. " +
+      "Register a new angle in .sidetrack.toml and create the Angles sentinel. " +
       "Use makeDefault=true to set it as the default angle.",
     schema: {
       angleId: z
@@ -471,12 +471,12 @@ export const ALL_TOOLS: McpToolDef[] = [
       makeDefault: z.boolean().optional().default(false).describe("Set as the default angle"),
     },
     handler: async (repoRoot, args) => {
-      await upsertAngleDefinitionInCommentrayToml(repoRoot, {
+      await upsertAngleDefinitionInSideTrackToml(repoRoot, {
         id: String(args.angleId),
         title: args.title ? String(args.title) : undefined,
         makeDefault: Boolean(args.makeDefault),
       });
-      const cfg = await loadCommentrayConfig(repoRoot);
+      const cfg = await loadSideTrackConfig(repoRoot);
       await ensureAnglesSentinelFile(repoRoot, cfg.storageDir);
       return textResult(
         `Angle "${args.angleId}" registered${args.makeDefault ? " (default)" : ""}.`,
@@ -484,9 +484,9 @@ export const ALL_TOOLS: McpToolDef[] = [
     },
   },
 
-  // ── commentray_sync_moved_paths ──────────────────────────────────────
+  // ── sidetrack_sync_moved_paths ──────────────────────────────────────
   {
-    name: "commentray_sync_moved_paths",
+    name: "sidetrack_sync_moved_paths",
     description:
       "Rewrite index.json paths using Git rename detection between two tree-ish refs. " +
       "Use dryRun=true to preview without writing.",
@@ -506,12 +506,12 @@ export const ALL_TOOLS: McpToolDef[] = [
       if (renames.length === 0) {
         return textResult("No Git-detected renames in that range.");
       }
-      const cfg = await loadCommentrayConfig(repoRoot);
+      const cfg = await loadSideTrackConfig(repoRoot);
       const index = await readIndex(repoRoot);
       if (!index) {
-        return errorResult(`No index at ${defaultMetadataIndexPath()}. Run commentray_init first.`);
+        return errorResult(`No index at ${defaultMetadataIndexPath()}. Run sidetrack_init first.`);
       }
-      const next = applyPathRenamesToCommentrayIndex(index, renames, repoRoot, cfg);
+      const next = applyPathRenamesToSideTrackIndex(index, renames, repoRoot, cfg);
       if (!next.changed) {
         return textResult("Index paths already match those renames (nothing to update).");
       }
@@ -527,11 +527,11 @@ export const ALL_TOOLS: McpToolDef[] = [
     },
   },
 
-  // ── commentray_convert_source_markers ────────────────────────────────
+  // ── sidetrack_convert_source_markers ────────────────────────────────
   {
-    name: "commentray_convert_source_markers",
+    name: "sidetrack_convert_source_markers",
     description:
-      "Rewrite Commentray marker pairs in a source file to the delimiter style " +
+      "Rewrite SideTrack marker pairs in a source file to the delimiter style " +
       "for a given VS Code language ID. Use dryRun=true to preview.",
     schema: {
       file: z.string().describe("Repo-relative path to the source file"),
@@ -553,7 +553,7 @@ export const ALL_TOOLS: McpToolDef[] = [
         if (code === "ENOENT") return errorResult(`File not found: ${rel}`);
         throw err;
       }
-      const { sourceText, changed, convertedPairs } = convertCommentraySourceMarkersToLanguage(
+      const { sourceText, changed, convertedPairs } = convertSideTrackSourceMarkersToLanguage(
         raw,
         String(args.language),
       );
@@ -573,47 +573,47 @@ export const ALL_TOOLS: McpToolDef[] = [
   // ── Read-only discovery tools ────────────────────────────────────────
 
   {
-    name: "commentray_list_pairs",
+    name: "sidetrack_list_pairs",
     description:
-      "List all source→commentary pairs in the project. " +
+      "List all source→sidetrack pairs in the project. " +
       "Returns repo-relative paths for each source file and its companion Markdown. " +
-      "Use this to discover what files already have commentary.",
+      "Use this to discover what files already have sidetrack.",
     schema: {},
     handler: async (repoRoot) => {
-      const cfg = await loadCommentrayConfig(repoRoot);
-      const pairs = await discoverCommentrayPairsOnDisk(repoRoot, cfg.storageDir);
+      const cfg = await loadSideTrackConfig(repoRoot);
+      const pairs = await discoverSideTrackPairsOnDisk(repoRoot, cfg.storageDir);
       if (pairs.length === 0) {
         return textResult(
-          "No commentray pairs found. Run commentray_init first, then add commentary.",
+          "No sidetrack pairs found. Run sidetrack_init first, then add sidetrack.",
         );
       }
-      const lines = [`${pairs.length} source→commentary pair(s):`];
+      const lines = [`${pairs.length} source→sidetrack pair(s):`];
       for (const p of pairs) {
-        lines.push(`  ${p.sourcePath}  →  ${p.commentrayPath}`);
+        lines.push(`  ${p.sourcePath}  →  ${p.sidetrackPath}`);
       }
       return textResult(lines.join("\n"));
     },
   },
 
   {
-    name: "commentray_read_commentray",
+    name: "sidetrack_read_sidetrack",
     description:
-      "Read the commentary Markdown for a given source file. " +
-      "Returns the full Markdown content. Use this before writing or editing commentary.",
+      "Read the sidetrack Markdown for a given source file. " +
+      "Returns the full Markdown content. Use this before writing or editing sidetrack.",
     schema: {
       file: z.string().describe("Repo-relative path to the source file"),
       angleId: z.string().optional().describe("Angle ID (uses default if omitted)"),
     },
     handler: async (repoRoot, args) => {
       const rel = normalizeRepoRelativePath(String(args.file));
-      const cfg = await loadCommentrayConfig(repoRoot);
-      const resolved = resolveCommentrayMarkdownPath(
+      const cfg = await loadSideTrackConfig(repoRoot);
+      const resolved = resolveSideTrackMarkdownPath(
         repoRoot,
         rel,
         cfg,
         args.angleId ? String(args.angleId) : undefined,
       );
-      const absPath = path.join(repoRoot, ...resolved.commentrayPath.split("/"));
+      const absPath = path.join(repoRoot, ...resolved.sidetrackPath.split("/"));
       try {
         const content = await fs.readFile(absPath, "utf8");
         return textResult(content);
@@ -621,7 +621,7 @@ export const ALL_TOOLS: McpToolDef[] = [
         const code = (err as NodeJS.ErrnoException).code;
         if (code === "ENOENT") {
           return errorResult(
-            `No commentary found for ${rel}. Run commentray_init and add commentary first.`,
+            `No sidetrack found for ${rel}. Run sidetrack_init and add sidetrack first.`,
           );
         }
         throw err;
@@ -630,10 +630,10 @@ export const ALL_TOOLS: McpToolDef[] = [
   },
 
   {
-    name: "commentray_read_source",
+    name: "sidetrack_read_source",
     description:
       "Read a source file's content. Returns the full file text. " +
-      "Use this to understand the code before writing commentary for it.",
+      "Use this to understand the code before writing sidetrack for it.",
     schema: {
       file: z.string().describe("Repo-relative path to the source file"),
     },
@@ -654,36 +654,36 @@ export const ALL_TOOLS: McpToolDef[] = [
   },
 
   {
-    name: "commentray_list_orphans",
+    name: "sidetrack_list_orphans",
     description:
-      "List orphan companion Markdown files — commentary without a matching " +
-      "primary source file. Use commentray_doctor with allowDeletions=true to remove them.",
+      "List orphan companion Markdown files — sidetrack without a matching " +
+      "primary source file. Use sidetrack_doctor with allowDeletions=true to remove them.",
     schema: {},
     handler: async (repoRoot) => {
-      const cfg = await loadCommentrayConfig(repoRoot);
+      const cfg = await loadSideTrackConfig(repoRoot);
       const orphans = await collectOrphanCompanionMarkdownTargets(repoRoot, cfg.storageDir);
       if (orphans.length === 0) {
         return textResult(
-          "No orphan companions found. All commentary files have matching source files.",
+          "No orphan companions found. All sidetrack files have matching source files.",
         );
       }
       const lines = [`${orphans.length} orphan companion(s) found:`];
       for (const o of orphans) {
         const kind = o.cleanupIsDirectory ? "dir" : "file";
-        lines.push(`  [${kind}] ${o.commentrayPath}  (missing source: ${o.sourcePath})`);
+        lines.push(`  [${kind}] ${o.sidetrackPath}  (missing source: ${o.sourcePath})`);
       }
       lines.push("");
       lines.push(
-        "To remove them: use commentray_doctor with allowDeletions=true, or run `commentray doctor --allow-deletions` from the CLI.",
+        "To remove them: use sidetrack_doctor with allowDeletions=true, or run `sidetrack doctor --allow-deletions` from the CLI.",
       );
       return textResult(lines.join("\n"));
     },
   },
 
   {
-    name: "commentray_find_uncommented",
+    name: "sidetrack_find_uncommented",
     description:
-      "Find source files in the repo that could have commentary but don't. " +
+      "Find source files in the repo that could have sidetrack but don't. " +
       "Scans Git-tracked files, filters by common source extensions, and " +
       "compares against the index. Use this to discover documentation opportunities.",
     schema: {
@@ -750,7 +750,7 @@ export const ALL_TOOLS: McpToolDef[] = [
       const index = await readIndex(repoRoot);
       const indexedPaths = new Set<string>();
       if (index) {
-        for (const entry of Object.values(index.byCommentrayPath)) {
+        for (const entry of Object.values(index.bySideTrackPath)) {
           indexedPaths.add(entry.sourcePath);
         }
       }
@@ -770,11 +770,11 @@ export const ALL_TOOLS: McpToolDef[] = [
       const commented = totalSource - uncommented.length;
 
       if (uncommented.length === 0) {
-        return textResult(`All ${totalSource} tracked source files have commentary. Great job!`);
+        return textResult(`All ${totalSource} tracked source files have sidetrack. Great job!`);
       }
 
       const lines = [
-        `${uncommented.length} uncommented source file(s) (${commented} already have commentary, ${totalSource} total tracked source files):`,
+        `${uncommented.length} uncommented source file(s) (${commented} already have sidetrack, ${totalSource} total tracked source files):`,
       ];
       for (const f of uncommented) {
         lines.push(`  ${f}`);
@@ -786,11 +786,11 @@ export const ALL_TOOLS: McpToolDef[] = [
     },
   },
 
-  // ── commentray_serve ─────────────────────────────────────────────────
+  // ── sidetrack_serve ─────────────────────────────────────────────────
   {
-    name: "commentray_serve",
+    name: "sidetrack_serve",
     description:
-      "Build the Commentray static site and serve it over HTTP. " +
+      "Build the SideTrack static site and serve it over HTTP. " +
       "Starts a local server on the given port (default 4173). " +
       "Returns the URL. The server keeps running until stop_serve is called " +
       "or the MCP session ends. Call again to rebuild and restart.",
@@ -813,7 +813,7 @@ export const ALL_TOOLS: McpToolDef[] = [
       try {
         // Dynamic import: static-site stack may pull heavy dependencies
         const { buildGithubPagesStaticSite } =
-          await import("@commentray/code-commentray-static/github-pages-site");
+          await import("@sidetrack/code-sidetrack-static/github-pages-site");
         const { default: serveHandler } = await import("serve-handler");
 
         await buildGithubPagesStaticSite({ repoRoot });
@@ -853,11 +853,11 @@ export const ALL_TOOLS: McpToolDef[] = [
     },
   },
 
-  // ── commentray_stop_serve ────────────────────────────────────────────
+  // ── sidetrack_stop_serve ────────────────────────────────────────────
   {
-    name: "commentray_stop_serve",
+    name: "sidetrack_stop_serve",
     description:
-      "Stop the Commentray HTTP server started by commentray_serve. " +
+      "Stop the SideTrack HTTP server started by sidetrack_serve. " +
       "Safe to call when no server is running.",
     schema: {},
     handler: async () => {
@@ -870,15 +870,15 @@ export const ALL_TOOLS: McpToolDef[] = [
     },
   },
 
-  // ── commentray_setup_pages ──────────────────────────────────────────
+  // ── sidetrack_setup_pages ──────────────────────────────────────────
 
   {
-    name: "commentray_setup_pages",
+    name: "sidetrack_setup_pages",
     description:
-      "Create or update `.github/workflows/commentray-pages.yml` to deploy " +
-      "the Commentray static site to GitHub Pages on every push to main. " +
+      "Create or update `.github/workflows/sidetrack-pages.yml` to deploy " +
+      "the SideTrack static site to GitHub Pages on every push to main. " +
       "Requires the repo's Pages source to be set to 'GitHub Actions' in Settings → Pages. " +
-      "The workflow builds `_site/` via `commentray pages build` and publishes it.",
+      "The workflow builds `_site/` via `sidetrack pages build` and publishes it.",
     schema: {
       force: z.boolean().optional().describe("Overwrite an existing workflow file"),
       dryRun: z.boolean().optional().describe("Preview the workflow content without writing"),
@@ -904,12 +904,12 @@ export const ALL_TOOLS: McpToolDef[] = [
       if (existingPagesWorkflows.length > 0 && !dryRun && !force) {
         return textResult(
           `Found existing GitHub Pages workflow(s): ${existingPagesWorkflows.join(", ")}.\n\n` +
-            "Instead of adding a separate workflow, integrate the Commentray build step into " +
+            "Instead of adding a separate workflow, integrate the SideTrack build step into " +
             "one of these existing workflows (before the upload-pages-artifact step). Add:\n" +
-            "\n      - name: Install Commentray CLI\n" +
-            "        run: npm install --no-save commentray\n\n" +
-            "      - name: Build Commentray static site\n" +
-            "        run: npx commentray pages build\n\n" +
+            "\n      - name: Install SideTrack CLI\n" +
+            "        run: npm install --no-save sidetrack\n\n" +
+            "      - name: Build SideTrack static site\n" +
+            "        run: npx sidetrack pages build\n\n" +
             `To create a standalone ${workflowFile} anyway, re-run with --force.`,
         );
       }
@@ -932,23 +932,23 @@ export const ALL_TOOLS: McpToolDef[] = [
   },
 
   {
-    name: "commentray_get_index",
+    name: "sidetrack_get_index",
     description:
-      "Return the full Commentray index as formatted JSON. " +
+      "Return the full SideTrack index as formatted JSON. " +
       "Shows all tracked source files, their companion paths, block IDs, anchors, and marker IDs. " +
-      "Use this to understand the complete state of the project's commentary.",
+      "Use this to understand the complete state of the project's sidetrack.",
     schema: {},
     handler: async (repoRoot) => {
       const index = await readIndex(repoRoot);
       if (!index) {
-        return errorResult(`No index found. Run commentray_init first.`);
+        return errorResult(`No index found. Run sidetrack_init first.`);
       }
       const summary = {
         schemaVersion: index.schemaVersion,
-        pairCount: Object.keys(index.byCommentrayPath).length,
-        pairs: Object.entries(index.byCommentrayPath).map(([cp, entry]) => ({
+        pairCount: Object.keys(index.bySideTrackPath).length,
+        pairs: Object.entries(index.bySideTrackPath).map(([cp, entry]) => ({
           sourcePath: entry.sourcePath,
-          commentrayPath: cp,
+          sidetrackPath: cp,
           blockCount: entry.blocks.length,
           blocks: entry.blocks.map((b) => ({
             id: b.id,

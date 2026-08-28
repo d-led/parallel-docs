@@ -6,11 +6,11 @@ import process from "node:process";
 
 import {
   ensureCompanionForSource,
-  isCommentrayProjectInitialized,
-  loadCommentrayConfig,
-  resolveCommentrayMarkdownPath,
-} from "@commentray/core";
-import { appendHtmlToOpaqueBrowseRequestUrl } from "@commentray/render";
+  isSideTrackProjectInitialized,
+  loadSideTrackConfig,
+  resolveSideTrackMarkdownPath,
+} from "@sidetrack/core";
+import { appendHtmlToOpaqueBrowseRequestUrl } from "@sidetrack/render";
 import handler from "serve-handler";
 
 import { runInitFull } from "./init.js";
@@ -22,9 +22,9 @@ export type ServeCliOptions = {
   port: number;
 };
 
-const EMPTY_STATE_MARKDOWN_ENV = "COMMENTRAY_EMPTY_STATE_MARKDOWN" as const;
-export const SERVE_ROUTE_INIT = "/__commentray/serve/init" as const;
-export const SERVE_ROUTE_GENERATE_ENTRY = "/__commentray/serve/generate-entry" as const;
+const EMPTY_STATE_MARKDOWN_ENV = "SIDETRACK_EMPTY_STATE_MARKDOWN" as const;
+export const SERVE_ROUTE_INIT = "/__sidetrack/serve/init" as const;
+export const SERVE_ROUTE_GENERATE_ENTRY = "/__sidetrack/serve/generate-entry" as const;
 
 type ServeActionContext = {
   repoRoot: string;
@@ -34,24 +34,24 @@ type ServeActionContext = {
 async function serveEmptyStateMarkdown(port: number, repoRoot: string): Promise<string> {
   const base = `http://127.0.0.1:${String(port)}`;
   try {
-    const initialized = await isCommentrayProjectInitialized(repoRoot);
+    const initialized = await isSideTrackProjectInitialized(repoRoot);
     if (!initialized) {
       return [
         "Use local actions to bootstrap this page:",
-        `- [Initialize Commentray in this repository](${base}${SERVE_ROUTE_INIT})`,
+        `- [Initialize SideTrack in this repository](${base}${SERVE_ROUTE_INIT})`,
       ].join("\n");
     }
-    const cfg = await loadCommentrayConfig(repoRoot);
-    const explicit = cfg.staticSite.commentrayMarkdownFile?.trim();
-    const desiredCommentrayPath =
+    const cfg = await loadSideTrackConfig(repoRoot);
+    const explicit = cfg.staticSite.sidetrackMarkdownFile?.trim();
+    const desiredSideTrackPath =
       explicit && explicit.length > 0
         ? explicit
-        : resolveCommentrayMarkdownPath(repoRoot, cfg.staticSite.sourceFile, cfg).commentrayPath;
-    const mdAbs = path.resolve(repoRoot, desiredCommentrayPath);
+        : resolveSideTrackMarkdownPath(repoRoot, cfg.staticSite.sourceFile, cfg).sidetrackPath;
+    const mdAbs = path.resolve(repoRoot, desiredSideTrackPath);
     if (!existsSync(mdAbs)) {
       return [
         "Use local actions to bootstrap this page:",
-        `- [Generate commentray for \`${cfg.staticSite.sourceFile}\`](${base}${SERVE_ROUTE_GENERATE_ENTRY})`,
+        `- [Generate sidetrack for \`${cfg.staticSite.sourceFile}\`](${base}${SERVE_ROUTE_GENERATE_ENTRY})`,
       ].join("\n");
     }
   } catch {
@@ -100,9 +100,9 @@ export async function runServeAction(pathname: string, ctx: ServeActionContext):
   if (pathname === SERVE_ROUTE_INIT) {
     const code = await runInitFull(ctx.repoRoot);
     if (code !== 0) {
-      throw new Error("commentray init reported validation errors; fix them, then retry.");
+      throw new Error("sidetrack init reported validation errors; fix them, then retry.");
     }
-    process.stderr.write("[commentray serve] initialized repository via serve action\n");
+    process.stderr.write("[sidetrack serve] initialized repository via serve action\n");
     await ctx.rebuild(true);
     return;
   }
@@ -110,16 +110,16 @@ export async function runServeAction(pathname: string, ctx: ServeActionContext):
   if (pathname === SERVE_ROUTE_GENERATE_ENTRY) {
     const initCode = await runInitFull(ctx.repoRoot);
     if (initCode !== 0) {
-      throw new Error("commentray init reported validation errors; fix them, then retry.");
+      throw new Error("sidetrack init reported validation errors; fix them, then retry.");
     }
-    const cfg = await loadCommentrayConfig(ctx.repoRoot);
+    const cfg = await loadSideTrackConfig(ctx.repoRoot);
     const generated = await ensureCompanionForSource(ctx.repoRoot, cfg.staticSite.sourceFile, {
-      commentrayPath: cfg.staticSite.commentrayMarkdownFile,
+      sidetrackPath: cfg.staticSite.sidetrackMarkdownFile,
     });
     const actionWord = generated.createdMarkdown ? "created" : "already existed";
     const indexWord = generated.createdIndexEntry ? "added" : "already indexed";
     process.stderr.write(
-      `[commentray serve] ${actionWord}: ${generated.commentrayPath} (for ${generated.sourcePath}; index ${indexWord})\n`,
+      `[sidetrack serve] ${actionWord}: ${generated.sidetrackPath} (for ${generated.sourcePath}; index ${indexWord})\n`,
     );
     await ctx.rebuild(true);
     return;
@@ -148,7 +148,7 @@ function tryServeActionRoute(
       redirectHome(res);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      process.stderr.write(`[commentray serve] action failed: ${message}\n`);
+      process.stderr.write(`[sidetrack serve] action failed: ${message}\n`);
       if (!res.headersSent) writePlain(res, 500, `${message}\n`);
     }
   })();
@@ -198,7 +198,7 @@ function tryServeDevBuildIdRoute(
   } catch {
     return false;
   }
-  if (pathname !== "/__commentray/dev/build-id") return false;
+  if (pathname !== "/__sidetrack/dev/build-id") return false;
   res.writeHead(200, {
     "Content-Type": "text/plain; charset=utf-8",
     "Cache-Control": "no-store",
@@ -221,7 +221,7 @@ function attachStaticSiteHandler(
     // `renderSingle` (lone `index.html` in humane browse dirs); see `github-pages-site.ts`.
     void handler(req, res, opts).catch((err: unknown) => {
       process.stderr.write(
-        `[commentray serve] request error: ${err instanceof Error ? err.message : String(err)}\n`,
+        `[sidetrack serve] request error: ${err instanceof Error ? err.message : String(err)}\n`,
       );
       if (!res.headersSent) res.statusCode = 500;
       res.end();
@@ -255,25 +255,25 @@ export async function runServeStaticPages(
   opts: ServeCliOptions,
 ): Promise<void> {
   // Dynamic import: the static-site stack pulls `renderCodeBrowserHtml` and filesystem reads that
-  // assume a Commentray **source** checkout. Consumer repos (and the Homebrew/SEA binary) only
+  // assume a SideTrack **source** checkout. Consumer repos (and the Homebrew/SEA binary) only
   // ship the bundled CLI — load this stack when `serve` actually runs, not for `--help` / `--version`.
   const { buildGithubPagesStaticSite } =
-    await import("@commentray/code-commentray-static/github-pages-site");
+    await import("@sidetrack/code-sidetrack-static/github-pages-site");
   const repoRoot = path.resolve(repoRootAbs);
   const siteRel = "_site";
   const siteAbs = path.join(repoRoot, siteRel);
   const livereload = await startLivereloadServer(opts.port + 1);
-  const serveDevBuildId = process.env.COMMENTRAY_SERVE_BUILD_ID?.trim() ?? "";
+  const serveDevBuildId = process.env.SIDETRACK_SERVE_BUILD_ID?.trim() ?? "";
 
   async function rebuild(notifyBrowser = false): Promise<void> {
-    process.stderr.write("[commentray serve] rebuilding…\n");
+    process.stderr.write("[sidetrack serve] rebuilding…\n");
     const emptyStateMarkdown = await serveEmptyStateMarkdown(opts.port, repoRoot);
     await withServeEmptyStateMarkdown(emptyStateMarkdown, async () => {
       await buildGithubPagesStaticSite({ repoRoot });
     });
     await livereload?.injectIntoSite(siteAbs);
     await injectServeDevBuildWatchIntoSite(siteAbs, serveDevBuildId);
-    process.stderr.write("[commentray serve] rebuild finished\n");
+    process.stderr.write("[sidetrack serve] rebuild finished\n");
     if (notifyBrowser) livereload?.notifyReload();
   }
 
@@ -289,12 +289,12 @@ export async function runServeStaticPages(
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     process.stderr.write(
-      `[commentray serve] failed to listen on port ${String(opts.port)}: ${msg}\n`,
+      `[sidetrack serve] failed to listen on port ${String(opts.port)}: ${msg}\n`,
     );
     throw err;
   }
   process.stderr.write(
-    `[commentray serve] HTTP listening on http://127.0.0.1:${String(opts.port)}/ (${siteRel})\n`,
+    `[sidetrack serve] HTTP listening on http://127.0.0.1:${String(opts.port)}/ (${siteRel})\n`,
   );
 
   const rebuildWatcher = await startServeRebuildWatcher(repoRoot, rebuild);
@@ -332,20 +332,20 @@ export async function runServeStaticPages(
 
 /**
  * Build the static `_site/` tree without starting an HTTP server.
- * Useful for CI / GitHub Pages workflows that call `commentray pages build`.
+ * Useful for CI / GitHub Pages workflows that call `sidetrack pages build`.
  */
 export async function runPagesBuild(repoRootAbs: string): Promise<void> {
   const { buildGithubPagesStaticSite } =
-    await import("@commentray/code-commentray-static/github-pages-site");
+    await import("@sidetrack/code-sidetrack-static/github-pages-site");
   const repoRoot = path.resolve(repoRootAbs);
 
   // Ensure the project is initialized before building
-  const initialized = await isCommentrayProjectInitialized(repoRoot);
+  const initialized = await isSideTrackProjectInitialized(repoRoot);
   if (!initialized) {
     const code = await runInitFull(repoRoot);
     if (code !== 0) {
       throw new Error(
-        `Failed to initialize Commentray project at ${repoRoot} (exit code: ${String(code)})`,
+        `Failed to initialize SideTrack project at ${repoRoot} (exit code: ${String(code)})`,
       );
     }
   }

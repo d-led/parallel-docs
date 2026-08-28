@@ -1,10 +1,10 @@
 {
-  "name": "@commentray/render",
-  "version": "0.4.2",
+  "name": "@sidetrack/render",
+  "version": "1.0.0",
   "publishConfig": {
     "access": "public"
   },
-  "description": "Markdown + syntax highlighting rendering for Commentray",
+  "description": "Markdown + syntax highlighting rendering for SideTrack",
   "license": "MPL-2.0",
   "type": "module",
   "sideEffects": false,
@@ -29,7 +29,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@commentray/core": "0.4.2",
+    "@sidetrack/core": "1.0.0",
     "@m31coding/fuzzy-search": "^2.0.0",
     "rehype-highlight": "^7.0.2",
     "rehype-raw": "^7.0.0",

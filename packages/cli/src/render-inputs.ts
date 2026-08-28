@@ -1,13 +1,13 @@
 import path from "node:path";
 
 import {
-  commentrayMarkdownPath,
+  sidetrackMarkdownPath,
   normalizeRepoRelativePath,
-  resolveCommentrayMarkdownPath,
-  type ResolvedCommentrayConfig,
-} from "@commentray/core";
+  resolveSideTrackMarkdownPath,
+  type ResolvedSideTrackConfig,
+} from "@sidetrack/core";
 
-/** Raw `commentray render` flags as parsed by Commander; all three may be omitted. */
+/** Raw `sidetrack render` flags as parsed by Commander; all three may be omitted. */
 export type RenderCliOptions = {
   source?: string;
   markdown?: string;
@@ -25,18 +25,18 @@ export type ResolvedRenderInputs = {
 export const DEFAULT_RENDER_OUT = path.posix.join("_site", "index.html");
 
 /**
- * Fill in `commentray render` flags from `.commentray.toml`. Omitting every flag should
+ * Fill in `sidetrack render` flags from `.sidetrack.toml`. Omitting every flag should
  * "just work" inside a configured tree; passing `--source` on its own derives the companion
- * Markdown via Commentray's path convention rather than reusing the static-site default,
+ * Markdown via SideTrack's path convention rather than reusing the static-site default,
  * which is tied to a specific source file.
  */
 export function resolveRenderInputs(
-  cfg: ResolvedCommentrayConfig,
+  cfg: ResolvedSideTrackConfig,
   opts: RenderCliOptions,
   repoRoot?: string,
 ): ResolvedRenderInputs {
   const source = opts.source ?? cfg.staticSite.sourceFile;
-  const staticSiteMarkdown = cfg.staticSite.commentrayMarkdownFile.trim();
+  const staticSiteMarkdown = cfg.staticSite.sidetrackMarkdownFile.trim();
   const useStaticSiteMarkdown = opts.source === undefined && staticSiteMarkdown.length > 0;
   const normalizedSource = normalizeRepoRelativePath(source);
   const markdown =
@@ -44,8 +44,8 @@ export function resolveRenderInputs(
     (useStaticSiteMarkdown
       ? staticSiteMarkdown
       : repoRoot
-        ? resolveCommentrayMarkdownPath(repoRoot, normalizedSource, cfg).commentrayPath
-        : commentrayMarkdownPath(source, cfg.storageDir));
+        ? resolveSideTrackMarkdownPath(repoRoot, normalizedSource, cfg).sidetrackPath
+        : sidetrackMarkdownPath(source, cfg.storageDir));
   const out = opts.out ?? DEFAULT_RENDER_OUT;
   return { source, markdown, out };
 }

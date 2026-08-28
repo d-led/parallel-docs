@@ -87,7 +87,7 @@ async function assertCliAndVscodePackageJsonHaveNoCrossReferences(): Promise<voi
   const cliKeys = dependencyKeysFromPackageJson(cli);
   const vscodeKeys = dependencyKeysFromPackageJson(vscode);
 
-  for (const name of ["commentray-vscode", "@commentray/vscode"] as const) {
+  for (const name of ["sidetrack-vscode", "@sidetrack/vscode"] as const) {
     expect(
       cliKeys.has(name),
       `Remove "${name}" from packages/cli/package.json (dependencies / devDependencies / peerDependencies / optionalDependencies). The CLI must not depend on the VS Code extension package.`,
@@ -95,19 +95,19 @@ async function assertCliAndVscodePackageJsonHaveNoCrossReferences(): Promise<voi
   }
 
   expect(
-    vscodeKeys.has("commentray"),
-    'Remove "commentray" from packages/vscode/package.json (dependencies / devDependencies / peerDependencies / optionalDependencies). The extension must not depend on the CLI package.',
+    vscodeKeys.has("sidetrack"),
+    'Remove "sidetrack" from packages/vscode/package.json (dependencies / devDependencies / peerDependencies / optionalDependencies). The extension must not depend on the CLI package.',
   ).toBe(false);
 }
 
 /**
  * **Defects** here mean wild first-party imports: a package reaching another when the
- * README / `.commentray/source/README.md/architecture.md` Mermaid (npm `dependencies` edges)
+ * README / `.sidetrack/source/README.md/architecture.md` Mermaid (npm `dependencies` edges)
  * does not allow that direction. ArchUnitTS fails those; the separate cycle checks are
  * structural hygiene, not drawn in the diagram.
  *
  * Dependency edges agreed for this monorepo (see README table and
- * `.commentray/source/README.md/architecture.md`). These tests enforce import
+ * `.sidetrack/source/README.md/architecture.md`). These tests enforce import
  * directions between first-party packages under `packages/`.
  *
  * Uses {@link https://github.com/LukasNiessen/ArchUnitTS ArchUnitTS} with Vitest
@@ -117,50 +117,50 @@ async function assertCliAndVscodePackageJsonHaveNoCrossReferences(): Promise<voi
  * that lists sources, hence `tsconfig.archunit.json`.
  */
 describe("monorepo package dependency rules", { timeout: 30_000 }, () => {
-  it("keeps @commentray/core free of other workspace packages", async () => {
+  it("keeps @sidetrack/core free of other workspace packages", async () => {
     await assertFirstPartyPackageDoesNotImportFolders({
       sourceGlob: "packages/core/**",
       forbiddenFolders: [
         "packages/render",
-        "packages/code-commentray-static",
+        "packages/code-sidetrack-static",
         "packages/cli",
         "packages/vscode",
       ],
-      failureMessage: (folder) => `@commentray/core must not depend on files under ${folder}`,
+      failureMessage: (folder) => `@sidetrack/core must not depend on files under ${folder}`,
     });
   });
 
-  it("keeps @commentray/render from reaching static site, CLI, or the VS Code extension", async () => {
+  it("keeps @sidetrack/render from reaching static site, CLI, or the VS Code extension", async () => {
     await assertFirstPartyPackageDoesNotImportFolders({
       sourceGlob: "packages/render/**",
-      forbiddenFolders: ["packages/code-commentray-static", "packages/cli", "packages/vscode"],
-      failureMessage: (folder) => `@commentray/render must not depend on files under ${folder}`,
+      forbiddenFolders: ["packages/code-sidetrack-static", "packages/cli", "packages/vscode"],
+      failureMessage: (folder) => `@sidetrack/render must not depend on files under ${folder}`,
     });
   });
 
-  it("keeps @commentray/mcp-server from reaching static site, CLI, or the VS Code extension", async () => {
+  it("keeps @sidetrack/mcp-server from reaching static site, CLI, or the VS Code extension", async () => {
     await assertFirstPartyPackageDoesNotImportFolders({
       sourceGlob: "packages/mcp-server/**",
-      forbiddenFolders: ["packages/code-commentray-static", "packages/cli", "packages/vscode"],
-      failureMessage: (folder) => `@commentray/mcp-server must not depend on files under ${folder}`,
+      forbiddenFolders: ["packages/code-sidetrack-static", "packages/cli", "packages/vscode"],
+      failureMessage: (folder) => `@sidetrack/mcp-server must not depend on files under ${folder}`,
     });
   });
 
-  it("keeps @commentray/code-commentray-static from reaching the CLI or VS Code extension", async () => {
+  it("keeps @sidetrack/code-sidetrack-static from reaching the CLI or VS Code extension", async () => {
     await assertFirstPartyPackageDoesNotImportFolders({
-      sourceGlob: "packages/code-commentray-static/**",
+      sourceGlob: "packages/code-sidetrack-static/**",
       forbiddenFolders: ["packages/cli", "packages/vscode"],
       failureMessage: (folder) =>
-        `@commentray/code-commentray-static must not depend on files under ${folder}`,
+        `@sidetrack/code-sidetrack-static must not depend on files under ${folder}`,
     });
   });
 
-  it("keeps the commentray CLI package from depending on the VS Code extension package", async () => {
+  it("keeps the sidetrack CLI package from depending on the VS Code extension package", async () => {
     await assertFirstPartyPackageDoesNotImportFolders({
       sourceGlob: "packages/cli/**",
       forbiddenFolders: ["packages/vscode"],
       failureMessage: () =>
-        "commentray (CLI) must not import packages/vscode — CLI is Node tooling; the extension is a separate host",
+        "sidetrack (CLI) must not import packages/vscode — CLI is Node tooling; the extension is a separate host",
     });
   });
 
@@ -168,11 +168,11 @@ describe("monorepo package dependency rules", { timeout: 30_000 }, () => {
     await assertCliAndVscodePackageJsonHaveNoCrossReferences();
   });
 
-  it("keeps the VS Code extension using only @commentray/core among workspace code", async () => {
+  it("keeps the VS Code extension using only @sidetrack/core among workspace code", async () => {
     await assertFirstPartyPackageDoesNotImportFolders({
       sourceGlob: "packages/vscode/**",
-      forbiddenFolders: ["packages/render", "packages/code-commentray-static", "packages/cli"],
-      failureMessage: (folder) => `commentray-vscode must not depend on files under ${folder}`,
+      forbiddenFolders: ["packages/render", "packages/code-sidetrack-static", "packages/cli"],
+      failureMessage: (folder) => `sidetrack-vscode must not depend on files under ${folder}`,
     });
   });
 
@@ -180,7 +180,7 @@ describe("monorepo package dependency rules", { timeout: 30_000 }, () => {
     const packages = [
       "core",
       "render",
-      "code-commentray-static",
+      "code-sidetrack-static",
       "mcp-server",
       "cli",
       "vscode",

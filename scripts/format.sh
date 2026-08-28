@@ -4,4 +4,4 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
 npx prettier --write .
-npm run commentray -- doctor
+npm run sidetrack -- doctor

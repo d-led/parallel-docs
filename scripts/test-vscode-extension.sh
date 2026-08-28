@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Run Commentray VS Code extension integration tests (Microsoft-recommended
+# Run SideTrack VS Code extension integration tests (Microsoft-recommended
 # @vscode/test-cli + Extension Development Host). Does not run Cypress or
 # other repo test suites.
 #
@@ -18,10 +18,10 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
-npm run build -w @commentray/core
-npm run build -w @commentray/render
-npm run build -w @commentray/code-commentray-static
-npm run build -w @commentray/mcp-server
+npm run build -w @sidetrack/core
+npm run build -w @sidetrack/render
+npm run build -w @sidetrack/code-sidetrack-static
+npm run build -w @sidetrack/mcp-server
 cd packages/vscode
 npm run build
 

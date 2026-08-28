@@ -8,8 +8,8 @@
  * stable in `packages/render/src/code-browser.ts` and easier to scope than long chains.
  */
 
-/** Substring or pattern for `document.title` — keep aligned with `.commentray.toml` `[static_site].title`. */
-export const STATIC_SITE_TITLE_PATTERN = /Commentray/i;
+/** Substring or pattern for `document.title` — keep aligned with `.sidetrack.toml` `[static_site].title`. */
+export const STATIC_SITE_TITLE_PATTERN = /SideTrack/i;
 
 /** Expected primary language of the generated HTML shell. */
 export const DOCUMENT_LANG = "en";
@@ -39,7 +39,7 @@ export const shellA11y = {
     /** In-page search hit rows (`code-browser-client.ts` `button.hit`). */
     hitButton: "#search-results button.hit",
   },
-  /** Comment-rayed files hub (`code-browser.ts` nav rail). */
+  /** Side-tracked files hub (`code-browser.ts` nav rail). */
   documentedFiles: {
     hub: "#documented-files-hub",
     filter: "#documented-files-filter",
@@ -49,16 +49,16 @@ export const shellA11y = {
   },
   panes: {
     source: '[aria-label="Source code"]',
-    commentray: '[aria-label="Commentray"]',
+    sidetrack: '[aria-label="SideTrack"]',
   },
   resizeSplitter: '[role="separator"][aria-label="Resize panes"]',
   wrapLinesCheckbox: "#wrap-lines",
   /** Label wraps the checkbox in the toolbar. */
   wrapLinesLabel: "label:has(#wrap-lines)",
   /** System / light / dark: compact trigger + popover (static code browser client bundle). */
-  colorThemeTrigger: "#commentray-theme-trigger",
-  colorThemeMenu: "#commentray-theme-menu",
-  angleSelect: '[aria-label="Commentray angle"]',
+  colorThemeTrigger: "#sidetrack-theme-trigger",
+  colorThemeMenu: "#sidetrack-theme-menu",
+  angleSelect: '[aria-label="SideTrack angle"]',
   /** Plain-text Src/Doc path strip above the dual panes (inside `#shell`). */
   documentationPairLandmark: '[aria-label="Current documentation pair"]',
   /** Static code-browser root (`code-browser.ts` `#shell`). */
@@ -67,8 +67,8 @@ export const shellA11y = {
   mobilePaneFlip: "#mobile-pane-flip",
   /** Fixed duplicate flip when the toolbar flip is off-screen (narrow dual layout). */
   mobilePaneFlipScroll: "#mobile-pane-flip-scroll",
-  /** Commentary markdown scroll body (`code-browser.ts` `#doc-pane-body`). */
+  /** SideTrack markdown scroll body (`code-browser.ts` `#doc-pane-body`). */
   docPaneBody: "#doc-pane-body",
   /** Wrapper class for fenced Mermaid blocks from the render pipeline. */
-  commentrayMermaid: ".commentray-mermaid",
+  sidetrackMermaid: ".sidetrack-mermaid",
 } as const;

@@ -1,23 +1,23 @@
-# @commentray/render
+# @sidetrack/render
 
-Markdown → HTML rendering stack for [Commentray](https://github.com/d-led/commentray): `remark-parse` + `remark-gfm` (tables, task lists, strikethrough, autolink literals, footnotes), `rehype-slug` on headings, `rehype-sanitize`, `rehype-highlight` (lowlight), Mermaid containers, and ready-made HTML shells (side-by-side and a client-side interactive code browser with in-page token search).
+Markdown → HTML rendering stack for [SideTrack](https://github.com/d-led/sidetrack): `remark-parse` + `remark-gfm` (tables, task lists, strikethrough, autolink literals, footnotes), `rehype-slug` on headings, `rehype-sanitize`, `rehype-highlight` (lowlight), Mermaid containers, and ready-made HTML shells (side-by-side and a client-side interactive code browser with in-page token search).
 
 ## Install
 
 ```bash
-npm install @commentray/render
+npm install @sidetrack/render
 ```
 
 ## Use
 
 ```ts
-import { renderSideBySideHtml } from "@commentray/render";
+import { renderSideBySideHtml } from "@sidetrack/render";
 
 const html = await renderSideBySideHtml({
   title: "src/example.ts",
   code: sourceText,
   language: "ts",
-  commentrayMarkdown: markdownText,
+  sidetrackMarkdown: markdownText,
 });
 ```
 

@@ -1,8 +1,0 @@
-{
-  "Commentray: Page break": {
-    "scope": "markdown",
-    "prefix": ["cr-page-break", "commentray-page-break"],
-    "description": "Insert a deliberate Commentray page break marker",
-    "body": ["<!-- commentray:page-break -->", "", "## ${1:Next section}", "", "${0}"],
-  },
-}

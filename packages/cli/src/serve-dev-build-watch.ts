@@ -1,9 +1,9 @@
 import { readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-const SCRIPT_MARKER = "commentray-serve-watch";
+const SCRIPT_MARKER = "sidetrack-serve-watch";
 
-/** Injected when `COMMENTRAY_SERVE_BUILD_ID` is set (repo `serve-with-package-watch` dev loop only; never part of shipped static hosting). */
+/** Injected when `SIDETRACK_SERVE_BUILD_ID` is set (repo `serve-with-package-watch` dev loop only; never part of shipped static hosting). */
 export function injectServeDevBuildWatch(html: string, buildId: string): string {
   if (!buildId) return html;
   const script = serveDevBuildWatchScript(buildId);
@@ -22,25 +22,25 @@ function serveDevBuildWatchScript(buildId: string): string {
 (() => {
   try {
     const u0 = new URL(window.location.href);
-    if (u0.searchParams.has("_commentray_bust")) {
-      u0.searchParams.delete("_commentray_bust");
+    if (u0.searchParams.has("_sidetrack_bust")) {
+      u0.searchParams.delete("_sidetrack_bust");
       const q = u0.searchParams.toString();
       history.replaceState(null, "", u0.pathname + (q ? "?" + q : "") + u0.hash);
     }
   } catch (_) {}
   const expect = "${buildId}";
-  console.log("[commentray:dev-watch] poll-init", { buildId: expect });
+  console.log("[sidetrack:dev-watch] poll-init", { buildId: expect });
   setInterval(async () => {
     try {
-      const r = await fetch("/__commentray/dev/build-id", { cache: "no-store" });
+      const r = await fetch("/__sidetrack/dev/build-id", { cache: "no-store" });
       if (!r.ok) return;
       const cur = (await r.text()).trim();
       if (cur.length > 0 && cur !== expect && !cur.startsWith("<")) {
-        console.log("[commentray:dev-watch] reload", { from: expect, to: cur });
+        console.log("[sidetrack:dev-watch] reload", { from: expect, to: cur });
         location.reload();
       }
     } catch (err) {
-      console.log("[commentray:dev-watch] poll-error", { msg: String(err) });
+      console.log("[sidetrack:dev-watch] poll-error", { msg: String(err) });
     }
   }, 600);
 })();

@@ -1,4 +1,4 @@
-describe("The Commentray GitHub Pages static build", () => {
+describe("The SideTrack GitHub Pages static build", () => {
   describe("The nav search JSON artifact", () => {
     it("responds with 200 and a schemaVersion field", () => {
       cy.NavSearchArtifactGetRequestShouldReturnSchemaVersion();
@@ -16,22 +16,22 @@ describe("The Commentray GitHub Pages static build", () => {
 
     it("presents a coherent browsable documentation workspace", () => {
       cy.CurrentPageShouldDisplayCodeBrowserShell();
-      cy.CommentrayPaneReadmeLinksShouldUseGithubBlobUrls();
-      cy.CommentrayPaneEmphasisShouldRenderAfterBlocks();
+      cy.SideTrackPaneReadmeLinksShouldUseGithubBlobUrls();
+      cy.SideTrackPaneEmphasisShouldRenderAfterBlocks();
       cy.DocumentationHomeLinkShouldPointToRelativeIndex();
       cy.ShellPairBrowseLinkShouldAdvertiseOnSiteBrowsePage();
-      cy.OpenCommentRayedFilesDisclosure();
-      cy.CommentRayedFilesTreeShouldExposeAtLeastOneFileLink();
+      cy.OpenSideTrackedFilesDisclosure();
+      cy.SideTrackedFilesTreeShouldExposeAtLeastOneFileLink();
     });
 
-    it("closes the Comment-rayed files hub when Escape is pressed", () => {
-      cy.OpenCommentRayedFilesDisclosure();
-      cy.CommentRayedFilesTreeShouldExposeAtLeastOneFileLink();
-      cy.CloseCommentRayedFilesHubWithEscape();
+    it("closes the Side-tracked files hub when Escape is pressed", () => {
+      cy.OpenSideTrackedFilesDisclosure();
+      cy.SideTrackedFilesTreeShouldExposeAtLeastOneFileLink();
+      cy.CloseSideTrackedFilesHubWithEscape();
     });
 
     it("keeps pair-browse routes from stacking under repeated /browse/ segments", () => {
-      cy.OpenCommentRayedFilesDisclosure();
+      cy.OpenSideTrackedFilesDisclosure();
       cy.FollowFirstBrowseFileLinkInTree();
       cy.CurrentPageShouldDisplayCodeBrowserShell();
       cy.ShellPairBrowseLinkShouldAvoidStackedBrowseSegments();
@@ -39,7 +39,7 @@ describe("The Commentray GitHub Pages static build", () => {
 
     it("keeps relative pair-browse links stable when landing on a direct browse permalink", () => {
       cy.get(".shell")
-        .invoke("attr", "data-commentray-pair-browse-href")
+        .invoke("attr", "data-sidetrack-pair-browse-href")
         .then((browseHref) => {
           expect(browseHref)
             .to.be.a("string")
@@ -66,7 +66,7 @@ describe("The Commentray GitHub Pages static build", () => {
       cy.ApplyDualPaneScrollTestViewport();
       cy.location("href").then((href) => {
         cy.get(".shell")
-          .invoke("attr", "data-commentray-pair-browse-href")
+          .invoke("attr", "data-sidetrack-pair-browse-href")
           .then((browseHref) => {
             expect(browseHref)
               .to.be.a("string")
@@ -78,7 +78,7 @@ describe("The Commentray GitHub Pages static build", () => {
             cy.wrap(browsePath).as("humaneBrowsePath");
             cy.visit(browsePath, {
               onBeforeLoad(win) {
-                win.localStorage.setItem("commentray.codeCommentrayStatic.wideModeIntro.v1", "1");
+                win.localStorage.setItem("sidetrack.codeSideTrackStatic.wideModeIntro.v1", "1");
               },
             });
           });
@@ -94,7 +94,7 @@ describe("The Commentray GitHub Pages static build", () => {
       cy.get("@humaneBrowsePath").then((browsePath) => {
         cy.visit(String(browsePath), {
           onBeforeLoad(win) {
-            win.localStorage.setItem("commentray.codeCommentrayStatic.wideModeIntro.v1", "1");
+            win.localStorage.setItem("sidetrack.codeSideTrackStatic.wideModeIntro.v1", "1");
           },
         });
       });
@@ -106,7 +106,7 @@ describe("The Commentray GitHub Pages static build", () => {
     it("returns 404 for humane browse paths without a documented pair", () => {
       cy.request({
         method: "GET",
-        url: "/browse/this-path-has-no-commentray.md",
+        url: "/browse/this-path-has-no-sidetrack.md",
         failOnStatusCode: false,
       })
         .its("status")
@@ -114,7 +114,7 @@ describe("The Commentray GitHub Pages static build", () => {
     });
 
     it("clears in-page search and hides hits when Escape is pressed", () => {
-      cy.TypeTextInSearchField("commentray");
+      cy.TypeTextInSearchField("sidetrack");
       cy.SearchResultsPanelShouldBeVisible();
       cy.PressEscapeInSearchField();
       cy.SearchFieldValueShouldBeEmpty();
@@ -122,7 +122,7 @@ describe("The Commentray GitHub Pages static build", () => {
     });
 
     it("highlights matched query tokens inside search hit snippets", () => {
-      cy.TypeTextInSearchField("commentray");
+      cy.TypeTextInSearchField("sidetrack");
       cy.SearchResultsPanelShouldBeVisible();
       cy.SearchResultsHitMarksShouldExist();
     });
@@ -130,19 +130,19 @@ describe("The Commentray GitHub Pages static build", () => {
     it("switches documentation angle while keeping on-site pair-browse targets", () => {
       cy.OptionsOfAngleSelectShouldIncludeMainAndArchitecture();
       cy.DisplayedValueOfAngleSelectShouldBe("main");
-      cy.CommentrayPaneShouldContainText("quick-start");
+      cy.SideTrackPaneShouldContainText("quick-start");
       cy.ShellPairBrowseLinkShouldMatchRelativeBrowseHtml();
       cy.ShellPairBrowseLinkShouldNotPointAtGithubHost();
 
       cy.ChooseValueOfAngleSelect("architecture");
       cy.DisplayedValueOfAngleSelectShouldBe("architecture");
-      cy.CommentrayPaneShouldContainText("architecture angle");
+      cy.SideTrackPaneShouldContainText("architecture angle");
       cy.ShellPairBrowseLinkShouldMatchRelativeBrowseHtml();
       cy.ShellPairBrowseLinkShouldNotPointAtGithubHost();
 
       cy.ChooseValueOfAngleSelect("main");
       cy.DisplayedValueOfAngleSelectShouldBe("main");
-      cy.CommentrayPaneShouldContainText("quick-start");
+      cy.SideTrackPaneShouldContainText("quick-start");
       cy.ShellPairBrowseLinkShouldMatchRelativeBrowseHtml();
       cy.ShellPairBrowseLinkShouldNotPointAtGithubHost();
     });
@@ -169,9 +169,9 @@ describe("The Commentray GitHub Pages static build", () => {
       cy.GoToStaticSiteHome();
     });
 
-    it("still exposes README through the comment-rayed files tree", () => {
-      cy.OpenCommentRayedFilesDisclosure();
-      cy.CommentRayedFilesTreeShouldContainReadmeLink();
+    it("still exposes README through the side-tracked files tree", () => {
+      cy.OpenSideTrackedFilesDisclosure();
+      cy.SideTrackedFilesTreeShouldContainReadmeLink();
     });
   });
 });

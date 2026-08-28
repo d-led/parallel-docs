@@ -8,5 +8,5 @@ package-lock.json
 .yarn
 LICENSE
 packages/*/LICENSE
-packages/code-commentray-static/site
-.commentray-dev/
+packages/code-sidetrack-static/site
+.sidetrack-dev/

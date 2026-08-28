@@ -6,11 +6,11 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-import { CURRENT_SCHEMA_VERSION } from "@commentray/core";
-import { renderCodeBrowserHtml } from "@commentray/render";
+import { CURRENT_SCHEMA_VERSION } from "@sidetrack/core";
+import { renderCodeBrowserHtml } from "@sidetrack/render";
 
 const LINE_COUNT = 100;
-const crPath = ".commentray/source/e2e/mobile-flip-end.ts.md";
+const crPath = ".sidetrack/source/e2e/mobile-flip-end.ts.md";
 
 /**
  * @param {string} repoRoot
@@ -20,10 +20,10 @@ export async function writeE2eMobileFlipEndFixture(repoRoot) {
   const b2End = 72;
   const index = {
     schemaVersion: CURRENT_SCHEMA_VERSION,
-    byCommentrayPath: {
+    bySideTrackPath: {
       [crPath]: {
         sourcePath: "e2e/mobile-flip-end.ts",
-        commentrayPath: crPath,
+        sidetrackPath: crPath,
         blocks: [
           { id: "b1", anchor: `lines:1-${b1End}` },
           { id: "b2", anchor: `lines:${b1End + 1}-${b2End}` },
@@ -39,25 +39,25 @@ export async function writeE2eMobileFlipEndFixture(repoRoot) {
   const filler = Array.from(
     { length: 40 },
     (_, i) =>
-      `Middle commentary paragraph ${String(i + 1)} with enough words to lengthen the doc pane.`,
+      `Middle sidetrack paragraph ${String(i + 1)} with enough words to lengthen the doc pane.`,
   ).join("\n\n");
   const md =
-    "<!-- commentray:block id=b1 -->\n\n## Opening\n\nShort commentary for the first source span.\n\n" +
-    "<!-- commentray:block id=b2 -->\n\n## Middle\n\n" +
+    "<!-- sidetrack:block id=b1 -->\n\n## Opening\n\nShort sidetrack for the first source span.\n\n" +
+    "<!-- sidetrack:block id=b2 -->\n\n## Middle\n\n" +
     filler +
-    "\n\n<!-- commentray:block id=b3 -->\n\n## Tail\n\nE2E_MOBILE_FLIP_TAIL_LBL\n";
+    "\n\n<!-- sidetrack:block id=b3 -->\n\n## Tail\n\nE2E_MOBILE_FLIP_TAIL_LBL\n";
 
   const html = await renderCodeBrowserHtml({
     title: "E2E mobile flip end",
     filePath: "e2e/mobile-flip-end.ts",
     code,
     language: "ts",
-    commentrayMarkdown: md,
+    sidetrackMarkdown: md,
     codeBrowserLayout: "dual",
     blockStretchRows: {
       index,
       sourceRelative: "e2e/mobile-flip-end.ts",
-      commentrayPathRel: crPath,
+      sidetrackPathRel: crPath,
     },
   });
 

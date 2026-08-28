@@ -126,7 +126,7 @@ dist
 .vscode-test
 
 # Generated when running the VS Code extension against fixtures/dogfood
-packages/vscode/fixtures/dogfood/.commentray/
+packages/vscode/fixtures/dogfood/.sidetrack/
 
 # yarn v2
 .yarn/cache
@@ -251,8 +251,8 @@ fabric.properties
 !.idea/codeStyles
 !.idea/runConfigurations
 
-# Commentray generated static site (@commentray/code-commentray-static)
-packages/code-commentray-static/site/
+# SideTrack generated static site (@sidetrack/code-sidetrack-static)
+packages/code-sidetrack-static/site/
 
 # GitHub Pages output (`npm run pages:build`)
 _site/
@@ -267,5 +267,5 @@ cypress/screenshots/
 packages/vscode/dist/*.vsix
 
 # End of https://www.toptal.com/developers/gitignore/api/node,webstorm+all,visualstudiocode
-.commentray-dev/
+.sidetrack-dev/
 .approval_tests_temp/

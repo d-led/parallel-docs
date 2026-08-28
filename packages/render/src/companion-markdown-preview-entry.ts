@@ -3,7 +3,7 @@
  * pages) without pulling in the full code-browser shell, search UI, or other site chrome.
  */
 export {
-  renderCommentrayPreviewHtml,
-  type RenderCommentrayPreviewHtmlArgs,
-} from "./commentray-preview-html.js";
-export type { CommentrayOutputUrlOptions, MarkdownPipelineOptions } from "./markdown-pipeline.js";
+  renderSideTrackPreviewHtml,
+  type RenderSideTrackPreviewHtmlArgs,
+} from "./sidetrack-preview-html.js";
+export type { SideTrackOutputUrlOptions, MarkdownPipelineOptions } from "./markdown-pipeline.js";

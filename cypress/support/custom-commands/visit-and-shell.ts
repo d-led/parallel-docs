@@ -1,6 +1,6 @@
 import { shellA11y } from "../shell-a11y";
 
-const WIDE_MODE_INTRO_STORAGE_KEY = "commentray.codeCommentrayStatic.wideModeIntro.v1";
+const WIDE_MODE_INTRO_STORAGE_KEY = "sidetrack.codeSideTrackStatic.wideModeIntro.v1";
 
 Cypress.Commands.add("GoToStaticSiteHome", () => {
   cy.visit("/", {
@@ -29,7 +29,7 @@ Cypress.Commands.add("CurrentPageShouldDisplayCodeBrowserShell", () => {
       cy.get(`${shellA11y.shell} .stretch-doc-inner`).first().should("be.visible");
     } else {
       cy.get(shellA11y.panes.source).should("be.visible");
-      cy.get(shellA11y.panes.commentray).should("be.visible");
+      cy.get(shellA11y.panes.sidetrack).should("be.visible");
     }
   });
   cy.get(shellA11y.search.region).within(() => {
@@ -41,7 +41,7 @@ Cypress.Commands.add("CurrentPageShouldDisplayCodeBrowserShell", () => {
 });
 
 Cypress.Commands.add("NavSearchArtifactGetRequestShouldReturnSchemaVersion", () => {
-  cy.request("/commentray-nav-search.json").then((res) => {
+  cy.request("/sidetrack-nav-search.json").then((res) => {
     expect(res.status).to.eq(200);
     expect(res.body).to.have.property("schemaVersion");
   });
