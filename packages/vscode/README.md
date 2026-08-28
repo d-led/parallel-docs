@@ -4,6 +4,18 @@ Side-by-side authoring for [ParallelDocs](https://github.com/d-led/parallel-docs
 out-of-file Markdown "side tracks" for any source file in your
 workspace.
 
+![ParallelDocs — side-by-side source and documentation](https://raw.githubusercontent.com/d-led/parallel-docs/main/.parallel-docs/source/packages/vscode/README.md/assets/parallel-docs-preview.png)
+
+## How it works
+
+```mermaid
+flowchart LR
+  src["src/foo.ts"] <-->|"anchored pair"| md[".parallel-docs/source/src/foo.ts/main.md"]
+  md -->|"render"| view["side-by-side code + docs"]
+  ext["VS Code extension"] -->|"Open paired markdown beside"| view
+  cli["parallel-docs CLI"] -->|"serve / pages build"| view
+```
+
 ## Walk-through (desktop VS Code)
 
 Captured from Extension Development Host + dogfood. In the palette, use **`>`** then **`ParallelDocs`** so you see **commands**, not file search hits.

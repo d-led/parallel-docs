@@ -6,6 +6,10 @@
   "publisher": "d-led",
   "license": "MPL-2.0",
   "icon": "icon.png",
+  "galleryBanner": {
+    "color": "#13203b",
+    "theme": "dark"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/d-led/parallel-docs.git",
