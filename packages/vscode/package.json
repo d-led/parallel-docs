@@ -2,7 +2,7 @@
   "name": "parallel-docs",
   "displayName": "Parallel Docs",
   "description": "Out-of-file documentation side tracks, authored side-by-side with your code",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "publisher": "d-led",
   "license": "MPL-2.0",
   "icon": "icon.png",
@@ -230,8 +230,8 @@
     "test:vscode": "tsc -p tsconfig.tests.json && vscode-test"
   },
   "dependencies": {
-    "@parallel-docs/core": "1.0.0",
-    "@parallel-docs/render": "1.0.0"
+    "@parallel-docs/core": "1.0.1",
+    "@parallel-docs/render": "1.0.1"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",

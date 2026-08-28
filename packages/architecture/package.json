@@ -1,6 +1,6 @@
 {
   "name": "@parallel-docs/architecture",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Monorepo architecture rules (ArchUnitTS); intent in .parallel-docs/source/README.md/architecture.md"
 }
